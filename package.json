@@ -1,0 +1,12 @@
+{
+  "name": "mod-ui-nhe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NHE: extensions for the MOD web UI (performance view and more), kept outside MOD's code",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "dev": "node tools/devproxy.js",
+    "dev:duo": "node tools/devproxy.js --target 192.168.51.1",
+    "deploy": "sh tools/deploy.sh"
+  }
+}
