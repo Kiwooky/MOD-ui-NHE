@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node tools/devproxy.js",
     "dev:duo": "node tools/devproxy.js --target 192.168.51.1",
+    "playground": "node tools/devproxy.js --port 18090",
     "deploy": "sh tools/deploy.sh"
   }
 }

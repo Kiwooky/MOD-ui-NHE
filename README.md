@@ -19,12 +19,15 @@ nhe/
   version.json           bumped on deploy so browsers fetch new files
   adapter/mod.js         the ONLY code that touches MOD's internals
   theme/tokens.css       design tokens (--nhe-*), exported from the Figma file's Variables
+  components/slider/     the slider that will replace MOD's knob (not wired into MOD yet)
   features/performance/  performance.js + .css (shared with the mod-ui branch) and index.js (wiring)
   device/install.sh      run on the device: hooks NHE into MOD's UI (safe to repeat)
   device/uninstall.sh    run on the device: restores MOD's original index.html
 tools/
   devproxy.js            local preview: MOD's real UI + this repo's files, live
   deploy.sh              copy to the device and install
+playground/              component playgrounds, no MOD needed (npm run playground)
+docs/                    specs (docs/slider-spec.md)
 test/                    browser tests (see test/README.md)
 ```
 
@@ -37,6 +40,10 @@ test/                    browser tests (see test/README.md)
 To preview against the Duo instead (over USB): `npm run dev:duo`.
 
 MOD Desktop hides the device-only parts of the UI (File Manager, Banks, Plugin Store, Settings, hardware addressing). Work on those against the Duo.
+
+## Try components on their own
+
+`npm run playground`, then open http://localhost:18090/playground/slider.html: the slider with a properties panel, an event log, a sample settings panel and a theme-colour picker. It needs no MOD. (The same page is at /playground/slider.html on the `npm run dev` proxy.) Open only the playground page on :18090, not its root: the root is MOD's UI, and MOD wants one tab at a time.
 
 ## Put it on the Duo
 

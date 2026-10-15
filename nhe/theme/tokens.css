@@ -25,8 +25,10 @@
     --nhe-color-white: #ffffff;
     --nhe-color-purple-500: #883996;
     --nhe-color-purple-700: #671c75;
+    --nhe-color-purple-800: #4f1559;
     --nhe-color-blue-500: #1e7bd6;
     --nhe-color-blue-700: #13508c;
+    --nhe-color-blue-800: #0e3b68;
     --nhe-color-indigo-500: #6155f5;
     --nhe-color-azure-500: #0088ff;
     --nhe-color-cyan-500: #00a7da;
@@ -34,6 +36,38 @@
     --nhe-color-lime-500: #c1da00;
     --nhe-color-olive-600: #8eab00;
     --nhe-color-amber-500: #da8e00;
+    --nhe-color-mod-group-0: #de7558;
+    --nhe-color-mod-group-1: #16aca6;
+    --nhe-color-mod-group-2: #74a16b;
+    --nhe-color-mod-group-3: #ec2469;
+    --nhe-color-mod-group-4: #860fda;
+    --nhe-color-mod-group-5: #d4ba3d;
+    --nhe-color-mod-group-6: #819393;
+    --nhe-color-mod-group-7: #9951bf;
+    --nhe-color-mod-group-8: #dfb6a5;
+    --nhe-color-mod-group-9: #b9a843;
+    --nhe-color-mod-group-10: #81dea8;
+    --nhe-color-mod-group-11: #ab386b;
+    --nhe-color-mod-group-12: #4d80dd;
+    --nhe-color-mod-group-13: #ebe65a;
+    --nhe-color-mod-group-14: #0b575b;
+    --nhe-color-mod-group-15: #5755f7;
+    --nhe-color-mod-group-16: #3dc745;
+    --nhe-color-mod-group-17: #f51034;
+    --nhe-color-mod-group-18: #84d08b;
+    --nhe-color-mod-group-19: #cab8b0;
+    --nhe-color-mod-group-20: #425265;
+    --nhe-color-mod-group-21: #341b05;
+    --nhe-color-mod-group-22: #055538;
+    --nhe-color-mod-group-23: #1ae35c;
+    --nhe-color-mod-group-24: #9d0b8e;
+    --nhe-color-mod-group-25: #6f8c9a;
+    --nhe-color-mod-group-26: #f91114;
+    --nhe-color-mod-group-27: #069758;
+    --nhe-color-mod-group-28: #2340b9;
+    --nhe-color-mod-group-29: #3f7cbb;
+    --nhe-color-mod-group-30: #8185d4;
+    --nhe-color-mod-group-31: #080f1f;
 
     /* Primitives: space */
     --nhe-space-2: 2px;
@@ -65,7 +99,7 @@
 
     /* Theme: accent (the user's theme colour) */
     --nhe-accent-default: var(--nhe-color-purple-500);
-    --nhe-accent-strong: var(--nhe-color-purple-700);       /* slider shadow, pressed states */
+    --nhe-accent-strong: var(--nhe-color-purple-800);       /* below zero on a zero-crossing slider */
 
     /* Theme: surfaces */
     --nhe-surface-base: var(--nhe-color-grey-900);          /* panel background */
@@ -82,10 +116,44 @@
     --nhe-border-default: var(--nhe-color-black);
     --nhe-border-focus: var(--nhe-color-indigo-500);        /* value box outline, focus */
     --nhe-selection: var(--nhe-color-indigo-500);           /* selected list item */
+    --nhe-status-warn: var(--nhe-color-amber-500);          /* blocked / warning outline */
+    --nhe-fill-disabled: var(--nhe-color-grey-700);         /* slider fill while the control is bound */
+    --nhe-shadow-thumb: rgba(0, 0, 0, .3);                  /* faux shadow under the slider thumb */
 
-    /* Theme: port groups */
-    --nhe-group-1: var(--nhe-color-indigo-500);
-    --nhe-group-2: var(--nhe-color-azure-500);
+    /* Theme: port groups. MOD's own --group-<n>-color (css/pedals.css) wins when present;
+     * the fallback is the same colour, copied into Figma as color/mod-group/<n>. */
+    --nhe-group-0: var(--group-0-color, var(--nhe-color-mod-group-0));
+    --nhe-group-1: var(--group-1-color, var(--nhe-color-mod-group-1));
+    --nhe-group-2: var(--group-2-color, var(--nhe-color-mod-group-2));
+    --nhe-group-3: var(--group-3-color, var(--nhe-color-mod-group-3));
+    --nhe-group-4: var(--group-4-color, var(--nhe-color-mod-group-4));
+    --nhe-group-5: var(--group-5-color, var(--nhe-color-mod-group-5));
+    --nhe-group-6: var(--group-6-color, var(--nhe-color-mod-group-6));
+    --nhe-group-7: var(--group-7-color, var(--nhe-color-mod-group-7));
+    --nhe-group-8: var(--group-8-color, var(--nhe-color-mod-group-8));
+    --nhe-group-9: var(--group-9-color, var(--nhe-color-mod-group-9));
+    --nhe-group-10: var(--group-10-color, var(--nhe-color-mod-group-10));
+    --nhe-group-11: var(--group-11-color, var(--nhe-color-mod-group-11));
+    --nhe-group-12: var(--group-12-color, var(--nhe-color-mod-group-12));
+    --nhe-group-13: var(--group-13-color, var(--nhe-color-mod-group-13));
+    --nhe-group-14: var(--group-14-color, var(--nhe-color-mod-group-14));
+    --nhe-group-15: var(--group-15-color, var(--nhe-color-mod-group-15));
+    --nhe-group-16: var(--group-16-color, var(--nhe-color-mod-group-16));
+    --nhe-group-17: var(--group-17-color, var(--nhe-color-mod-group-17));
+    --nhe-group-18: var(--group-18-color, var(--nhe-color-mod-group-18));
+    --nhe-group-19: var(--group-19-color, var(--nhe-color-mod-group-19));
+    --nhe-group-20: var(--group-20-color, var(--nhe-color-mod-group-20));
+    --nhe-group-21: var(--group-21-color, var(--nhe-color-mod-group-21));
+    --nhe-group-22: var(--group-22-color, var(--nhe-color-mod-group-22));
+    --nhe-group-23: var(--group-23-color, var(--nhe-color-mod-group-23));
+    --nhe-group-24: var(--group-24-color, var(--nhe-color-mod-group-24));
+    --nhe-group-25: var(--group-25-color, var(--nhe-color-mod-group-25));
+    --nhe-group-26: var(--group-26-color, var(--nhe-color-mod-group-26));
+    --nhe-group-27: var(--group-27-color, var(--nhe-color-mod-group-27));
+    --nhe-group-28: var(--group-28-color, var(--nhe-color-mod-group-28));
+    --nhe-group-29: var(--group-29-color, var(--nhe-color-mod-group-29));
+    --nhe-group-30: var(--group-30-color, var(--nhe-color-mod-group-30));
+    --nhe-group-31: var(--group-31-color, var(--nhe-color-mod-group-31));
 
     /* Theme: meters */
     --nhe-meter-cpu: var(--nhe-color-cyan-500);

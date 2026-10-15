@@ -1,0 +1,276 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Niels -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slider playground</title>
+<link rel="stylesheet" href="/nhe/theme/tokens.css">
+<link rel="stylesheet" href="/nhe/components/slider/slider.css">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--nhe-color-black);
+        color: var(--nhe-text-primary);
+        font: 14px/1.4 var(--nhe-font-family-base);
+    }
+    header {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px;
+        padding: 16px 24px; border-bottom: 1px solid #333;
+    }
+    header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    header .hint { color: #999; font-size: 13px; }
+    main { display: grid; grid-template-columns: 300px 1fr; gap: 24px; padding: 24px; align-items: start; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    h2 { margin: 0 0 12px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #aaa; }
+    section + section { margin-top: 32px; }
+
+    /* controls */
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+    aside, form, form fieldset, label { min-width: 0; }
+    input:not([type=checkbox]), select { width: 100%; }
+    form fieldset { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 6px 0 0; padding: 12px; border: 1px solid #333; border-radius: 8px; }
+    form legend { padding: 0 4px; color: #aaa; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #bbb; }
+    label.check { flex-direction: row; align-items: center; gap: 8px; }
+    label.wide { grid-column: 1 / -1; }
+    input, select {
+        font: inherit; font-size: 14px; color: inherit; background: #1a1a1a;
+        border: 1px solid #3a3a3a; border-radius: 6px; padding: 6px 8px; min-width: 0;
+    }
+    input[type=checkbox] { width: 18px; height: 18px; }
+    input[type=color] { padding: 2px; height: 34px; }
+    .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    button.preset {
+        font: inherit; font-size: 13px; color: inherit; background: #222; border: 1px solid #3a3a3a;
+        border-radius: 999px; padding: 6px 12px; cursor: pointer;
+    }
+    button.preset:hover { border-color: var(--nhe-accent-default); }
+
+    /* stage */
+    .stage { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+    .panel {
+        /* the settings panel the sliders sit on */
+        display: flex; align-items: flex-start; padding: 0 16px 16px; border-radius: 8px;
+        background: var(--nhe-surface-base); overflow-x: auto; max-width: 100%;
+    }
+    .log {
+        flex: 1 1 260px; min-width: 240px; max-width: 420px; height: 646px; overflow: auto;
+        background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px;
+        font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .log div { color: #ccc; white-space: nowrap; }
+    .log b { color: var(--nhe-accent-default); font-weight: 600; }
+    .log .blocked b { color: var(--nhe-status-warn); }
+    .notes { color: #999; font-size: 13px; max-width: 70ch; }
+    .notes li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<header>
+    <h1>Slider playground</h1>
+    <label class="check">Theme colour <input type="color" id="accent" value="#883996"></label>
+    <span class="hint">Drag the thumb · hold it still for ~0.4 s for fine · Shift-drag on desktop · tap the readout to type · wheel and arrow keys work too</span>
+</header>
+
+<main>
+    <aside>
+        <section>
+            <h2>Presets</h2>
+            <div class="presets" id="presets"></div>
+        </section>
+        <section>
+            <h2>Properties</h2>
+            <form id="form" autocomplete="off">
+                <label class="wide">Title <input name="title"></label>
+                <label>Value <input name="value" type="number" step="any"></label>
+                <label>Unit <input name="unit"></label>
+                <label>Minimum <input name="min" type="number" step="any"></label>
+                <label>Maximum <input name="max" type="number" step="any"></label>
+                <label>Decimals <input name="decimals" type="number" min="0" max="4"></label>
+                <label>Range steps <input name="rangeSteps" type="number" min="0" max="64"></label>
+                <label class="check"><input name="integer" type="checkbox"> Integer</label>
+                <label class="check"><input name="logarithmic" type="checkbox"> Logarithmic</label>
+                <label class="check wide"><input name="minimised" type="checkbox"> Minimised (display only)</label>
+                <fieldset>
+                    <legend>Binding</legend>
+                    <label class="wide">Type
+                        <select name="bindingType">
+                            <option value="">Not bound</option>
+                            <option value="midi">MIDI</option>
+                            <option value="cv">CV</option>
+                            <option value="device">Device</option>
+                            <option value="chain">Control Chain</option>
+                        </select>
+                    </label>
+                    <label class="wide">Detail <input name="bindingLabel"></label>
+                </fieldset>
+                <fieldset>
+                    <legend>Group</legend>
+                    <label>Position
+                        <select name="groupKind">
+                            <option value="none">None</option>
+                            <option value="single">Single</option>
+                            <option value="start">Start</option>
+                            <option value="middle">Middle</option>
+                            <option value="end">End</option>
+                        </select>
+                    </label>
+                    <label>Colour <select name="groupColor" id="groupColor"></select></label>
+                    <label class="wide">Name <input name="groupName"></label>
+                    <label class="wide">Group width (px) <input name="groupWidth" type="number" min="44" step="60"></label>
+                </fieldset>
+            </form>
+        </section>
+    </aside>
+
+    <div>
+        <section>
+            <h2>Live</h2>
+            <div class="stage">
+                <div class="panel"><div id="live"></div></div>
+                <div class="log" id="log"></div>
+            </div>
+        </section>
+        <section>
+            <h2>A settings panel</h2>
+            <div class="panel" id="gallery"></div>
+        </section>
+        <section>
+            <h2>What to try</h2>
+            <ul class="notes">
+                <li>Tap the track: nothing happens. Only the thumb drags, and it never jumps to your finger.</li>
+                <li>Press and hold the thumb without moving: the ring turns to the theme colour and a magnifier appears. Now drag: it moves 10× finer.</li>
+                <li>Tap the readout and type a value; Enter commits, Escape cancels. Out-of-range values are clamped.</li>
+                <li>Pick a binding: the fill goes grey and the binding icon appears. Touch the thumb: the blocked look. Tap the binding icon: the overlay.</li>
+                <li>"High cut" is logarithmic, "Voices" is stepped (ticks, snapping), "Pan" crosses zero (fill from zero).</li>
+                <li>Long values shrink to fit the readout (try "Low cut" while dragging).</li>
+                <li>Change the theme colour at the top: everything follows the accent token.</li>
+            </ul>
+        </section>
+    </div>
+</main>
+
+<script src="/nhe/components/slider/icons.js"></script>
+<script src="/nhe/components/slider/slider.js"></script>
+<script>
+(function () {
+    var log = document.getElementById('log')
+    var t0 = Date.now()
+    var write = function (kind, name, value, cls) {
+        var d = document.createElement('div')
+        if (cls) d.className = cls
+        d.innerHTML = '<span style="color:#666">' + ((Date.now() - t0) / 1000).toFixed(2) + 's</span> <b>' + kind + '</b> ' + name + (value !== undefined ? ' = ' + value : '')
+        log.insertBefore(d, log.firstChild)
+        while (log.childNodes.length > 200) log.removeChild(log.lastChild)
+    }
+    var lastInput = 0
+    var callbacks = function (name) {
+        return {
+            onInput: function (v) { var now = Date.now(); if (now - lastInput > 80) { lastInput = now; write('input', name, v) } },
+            onChange: function (v) { write('change', name, v) },
+            onSettings: function () { write('settings', name) },
+            onBlocked: function () { write('blocked', name, undefined, 'blocked') }
+        }
+    }
+    var mix = function (a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o }
+
+    // ---- presets
+    var PRESETS = {
+        'Tone':     { title: 'Tone', value: 65, min: 0, max: 100, unit: '%', decimals: 0, integer: false, logarithmic: false, rangeSteps: 0 },
+        'High cut': { title: 'High cut freq.', value: 7500, min: 200, max: 22000, unit: 'Hz', decimals: 2, integer: false, logarithmic: true, rangeSteps: 0 },
+        'Low cut':  { title: 'Low cut', value: -22000, min: -22000, max: -20, unit: 'Hz', decimals: 2, integer: false, logarithmic: false, rangeSteps: 0 },
+        'Voices':   { title: 'Voices', value: 3, min: 1, max: 5, unit: '', decimals: 0, integer: true, logarithmic: false, rangeSteps: 0 },
+        'Pan':      { title: 'Pan', value: -25, min: -100, max: 100, unit: '', decimals: 0, integer: false, logarithmic: false, rangeSteps: 0 },
+        'Tempo':    { title: 'Tempo', value: 120, min: 6, max: 1000, unit: 'BPM', decimals: 2, integer: false, logarithmic: false, rangeSteps: 0 },
+        'Gain dB':  { title: 'Gain', value: -3.5, min: -60, max: 12, unit: 'dB', decimals: 2, integer: false, logarithmic: false, rangeSteps: 0 }
+    }
+
+    var form = document.getElementById('form')
+    var colorSel = document.getElementById('groupColor')
+    for (var i = 0; i < 32; i++) {
+        var opt = document.createElement('option'); opt.value = i; opt.textContent = 'Group ' + i
+        opt.style.background = 'var(--nhe-group-' + i + ')'; colorSel.appendChild(opt)
+    }
+
+    var state = mix(PRESETS['Tone'], {
+        minimised: false, bindingType: '', bindingLabel: 'CC 7 · Ch 1',
+        groupKind: 'single', groupName: 'Low band', groupColor: 0, groupWidth: 120
+    })
+
+    var KIND = { midi: 'MIDI', cv: 'CV', device: 'Device', chain: 'Control Chain' }
+    var toOptions = function (s) {
+        return mix(s, {
+            value: Number(s.value), min: Number(s.min), max: Number(s.max),
+            decimals: Number(s.decimals) || 0, rangeSteps: Number(s.rangeSteps) || 0,
+            binding: s.bindingType ? { type: s.bindingType, kind: KIND[s.bindingType], label: s.bindingLabel } : null,
+            group: { kind: s.groupKind, name: s.groupName, color: Number(s.groupColor) || 0, width: Number(s.groupWidth) || 0 }
+        })
+    }
+
+    var fill = function () {
+        for (var k in state) {
+            var f = form.elements[k]; if (!f) continue
+            if (f.type === 'checkbox') f.checked = !!state[k]; else f.value = state[k]
+        }
+    }
+
+    var live = new NHE.Slider(document.getElementById('live'), mix(toOptions(state), callbacks('live')))
+    var origInput = live.o.onInput
+    live.o.onInput = function (v) { state.value = v; form.elements.value.value = v; origInput(v) }
+    var origChange = live.o.onChange
+    live.o.onChange = function (v) { state.value = v; form.elements.value.value = v; origChange(v) }
+
+    form.addEventListener('input', function (e) {
+        var f = e.target; if (!f.name) return
+        state[f.name] = f.type === 'checkbox' ? f.checked : f.value
+        var o = toOptions(state); delete o.onInput; delete o.onChange
+        live.update(o)
+    })
+    form.addEventListener('submit', function (e) { e.preventDefault() })
+
+    var presets = document.getElementById('presets')
+    Object.keys(PRESETS).forEach(function (name) {
+        var b = document.createElement('button'); b.className = 'preset'; b.type = 'button'; b.textContent = name
+        b.addEventListener('click', function () {
+            state = mix(state, PRESETS[name]); fill()
+            var o = toOptions(state); delete o.onInput; delete o.onChange
+            live.update(o)
+            write('preset', name)
+        })
+        presets.appendChild(b)
+    })
+    fill()
+
+    // ---- a settings panel: groups, minimised, bound
+    var gallery = document.getElementById('gallery')
+    var G = [
+        { title: 'Gain', value: -3.5, min: -60, max: 12, unit: 'dB', group: { kind: 'start', name: 'Low band', color: 0, width: 360 } },
+        { title: 'Freq.', value: 120, min: 20, max: 2000, unit: 'Hz', logarithmic: true, group: { kind: 'middle', color: 0 } },
+        { title: 'Q', value: 0.7, min: 0.1, max: 10, unit: '', group: { kind: 'end', color: 0 }, binding: { type: 'midi', kind: 'MIDI', label: 'CC 21 · Ch 1' } },
+        { title: 'Level', value: 0, min: -60, max: 12, unit: 'dB', group: { kind: 'single', name: 'Output level control', color: 1, width: 120 } },
+        { title: 'Rate', value: 2.4, min: 0.1, max: 10, unit: 'Hz', group: { kind: 'start', name: 'Modulation of the delayed and the feedback signal path', color: 3, width: 180 } },
+        { title: 'Depth', value: 35, min: 0, max: 100, unit: '%', decimals: 0, minimised: true, group: { kind: 'end', color: 3 } },
+        { title: 'Voices', value: 3, min: 1, max: 5, integer: true, group: { kind: 'none' } },
+        { title: 'Pan', value: -25, min: -100, max: 100, decimals: 0, group: { kind: 'none' }, binding: { type: 'chain', kind: 'Control Chain', label: 'Knob 2' } },
+        { title: 'Mix', value: 50, min: 0, max: 100, unit: '%', decimals: 0, group: { kind: 'none' } }
+    ]
+    G.forEach(function (o) {
+        var d = document.createElement('div'); gallery.appendChild(d)
+        new NHE.Slider(d, mix(o, callbacks(o.title)))
+    })
+
+    // ---- theme colour: the accent token and a darker partner
+    var accent = document.getElementById('accent')
+    accent.addEventListener('input', function () {
+        var r = document.documentElement.style
+        r.setProperty('--nhe-accent-default', accent.value)
+        r.setProperty('--nhe-accent-strong', 'color-mix(in srgb, ' + accent.value + ' 55%, black)')
+    })
+})()
+</script>
+</body>
+</html>

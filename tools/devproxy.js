@@ -14,6 +14,9 @@
  * - Everything is passed through to the target, including the websocket.
  * - /nhe/... is served from ./nhe in this repo (never cached), so an edit is
  *   live on the next reload. Nothing on the target is changed.
+ * - /playground/... is served from ./playground: component playgrounds that
+ *   need no MOD at all (http://localhost:18080/playground/slider.html).
+ *   `npm run playground` runs a second copy on :18090 for just that.
  * - HTML pages get the loader's <script> tag added before </body>, unless
  *   the target already has it installed.
  *
@@ -38,6 +41,7 @@ const [THOST, TPORT] = [target.split(':')[0], parseInt(target.split(':')[1], 10)
 const PORT = parseInt(opt('port', '18080'), 10)
 const ROOT = path.resolve(__dirname, '..')
 const NHE_DIR = path.join(ROOT, 'nhe')
+const PLAYGROUND_DIR = path.join(ROOT, 'playground')
 const TAG = '<script type="text/javascript" src="/nhe/loader.js?v=dev"></script>'
 
 const TYPES = {
@@ -57,17 +61,17 @@ const newestMtime = (dir) => {
     return newest
 }
 
-const serveLocal = (req, res) => {
-    const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/nhe\/?/, '')
-    if (rel === 'version.json') {
+const serveLocal = (req, res, prefix = 'nhe', dir = NHE_DIR) => {
+    const rel = decodeURIComponent(req.url.split('?')[0]).replace(new RegExp('^/' + prefix + '/?'), '')
+    if (prefix === 'nhe' && rel === 'version.json') {
         res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
         res.end(JSON.stringify({ version: 'dev-' + Math.floor(newestMtime(NHE_DIR)) }))
         return
     }
-    const file = path.join(NHE_DIR, rel)
-    if (!file.startsWith(NHE_DIR) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    const file = path.join(dir, rel)
+    if (!file.startsWith(dir) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
         res.writeHead(404, { 'Content-Type': 'text/plain' })
-        res.end('not in ./nhe: ' + rel)
+        res.end('not in ./' + prefix + ': ' + rel)
         return
     }
     res.writeHead(200, {
@@ -111,6 +115,7 @@ const proxy = (req, res) => {
 
 const server = http.createServer((req, res) => {
     if (req.url === '/nhe' || req.url.startsWith('/nhe/')) return serveLocal(req, res)
+    if (req.url.startsWith('/playground/')) return serveLocal(req, res, 'playground', PLAYGROUND_DIR)
     proxy(req, res)
 })
 
@@ -138,4 +143,5 @@ server.on('upgrade', (req, socket, head) => {
 server.listen(PORT, () => {
     console.log(`NHE dev proxy: http://localhost:${PORT}  ->  MOD at ${target}`)
     console.log(`serving ./nhe live from ${NHE_DIR}`)
+    console.log(`playgrounds: http://localhost:${PORT}/playground/slider.html`)
 })
