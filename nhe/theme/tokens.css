@@ -1,0 +1,95 @@
+/* SPDX-FileCopyrightText: 2026 Niels
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * NHE design tokens. The source of truth is the Variables in the Figma file
+ * "MOD-ui-NHE" (collections Primitives and Theme); each variable's web code
+ * syntax is the property name below. Change a value in Figma, then re-export
+ * this file; don't edit values here by hand.
+ *
+ * Features use the Theme roles (--nhe-accent-default, --nhe-surface-base...),
+ * not the primitives. A user theme colour will override --nhe-accent-default
+ * and --nhe-accent-strong on :root; a per-pedal colour, the same two on the
+ * pedal's element.
+ */
+
+:root {
+    /* Primitives: colour */
+    --nhe-color-black: #000000;
+    --nhe-color-grey-900: #212121;
+    --nhe-color-grey-800: #323232;
+    --nhe-color-grey-700: #575757;
+    --nhe-color-grey-600: #7b7b7b;
+    --nhe-color-grey-500: #8e8e93;
+    --nhe-color-grey-400: #aeaeb2;
+    --nhe-color-grey-300: #c7c7cc;
+    --nhe-color-white: #ffffff;
+    --nhe-color-purple-500: #883996;
+    --nhe-color-purple-700: #671c75;
+    --nhe-color-blue-500: #1e7bd6;
+    --nhe-color-blue-700: #13508c;
+    --nhe-color-indigo-500: #6155f5;
+    --nhe-color-azure-500: #0088ff;
+    --nhe-color-cyan-500: #00a7da;
+    --nhe-color-teal-500: #00c8b3;
+    --nhe-color-lime-500: #c1da00;
+    --nhe-color-olive-600: #8eab00;
+    --nhe-color-amber-500: #da8e00;
+
+    /* Primitives: space */
+    --nhe-space-2: 2px;
+    --nhe-space-4: 4px;
+    --nhe-space-8: 8px;
+    --nhe-space-10: 10px;
+    --nhe-space-16: 16px;
+    --nhe-space-24: 24px;
+    --nhe-space-32: 32px;
+
+    /* Primitives: radius */
+    --nhe-radius-sm: 2px;
+    --nhe-radius-md: 8px;
+    --nhe-radius-lg: 16px;
+    --nhe-radius-full: 9999px;
+
+    /* Primitives: type */
+    --nhe-font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --nhe-font-size-xs: 10px;
+    --nhe-font-size-sm: 12px;
+    --nhe-font-size-md: 14px;
+    --nhe-font-size-lg: 16px;
+    --nhe-font-size-xl: 24px;
+    --nhe-font-line-tight: 12px;
+    --nhe-font-line-snug: 14px;
+    --nhe-font-line-normal: 20px;
+    --nhe-font-weight-medium: 500;
+    --nhe-font-weight-semibold: 600;
+
+    /* Theme: accent (the user's theme colour) */
+    --nhe-accent-default: var(--nhe-color-purple-500);
+    --nhe-accent-strong: var(--nhe-color-purple-700);       /* slider shadow, pressed states */
+
+    /* Theme: surfaces */
+    --nhe-surface-base: var(--nhe-color-grey-900);          /* panel background */
+    --nhe-surface-sunken: var(--nhe-color-black);           /* value boxes, lists */
+    --nhe-surface-track-top: var(--nhe-color-grey-600);     /* slider track gradient, light end */
+    --nhe-surface-track-bottom: var(--nhe-color-grey-800);  /* slider track gradient, dark end */
+    --nhe-surface-knob-top: var(--nhe-color-black);         /* knob / thumb gradient, dark end */
+    --nhe-surface-knob-bottom: var(--nhe-color-grey-700);   /* knob / thumb gradient, light end */
+
+    /* Theme: text, icons, borders */
+    --nhe-text-primary: var(--nhe-color-white);
+    --nhe-text-on-accent: var(--nhe-color-white);
+    --nhe-icon-default: var(--nhe-color-white);
+    --nhe-border-default: var(--nhe-color-black);
+    --nhe-border-focus: var(--nhe-color-indigo-500);        /* value box outline, focus */
+    --nhe-selection: var(--nhe-color-indigo-500);           /* selected list item */
+
+    /* Theme: port groups */
+    --nhe-group-1: var(--nhe-color-indigo-500);
+    --nhe-group-2: var(--nhe-color-azure-500);
+
+    /* Theme: meters */
+    --nhe-meter-cpu: var(--nhe-color-cyan-500);
+    --nhe-meter-level-top: var(--nhe-color-lime-500);
+    --nhe-meter-level-bottom: var(--nhe-color-olive-600);
+    --nhe-meter-warn: var(--nhe-color-amber-500);
+}

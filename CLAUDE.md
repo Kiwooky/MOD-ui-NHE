@@ -1,6 +1,6 @@
 # Working on mod-ui-nhe (for Claude Code and other agents)
 
-Read README.md first. This repo extends MOD's web UI **without changing MOD's code**.
+Read README.md first, then HANDOVER.md for current status and the next task. This repo extends MOD's web UI **without changing MOD's code**.
 
 ## Rules
 
@@ -29,6 +29,7 @@ Read README.md first. This repo extends MOD's web UI **without changing MOD's co
 - **Plugins arrive one by one** over the websocket when a pedalboard loads, in no particular order, and the bundle name can update before or after them. Don't pick "the first plugin" until the board settles (see `settling` in performance.js).
 - **jquery.ba-resize** (used elsewhere in MOD's UI) fires `resize` on elements and those bubble to `window`. Only react to real window resizes (`e.target === window`), or you re-lay out ~16 times a second.
 - **iOS < 13.4 can't run MOD 1.14 at all** (optional chaining in modgui.js/pedalboard.js). Old iPads are out.
+- **One MOD tab at a time:** mod-ui expects one browser client. A second tab (via the proxy or direct) can hang on "Loading pedalboard…".
 
 ## Tests
 

@@ -86,8 +86,8 @@
             }
             f.files.forEach(function (file) { queue.push(file) })
         })
-        // the adapter first, then features in order
-        queue.unshift('adapter/mod.js')
+        // design tokens and the adapter first, then features in order
+        queue.unshift('theme/tokens.css', 'adapter/mod.js')
         var next = function () {
             if (!queue.length) {
                 NHE.mod.ready(function () {

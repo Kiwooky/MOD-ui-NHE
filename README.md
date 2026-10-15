@@ -18,6 +18,7 @@ nhe/
   loader.js              the one file index.html loads; reads version.json, loads features
   version.json           bumped on deploy so browsers fetch new files
   adapter/mod.js         the ONLY code that touches MOD's internals
+  theme/tokens.css       design tokens (--nhe-*), exported from the Figma file's Variables
   features/performance/  performance.js + .css (shared with the mod-ui branch) and index.js (wiring)
   device/install.sh      run on the device: hooks NHE into MOD's UI (safe to repeat)
   device/uninstall.sh    run on the device: restores MOD's original index.html
