@@ -121,9 +121,14 @@
             e.preventDefault()
             if (self.o.minimised) return
             if (self.locked()) { self.blocked(); return }
-            try { n.thumb.setPointerCapture(e.pointerId) } catch (err) {}
             n.thumb.focus({ preventScroll: true })
             drag = { id: e.pointerId, y: e.clientY, x: e.clientX, pos: self.pos, moved: false, fine: false }
+            // follow the pointer on the whole document: pointer capture can't be
+            // relied on (inside MOD's page it doesn't take), and a fast drag
+            // leaves the thumb at once
+            document.addEventListener('pointermove', onMove)
+            document.addEventListener('pointerup', onUp)
+            document.addEventListener('pointercancel', onUp)
             self.state('dragging', true)
             self.timers.hold = setTimeout(function () {
                 if (drag && !drag.moved) { drag.held = true; self.fine(drag, true) }
@@ -147,15 +152,15 @@
             if (!drag || e.pointerId !== drag.id) return
             clearTimeout(self.timers.hold)
             drag = null
+            document.removeEventListener('pointermove', onMove)
+            document.removeEventListener('pointerup', onUp)
+            document.removeEventListener('pointercancel', onUp)
             self.state('dragging', false)
             self.state('fine', false)
             if (self.positions()) self.setPos(self.snap(self.pos), true)
             self.emit('onChange')
         }
         n.thumb.addEventListener('pointerdown', onDown)
-        n.thumb.addEventListener('pointermove', onMove)
-        n.thumb.addEventListener('pointerup', onUp)
-        n.thumb.addEventListener('pointercancel', onUp)
 
         // --- wheel over the whole control; keys on the thumb
         r.addEventListener('wheel', function (e) {
