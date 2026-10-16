@@ -273,4 +273,165 @@
         var box = presetBox(instance)[0]
         if (box && window.MutationObserver) new MutationObserver(function () { cb() }).observe(box, { childList: true, subtree: true, characterData: true })
     }
+
+    // ------------------------------------------------------------------
+    // System bar: stats, tempo, signal chain
+    //
+    // Stats are read from MOD's own status bar elements (#cpu-bar-text,
+    // #ram-bar-text, #mod-xruns), which host.js updates from the websocket's
+    // "stats" / "sys_stats". Tempo is desktop.transportControls (transport.js)
+    // plus the websocket's "transport-bpm" (the global `ws`). Connections come
+    // from the pedalboard's connectionManager (pedalboard.js): origIndex /
+    // destIndex keyed by port paths like /graph/<plugin>/<symbol>; the device's
+    // own jacks are /graph/capture_N, /graph/playback_N, MIDI and CV ports.
+
+    // null when MOD has no figure (MOD Desktop shows "RAM NaN%")
+    var number = function (text) { var m = /([\d.]+)/.exec(text || ''); return m ? parseFloat(m[1]) : null }
+
+    mod.stats = function () {
+        return { cpu: number($('#cpu-bar-text').text()), ram: number($('#ram-bar-text').text()), xruns: number($('#mod-xruns').text()) }
+    }
+
+    mod.onStats = function (cb) {
+        if (!window.MutationObserver) return
+        var fire = function () { cb(mod.stats()) }
+        ;['#cpu-bar-text', '#ram-bar-text', '#mod-xruns'].forEach(function (sel) {
+            var el = $(sel)[0]
+            if (el) new MutationObserver(fire).observe(el, { childList: true, characterData: true, subtree: true })
+        })
+    }
+
+    var syncMode = function () { return $('[mod-sync-mode].selected').attr('mod-sync-mode') || 'none' }
+    var SYNC_NAMES = { midi_clock_slave: 'MIDI clock', link: 'Ableton Link' }
+
+    // { bpm, locked, sync }: locked while slaved to MIDI clock (MOD greys its knob then)
+    mod.tempo = function () {
+        var t = desktop && desktop.transportControls
+        var mode = syncMode()
+        return { bpm: t && t.beatsPerMinutePort ? t.beatsPerMinutePort.value : 120, locked: mode === 'midi_clock_slave', sync: SYNC_NAMES[mode] || '' }
+    }
+
+    mod.setTempo = function (bpm) {
+        var t = desktop && desktop.transportControls
+        if (!t || !window.ws) return
+        ws.send('transport-bpm ' + bpm)
+        t.setBeatsPerMinuteValue(bpm, true, true)
+    }
+
+    mod.onTempo = function (cb) {
+        var t = desktop && desktop.transportControls
+        if (!t || t.__nheTempo) return
+        t.__nheTempo = []
+        ;['setBeatsPerMinuteValue', 'setSyncMode'].forEach(function (m) {
+            var original = t[m]
+            t[m] = function () { var r = original.apply(this, arguments); t.__nheTempo.forEach(function (fn) { fn(mod.tempo()) }); return r }
+        })
+        t.__nheTempo.push(cb)
+    }
+
+    // the plugins and device jacks directly connected to a plugin, per port:
+    // { inputs: [{ port, items: [{ id, brand, name } | { device: true }] }], outputs: [...] }
+    mod.neighbours = function (instance) {
+        var gui = mod.gui(instance), cm = mod.pedalboard().data('connectionManager')
+        if (!gui || !cm) return { inputs: [], outputs: [] }
+        var plugins = mod.plugins()
+        var owner = function (path) {
+            for (var i in plugins) if (path.indexOf(i + '/') === 0) return i
+            return null
+        }
+        var describe = function (path) {
+            var i = owner(path)
+            if (!i) return { device: true }
+            var g = mod.gui(i), e = (g && g.effect) || {}
+            return { id: i, brand: e.brand || '', name: (plugins[i].data('label')) || e.label || e.name || i }
+        }
+        var side = function (dir, index) {
+            var out = []
+            ;['audio', 'cv', 'midi'].forEach(function (type) {
+                var ports = (gui.effect.ports[type] && gui.effect.ports[type][dir]) || []
+                ports.forEach(function (p) {
+                    var path = instance + '/' + p.symbol
+                    var seen = {}, items = []
+                    Object.keys(index[path] || {}).forEach(function (other) {
+                        var d = describe(other), key = d.device ? 'device' : d.id
+                        if (!seen[key]) { seen[key] = true; items.push(d) }
+                    })
+                    out.push({ port: p.name || p.symbol, items: items })
+                })
+            })
+            return out
+        }
+        // ports wired to the same things share one heading: "In L/R"
+        var merge = function (list) {
+            var out = []
+            list.forEach(function (p) {
+                var key = p.items.map(function (i) { return i.device ? 'device' : i.id }).join('|')
+                var prev = out[out.length - 1]
+                if (prev && prev.key === key && key) {
+                    prev.names.push(p.port)
+                    // the shared start up to its last space: "In L", "In R" -> "In L/R";
+                    // "Audio Input 1", "Audio Input 2" -> "Audio Input 1/2"
+                    var first = prev.names[0], n = first.length
+                    prev.names.forEach(function (name) { var i = 0; while (i < n && i < name.length && name[i] === first[i]) i++; n = i })
+                    var cut = first.lastIndexOf(' ', n - 1) + 1
+                    prev.port = cut > 0
+                        ? first.slice(0, cut) + prev.names.map(function (name) { return name.slice(cut) }).join('/')
+                        : prev.names.join(' / ')
+                    return
+                }
+                out.push({ port: p.port, items: p.items, key: key, names: [p.port] })
+            })
+            return out.map(function (p) { return { port: p.port, items: p.items } })
+        }
+        return { inputs: merge(side('input', cm.destIndex)), outputs: merge(side('output', cm.origIndex)) }
+    }
+
+    mod.openSettings = function (instance) {
+        var icon = mod.plugins()[instance]
+        var s = icon && icon.data('settings')
+        if (s) s.window('open')
+    }
+
+    // ------------------------------------------------------------------
+    // File parameters (NAM models, IRs…): MOD's file lists
+    //
+    // Read from MOD's own (hidden) file list (.mod-file-list, the
+    // customSelectPath widget in modgui.js) and act by clicking its rows, so
+    // MOD keeps doing the folder navigation and setting the parameter. Rows:
+    // "dir://<path>" is a folder (with icon-folder-up: the open folder, a tap
+    // goes up), "t3k://…" is MOD's Tone3000 entry, anything else a file.
+
+    var fileBoxes = function (instance) {
+        var gui = mod.gui(instance)
+        return gui && gui.settings ? gui.settings.find('.mod-file-list') : $()
+    }
+
+    mod.fileLists = function (instance) {
+        return fileBoxes(instance).map(function () {
+            var box = $(this), list = box.find('.mod-enumerated-list')
+            var items = list.find('[mod-role=enumeration-option]').filter(':not(.mod-hidden)').map(function () {
+                var el = $(this), v = el.attr('mod-parameter-value') || ''
+                if (v.indexOf('t3k://') === 0) return null
+                var kind = v.indexOf('dir://') === 0 ? (el.find('.icon-folder-up').length ? 'up' : 'folder') : 'file'
+                return { kind: kind, name: el.attr('title') || el.text().trim(), value: v, selected: el.hasClass('selected') }
+            }).get()
+            return { uri: list.attr('mod-parameter-uri'), label: box.find('.mod-enumerated-title').first().text().trim(), items: items, t3k: box.find('.file-list-btn-t3k').length > 0 }
+        }).get()
+    }
+
+    mod.fileAction = function (instance, uri, value) {
+        fileBoxes(instance).find('.mod-enumerated-list').filter(function () { return $(this).attr('mod-parameter-uri') === uri })
+            .find('[mod-role=enumeration-option]').filter(function () { return $(this).attr('mod-parameter-value') === value }).first().click()
+    }
+
+    mod.fileT3K = function (instance, uri) {
+        fileBoxes(instance).find('.file-list-btn-t3k').filter(function () { return $(this).attr('mod-parameter-uri') === uri }).first().click()
+    }
+
+    mod.onFilesChange = function (instance, cb) {
+        if (!window.MutationObserver) return
+        fileBoxes(instance).each(function () {
+            new MutationObserver(function () { cb() }).observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] })
+        })
+    }
 })();

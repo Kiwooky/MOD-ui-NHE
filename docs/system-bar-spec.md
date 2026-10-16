@@ -63,4 +63,10 @@ Section **Control / System bar**, set **Control / System bar** (`81:17084`), 120
 
 ## Implementation (code)
 
-`nhe/components/controls/systembar.js` (`NHE.SystemBar` with `setStats`, `setSysStats`, `setTempo`) and `controls.css`. In the playground the stats are simulated. Checked in the browser on 2026-10-16: an xrun lights the red outline and floats the count; tempo locks under MIDI clock; typing a tempo; the chain tab lists neighbours and a card "hops" (event). The adapter functions (stats, tempo, neighbours, open settings) are not written yet.
+`nhe/components/controls/systembar.js` (`NHE.SystemBar` with `setStats`, `setSysStats`, `setTempo`) and `controls.css`. In the playground the stats are simulated. Checked in the browser on 2026-10-16: an xrun lights the red outline and floats the count; tempo locks under MIDI clock; typing a tempo; the chain tab lists neighbours and a card "hops" (event). 
+
+## Wired into MOD (settings feature)
+
+The settings window shows the system bar to the left of the panel, at the panel's height. Adapter: `NHE.mod.stats` / `onStats` (MOD's own status bar elements `#cpu-bar-text`, `#ram-bar-text`, `#mod-xruns`), `tempo` / `setTempo` / `onTempo` (`desktop.transportControls`, the websocket's `transport-bpm`; locked under MIDI clock), `neighbours` (the pedalboard's `connectionManager`; ports wired to the same plugins share a heading, "In L/R", "Audio Input 1/2"), `openSettings`. EXIT closes the window; a chain card closes this plugin's settings and opens the other's. **The tab is remembered** (Niels): every plugin's window opens on the tab used last (Meters or Chain), kept per browser (`localStorage` `nhe-system-bar-tab`), so the chain view can stay up until CPU info is needed.
+
+Checked in MOD Desktop: CPU follows MOD's figure; RAM shows "–" (MOD Desktop reports none: "RAM NaN%"); typing 96 BPM set MOD's transport; Bollie Delay's chain (NAM → Bollie → Dragonfly) and hopping to Dragonfly.

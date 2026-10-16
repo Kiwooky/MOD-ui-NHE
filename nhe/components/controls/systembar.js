@@ -97,8 +97,10 @@
         this.renderChain()
     }
 
+    // null or NaN = the device reports no figure: show a dash and no fill
     SystemBar.prototype.meter = function (m, pct) {
-        pct = Math.max(0, Math.min(100, Number(pct) || 0))
+        if (pct === null || pct === undefined || isNaN(pct)) { m.value.textContent = '–'; m.fill.style.setProperty('--level', 0); return }
+        pct = Math.max(0, Math.min(100, Number(pct)))
         m.value.textContent = Math.round(pct) + ' %'
         m.fill.style.setProperty('--level', pct / 100)
     }
@@ -164,7 +166,7 @@
 
     SystemBar.prototype.setStats = function (s) {
         var self = this
-        if (s.xruns !== undefined && s.xruns > this.o.xruns) {
+        if (s.xruns !== undefined && s.xruns !== null && this.o.xruns !== null && s.xruns > this.o.xruns) {
             this.root.classList.add('is-xrun')
             clearTimeout(this.timers.xrun)
             this.timers.xrun = setTimeout(function () { self.root.classList.remove('is-xrun') }, XRUN_MS)

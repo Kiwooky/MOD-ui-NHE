@@ -48,7 +48,7 @@ MOD Desktop hides the device-only parts of the UI (File Manager, Banks, Plugin S
 
 ## The settings panel
 
-With the `settings` feature on (the default), a pedal's gear opens MOD's settings window with the NHE panel: sliders, toggles, triggers, option lists, presets and plugin on/off, stacked into columns. The **NHE / MOD** switch at the top right shows MOD's own panel instead (remembered per browser). Values go through MOD's own path both ways, bindings show as shared or locked, and the binding dialog, presets and on/off use MOD's existing functions. Plugins with file or text settings (e.g. NAM's model, Button to CV's texts) say so: use the MOD view for those. The performance view's strip still shows MOD's controls.
+With the `settings` feature on (the default), a pedal's gear opens MOD's settings window with the NHE panel: sliders, toggles, triggers, option lists, presets and plugin on/off, stacked into columns. The **NHE / MOD** switch at the top right shows MOD's own panel instead (remembered per browser). Values go through MOD's own path both ways, bindings show as shared or locked, and the binding dialog, presets and on/off use MOD's existing functions. The system bar sits on the left (tempo, CPU / RAM, the signal chain; EXIT closes the window). The NHE panel doesn't handle file or text settings yet (e.g. NAM's model, Button to CV's texts): use the MOD view for those. The performance view's strip still shows MOD's controls.
 
 Turn it off with `NHE.mod.setPreference('nhe-settings', 'false')`.
 

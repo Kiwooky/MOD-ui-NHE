@@ -298,9 +298,9 @@
     }
 
     OptionList.prototype.pick = function (i) {
-        this.o.value = this.o.options[i].value
-        this.render()
-        this.emit('onChange', this.o.value)
+        var v = this.o.options[i].value
+        this.setValue(v)
+        this.emit('onChange', v)
     }
 
     OptionList.prototype.render = function () {
@@ -329,7 +329,20 @@
         if (selRow) list.scrollTop = Math.max(0, selRow.offsetTop - ROW)
     }
 
-    OptionList.prototype.setValue = function (v) { this.o.value = v; this.render() }
+    // an outside value only moves the highlight: rebuilding the rows here
+    // would lose a click that is half-way (pressed, not yet released)
+    OptionList.prototype.setValue = function (v) {
+        if (v === this.o.value) return
+        this.o.value = v
+        var sel = this.index(), rows = this.n.list.children, self = this
+        for (var i = 0; i < rows.length; i++) {
+            var on = i === sel
+            rows[i].classList.toggle('is-selected', on)
+            rows[i].setAttribute('aria-selected', on ? 'true' : 'false')
+            if (on) { self.n.rowIcon = rows[i].querySelector('.nhe-row__icon') }
+        }
+        this.renderBinding()
+    }
 
     // ---- Segmented switch -------------------------------------------------
 
@@ -400,6 +413,8 @@
         var self = this, o = this.o
         var noFactory = !o.factory.length
         this.state('no-factory', noFactory)
+        // no presets at all: the action row alone, so a first preset can be saved
+        this.state('empty', !o.factory.length && !o.user.length)
         // the list showing: the user's choice, else the one holding the selected preset
         var tab = noFactory ? 'user' : (o.tab || (this.isUser(o.selected) ? 'user' : 'factory'))
         this.segmented.update({ value: tab === 'user' ? 1 : 0 })
@@ -430,6 +445,49 @@
         this.renderBinding()
     }
 
+    // ---- File list (LV2 path parameters: NAM models, IRs…) --------------------
+
+    var FileList = function (root, options) {
+        var self = this
+        this.root = root
+        this.o = mix({ title: '', items: [], t3k: false }, options || {})
+        root.innerHTML = ''
+        root.className = 'nhe-ctl nhe-file-list'
+        el('div', 'nhe-file-list__band', root)
+        var t = el('div', 'nhe-cell__title', root)
+        this.title = el('span', null, t)
+        this.list = el('div', 'nhe-list', root)
+        this.list.setAttribute('role', 'listbox')
+        var f = el('div', 'nhe-footer', root)
+        this.t3k = NHE.textButton('T3K', 'secondary', function () { if (typeof self.o.onT3K === 'function') self.o.onT3K() })
+        this.t3k.classList.add('nhe-file-list__t3k')
+        this.t3k.title = 'Browse tones on Tone3000'
+        f.appendChild(this.t3k)
+        this.render()
+    }
+
+    var FILE_ICON = { up: 'folderUp', folder: 'folder', file: 'file' }
+
+    FileList.prototype.render = function () {
+        var self = this, o = this.o, list = this.list
+        this.title.textContent = o.title
+        this.t3k.style.display = o.t3k ? '' : 'none'
+        var keep = list.scrollTop
+        list.innerHTML = ''
+        o.items.forEach(function (it) {
+            var r = el('button', 'nhe-row nhe-row--wide nhe-row--' + it.kind + (it.selected ? ' is-selected' : ''), list)
+            r.type = 'button'
+            r.title = it.name
+            el('span', 'nhe-row__lead', r, icon(FILE_ICON[it.kind]))
+            el('span', 'nhe-row__label', r).textContent = it.name
+            r.addEventListener('click', function () { if (typeof o.onPick === 'function') o.onPick(it.value, it) })
+        })
+        list.scrollTop = keep
+    }
+
+    FileList.prototype.update = function (options) { this.o = mix(this.o, options || {}); this.render() }
+
+    NHE.FileList = FileList
     NHE.Toggle = Toggle
     NHE.Trigger = Trigger
     NHE.PluginHeader = PluginHeader

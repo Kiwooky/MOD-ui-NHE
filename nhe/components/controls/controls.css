@@ -384,6 +384,7 @@
 .nhe-presets .nhe-cell__title { height: 33px; flex: none; }
 .nhe-presets .nhe-list { flex: 1 1 auto; min-height: 88px; }
 .nhe-presets.is-no-factory .nhe-segmented { display: none; }
+.nhe-presets.is-empty .nhe-list { display: none; }
 .nhe-presets__actions { display: flex; justify-content: space-between; flex: none; }
 
 /* ---- system bar ------------------------------------------------------- */
@@ -444,7 +445,8 @@
 .nhe-system-bar__sync { display: none; font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); color: var(--nhe-status-warn); margin-top: var(--nhe-space-4); }
 .nhe-system-bar.is-tempo-locked .nhe-system-bar__sync { display: block; }
 
-.nhe-meters { position: relative; display: flex; gap: var(--nhe-space-8); width: 100%; flex: 1 1 auto; min-height: 0; padding: var(--nhe-space-8) var(--nhe-space-16); }
+/* the bars stop 42 px above the tab icons (Figma), leaving room for the xrun count */
+.nhe-meters { position: relative; display: flex; gap: var(--nhe-space-8); width: 100%; flex: 1 1 auto; min-height: 0; padding: var(--nhe-space-8) var(--nhe-space-16) 34px; }
 .nhe-meter { display: flex; flex-direction: column; align-items: center; gap: var(--nhe-space-4); flex: 1 1 0; min-height: 0; }
 .nhe-meter__title { font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
 .nhe-meter__value { font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-medium); }
@@ -474,9 +476,10 @@
 .nhe-meter--ram .nhe-meter__fill { background: linear-gradient(to top, var(--nhe-meter-level-bottom), var(--nhe-meter-level-top)); }
 .nhe-system-bar.is-xrun .nhe-meter--cpu .nhe-meter__track { box-shadow: inset 4px 4px 4px rgba(0, 0, 0, .5), inset 0 0 0 2px var(--nhe-status-error); }
 
-/* the xrun count floats in the gap above the tabs, so the bars keep their height */
-.nhe-system-bar__xruns { display: none; position: absolute; left: 0; right: 0; bottom: 64px; text-align: center; font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); color: var(--nhe-status-error); }
-.nhe-system-bar.is-xrun .nhe-system-bar__xruns { display: block; }
+/* the xrun count floats centred in that gap (icons start 40 px up: tabs 48 minus 8),
+   so the bars keep their height */
+.nhe-system-bar__xruns { display: none; position: absolute; left: 0; right: 0; bottom: 55px; line-height: 12px; text-align: center; font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); color: var(--nhe-status-error); }
+.nhe-system-bar.is-xrun[data-tab="meters"] .nhe-system-bar__xruns { display: block; }   /* with the CPU meter only */
 
 .nhe-chain { display: flex; flex-direction: column; gap: var(--nhe-space-8); width: 100%; flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 var(--nhe-space-8) var(--nhe-space-8); }
 .nhe-chain__current { display: flex; align-items: center; justify-content: center; height: 33px; flex: none; padding: 0 var(--nhe-space-8); text-align: center; font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-tight); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; opacity: .7; }
@@ -566,3 +569,24 @@
 }
 
 .nhe-scroll-hint svg { width: 32px; height: 32px; }
+
+/* ---- file list column (path parameters: NAM models, IRs) ----------------- */
+
+.nhe-file-list {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    height: var(--nhe-slider-height, 646px);
+    flex: none;
+    padding: 0 var(--nhe-space-8);
+    background: var(--nhe-surface-base);
+}
+
+.nhe-file-list__band { height: 44px; flex: none; }   /* lines titles up with the other columns */
+.nhe-file-list .nhe-cell__title { flex: none; }
+.nhe-file-list .nhe-list { flex: 1 1 auto; min-height: 88px; }
+.nhe-row__lead { display: flex; width: 20px; height: 20px; flex: none; opacity: .8; }
+.nhe-row__lead svg { width: 100%; height: 100%; }
+.nhe-row--wide { text-transform: none; }
+.nhe-presets .nhe-row--wide { text-transform: uppercase; }
+.nhe-file-list__t3k.nhe-text-button { height: 32px; min-width: 0; padding: 0 var(--nhe-space-16); font-size: var(--nhe-font-size-md); }

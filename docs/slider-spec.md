@@ -148,6 +148,12 @@ All colours, radii, spacing and type sizes are bound to the variables. New Theme
     - **Overlay:** three lines: kind (caption), detail, and the status, `Shared` in the accent colour or `Locked` in `status/warn`. 64 px high, so "Control Chain" fits on its own line.
     - **The finger wins:** an outside change (MIDI, host feedback) while a finger is on the thumb or a value is being typed is ignored; the slider keeps what the user is doing.
     - In code: `binding.locked`; in Figma: `State` = Bound · Binding info · Locked · Blocked.
+13. **Snap to whole values; fine = two decimals** (Niels). For ports where the plugin gives no precision of its own (`units.render` without `%.Nf` or `%d`):
+    - a normal drag, the wheel and the arrow keys snap to the **coarse step**: whole numbers when the range is 20 or more (Blend 0–100, Tempo 6–1000, Hz), 0.1 for ranges of 2–20 (Q 0.125–8), 0.01 below 2;
+    - **fine adjustment** (hold the thumb, or Shift) moves in **0.01**;
+    - a whole value shows **without decimals** ("30", "7500 Hz", "120 BPM"); a value set finely, typed, or not on a coarse step shows **two** ("37.69");
+    - integer and stepped ports, and plugins that ask for a precision, are unchanged.
+    In code: `decimals: 'auto'` (the default); the settings feature passes the plugin's own precision when it has one.
 
 ## Height
 

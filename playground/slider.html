@@ -91,7 +91,7 @@
                 <label>Unit <input name="unit"></label>
                 <label>Minimum <input name="min" type="number" step="any"></label>
                 <label>Maximum <input name="max" type="number" step="any"></label>
-                <label>Decimals <input name="decimals" type="number" min="0" max="4"></label>
+                <label>Decimals (number or auto) <input name="decimals"></label>
                 <label>Range steps <input name="rangeSteps" type="number" min="0" max="64"></label>
                 <label class="check"><input name="integer" type="checkbox"> Integer</label>
                 <label class="check"><input name="logarithmic" type="checkbox"> Logarithmic</label>
@@ -184,12 +184,12 @@
     // ---- presets
     var PRESETS = {
         'Tone':     { title: 'Tone', value: 65, min: 0, max: 100, unit: '%', decimals: 0, integer: false, logarithmic: false, rangeSteps: 0 },
-        'High cut': { title: 'High cut freq.', value: 7500, min: 200, max: 22000, unit: 'Hz', decimals: 2, integer: false, logarithmic: true, rangeSteps: 0 },
-        'Low cut':  { title: 'Low cut', value: -22000, min: -22000, max: -20, unit: 'Hz', decimals: 2, integer: false, logarithmic: false, rangeSteps: 0 },
+        'High cut': { title: 'High cut freq.', value: 7500, min: 200, max: 22000, unit: 'Hz', decimals: 'auto', integer: false, logarithmic: true, rangeSteps: 0 },
+        'Low cut':  { title: 'Low cut', value: -22000, min: -22000, max: -20, unit: 'Hz', decimals: 'auto', integer: false, logarithmic: false, rangeSteps: 0 },
         'Voices':   { title: 'Voices', value: 3, min: 1, max: 5, unit: '', decimals: 0, integer: true, logarithmic: false, rangeSteps: 0 },
         'Pan':      { title: 'Pan', value: -25, min: -100, max: 100, unit: '', decimals: 0, integer: false, logarithmic: false, rangeSteps: 0 },
-        'Tempo':    { title: 'Tempo', value: 120, min: 6, max: 1000, unit: 'BPM', decimals: 2, integer: false, logarithmic: false, rangeSteps: 0 },
-        'Gain dB':  { title: 'Gain', value: -3.5, min: -60, max: 12, unit: 'dB', decimals: 2, integer: false, logarithmic: false, rangeSteps: 0 }
+        'Tempo':    { title: 'Tempo', value: 120, min: 6, max: 1000, unit: 'BPM', decimals: 'auto', integer: false, logarithmic: false, rangeSteps: 0 },
+        'Gain dB':  { title: 'Gain', value: -3.5, min: -60, max: 12, unit: 'dB', decimals: 'auto', integer: false, logarithmic: false, rangeSteps: 0 }
     }
 
     var form = document.getElementById('form')
@@ -208,7 +208,7 @@
     var toOptions = function (s) {
         return mix(s, {
             value: Number(s.value), min: Number(s.min), max: Number(s.max),
-            decimals: Number(s.decimals) || 0, rangeSteps: Number(s.rangeSteps) || 0,
+            decimals: s.decimals === 'auto' || s.decimals === '' ? 'auto' : Number(s.decimals), rangeSteps: Number(s.rangeSteps) || 0,
             binding: s.bindingType ? { type: s.bindingType, kind: KIND[s.bindingType], label: s.bindingLabel, locked: !!s.bindingLocked } : null,
             group: { kind: s.groupKind, name: s.groupName, color: Number(s.groupColor) || 0, width: Number(s.groupWidth) || 0 }
         })

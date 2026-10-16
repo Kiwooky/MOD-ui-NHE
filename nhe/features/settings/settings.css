@@ -20,26 +20,11 @@
     z-index: 1;
 }
 
-.nhe-settings__bar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--nhe-space-16);
-    height: 44px;
-    flex: none;
-    padding: 0 var(--nhe-space-16) 0 var(--nhe-space-16);
-    font-family: var(--nhe-font-family-base);
-    color: var(--nhe-text-primary);
-}
-
-.nhe-settings__note { flex: 1 1 auto; font-size: var(--nhe-font-size-sm); opacity: .6; }
-
-.nhe-settings__close.nhe-text-button { height: 32px; min-width: 0; padding: 0 var(--nhe-space-16); font-size: var(--nhe-font-size-md); }
-
 .nhe-settings__scroll { flex: 1 1 auto; min-height: 0; }
 .nhe-settings .nhe-scroll { flex: 1 1 auto; min-height: 0; }
 
-/* the NHE / MOD switch: top right, left of Close, in both views */
+/* the NHE / MOD switch floats top right: in the corner in the NHE view, left
+   of MOD's own Close button in MOD's view */
 .mod-settings > .nhe-settings__switch {
     position: absolute;
     top: 6px;
@@ -48,4 +33,9 @@
     z-index: 2;
 }
 
+.mod-settings.nhe-settings-on > .nhe-settings__switch { top: var(--nhe-space-8); right: var(--nhe-space-16); }
+
 .mod-settings.performance-settings > .nhe-settings__switch { display: none; }
+
+/* the system bar at the left, then the panel; they scroll together */
+.nhe-settings__stage { display: flex; align-items: flex-start; }

@@ -36,7 +36,16 @@ In the plugin column (240 wide), below the plugin on/off header, filling the col
 
 Two (or more) equal segments in one 28 px box, radius 8, 1 px `border/focus`; the active segment filled with `selection`, the others `surface/sunken`. 14 px semibold upper case. Tap a segment to switch.
 
-Not in this spec: **file lists** (folders, IR / NAM) — a later spec.
+### 4. File list (LV2 path parameters: NAM models, IRs…)
+
+MOD shows these as `.mod-file-list` (`customSelectPath`): rows for the open folder (with a "folder up" icon: tap to go up), other folders, and files; a **T3K** button (Tone3000's model browser) and **EXP** (expand, more than 5 files).
+
+- **Its own column** (Niels): 240 wide, after the plugin column, as tall as the other columns; the same 44 band on top so its title lines up.
+- Rows as the preset list's (two lines, then …), in the file's own case, with a folder-up / folder / file icon (placeholders drawn in code; to be replaced from Figma).
+- **T3K** stays (opens MOD's Tone3000 browser); **no EXP**: the list already uses the full column height.
+- The panel reads MOD's own list and taps MOD's rows, so MOD keeps doing the folder navigation and setting the parameter.
+
+Not covered yet: **text parameters** (Button to CV's press texts): use the MOD view.
 
 ## Decisions (2026-10-16)
 
@@ -45,6 +54,8 @@ Not in this spec: **file lists** (folders, IR / NAM) — a later spec.
 | Preset actions | Four icons: **FilePlus = Save as**, **FloppyDisk = Save** (overwrite; replaced CirclesThreePlus in the iPhone mock-up, and in `Button / Icon`'s swap options), **Pencil = Rename**, **Trash = Delete**. MOD's **Assign all** is not a separate button: it does exactly what the presets' **settings icon** does (bind the preset list), so the settings icon handles it. Icons to be refined by Niels. |
 | Option lists in stacks | **Yes.** Option-list cells join button stacks; a column fills with cells of mixed height (169 for buttons, 241 for a 3½-row list) until the next one doesn't fit. |
 | Locked list | The binding icon sits **on the selected row**, right-aligned, and the selection fill turns grey (`fill/disabled`). A touch shows Blocked (orange outline on the list + overlay). |
+| No presets at all | **The action row alone** (Niels): no list and no FACTORY / USER switch, Save as active, so a first preset can be saved. |
+| File lists | **Own column**, T3K yes, no EXP (see 4). |
 | Selection colour | **Follows the theme colour.** `selection` and `border/focus` now point at `accent/default`, so the selected row, the active segment and every readout border change with the user's colour. |
 
 ## The components (Figma, built 2026-10-16)
@@ -66,3 +77,5 @@ Notes:
 ## Implementation (code)
 
 `nhe/components/controls/controls.js` (`NHE.OptionList`, `NHE.Segmented`, `NHE.PresetList`) and `controls.css`. Checked in the browser on 2026-10-16: picking an option; locked list refused with the icon on the selected row; preset actions follow MOD (Save as always; Save / Rename / Delete only for a user preset, not while locked); no factory presets hides the switch; loading a preset from the other tab. Not wired into MOD yet.
+
+File list in code: `NHE.FileList` (`controls.js`), a `files` option on `NHE.Panel`, adapter `fileLists`, `fileAction`, `fileT3K`, `onFilesChange`. Checked in MOD Desktop with Neural Amp Modeler: picking a model sets MOD's parameter, going up and back into a folder, T3K shown; NAM has no presets, so its preset section is the action row with Save as only.

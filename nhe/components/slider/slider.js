@@ -8,7 +8,8 @@
  *
  *   var s = new NHE.Slider(element, {
  *       title: 'Tone', value: 65, min: 0, max: 100, unit: '%',
- *       integer: false, logarithmic: false, rangeSteps: 0, decimals: 2,
+ *       integer: false, logarithmic: false, rangeSteps: 0,
+ *       decimals: 'auto',   // or a number: the plugin's own precision (%.1f, %d)
  *       minimised: false,
  *       group: { kind: 'none'|'single'|'start'|'middle'|'end', name: '', color: 0, width: 360 },
  *       binding: null | { type: 'midi'|'cv'|'device'|'chain', kind: 'MIDI', label: 'CC 7 · Ch 1',
@@ -37,6 +38,7 @@
     var BLOCKED_MS = 600       // how long the blocked look stays
     var INFO_MS = 2000         // how long the binding overlay stays
     var MAX_TICKS = 12         // above this many positions, no tick marks
+    var QUIET_MS = 400         // after the user's own change, outside updates are ignored this long
     var FITS = ['max', 'compact', 'tight']
 
     var clamp = function (v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v) }
@@ -51,7 +53,7 @@
     var Slider = function (root, options) {
         this.root = root
         this.o = {
-            title: '', value: 0, min: 0, max: 1, unit: '', decimals: 2,
+            title: '', value: 0, min: 0, max: 1, unit: '', decimals: 'auto',
             integer: false, logarithmic: false, rangeSteps: 0,
             minimised: false, group: null, binding: null
         }
@@ -252,9 +254,11 @@
         this.setValue(o.value, true)
     }
 
-    // the finger wins: an outside change while dragging or typing is ignored
+    // the finger wins: an outside change while dragging or typing, or just
+    // after the user's own change (the host echoing older values back while
+    // the wheel or keys are turning it), is ignored
     Slider.prototype.setValue = function (value, force) {
-        if (!force && (this.has('dragging') || this.editing)) return
+        if (!force && (this.has('dragging') || this.editing || new Date().getTime() - (this.lastUser || 0) < QUIET_MS)) return
         this.o.value = this.clampValue(value)
         this.pos = this.posFromValue(this.o.value)
         this.render()
@@ -300,8 +304,34 @@
         }
     }
 
+    // 'auto' precision (the plugin gives none): a normal drag snaps to the
+    // coarse step (whole numbers when the range is 20 or more, else 0.1 or
+    // 0.01); fine adjustment moves in 0.01. Whole values show without
+    // decimals, finely set ones with two.
+    Slider.prototype.auto = function () {
+        return this.o.decimals === 'auto' && !this.o.integer && !this.positions()
+    }
+
+    Slider.prototype.coarse = function () {
+        var r = this.o.max - this.o.min
+        return r >= 20 ? 1 : r >= 2 ? 0.1 : 0.01
+    }
+
+    var decimalsOf = function (step) { return step >= 1 ? 0 : step >= 0.1 ? 1 : 2 }
+
     Slider.prototype.decimals = function () {
-        return this.o.integer ? 0 : this.o.decimals
+        var o = this.o
+        if (o.integer) return 0
+        if (o.decimals !== 'auto') return o.decimals
+        if (this.positions()) return 2
+        var c = this.coarse(), q = o.value / c
+        return Math.abs(q - Math.round(q)) < 1e-6 ? decimalsOf(c) : 2
+    }
+
+    Slider.prototype.roundTo = function (v, step) {
+        var d = decimalsOf(step)
+        v = parseFloat((Math.round(v / step) * step).toFixed(d))
+        return clamp(v, this.o.min, this.o.max)
     }
 
     Slider.prototype.format = function (v, decimals) {
@@ -355,9 +385,14 @@
         var n = this.positions()
         var v = this.valueFromPos(n ? this.snap(p) : p)
         this.pos = n && !this.has('dragging') ? this.snap(p) : p
+        if (this.auto()) {
+            v = this.roundTo(v, this.has('fine') || this.fineOnce ? 0.01 : this.coarse())
+            if (!this.has('dragging')) this.pos = this.posFromValue(v)
+        }
         var changed = v !== this.o.value
         this.o.value = v
         this.render()
+        if (user) this.lastUser = new Date().getTime()
         if (user && changed) this.emit('onInput')
     }
 
@@ -365,7 +400,9 @@
     Slider.prototype.nudge = function (steps, fine) {
         var n = this.positions()
         var size = n >= 2 ? 1 / (n - 1) : (fine ? 0.001 : 0.01)
+        this.fineOnce = !!fine
         this.setPos((n >= 2 ? this.snap(this.pos) : this.pos) + steps * size, true)
+        this.fineOnce = false
     }
 
     Slider.prototype.ticks = function () {

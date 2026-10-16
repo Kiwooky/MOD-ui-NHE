@@ -14,7 +14,7 @@
  */
 NHE.register('settings', function (mod) {
     var VIEW_KEY = 'nhe-settings-view'     // 'nhe' | 'mod', per browser
-    var TOOLBAR = 44
+    var TAB_KEY = 'nhe-system-bar-tab'     // 'meters' | 'chain', per browser
     var MIN_HEIGHT = 400
 
     var view = function () {
@@ -22,6 +22,10 @@ NHE.register('settings', function (mod) {
     }
     var setView = function (v) {
         try { localStorage.setItem(VIEW_KEY, v) } catch (e) {}
+    }
+    // the system bar opens on the tab used last, in every plugin's window
+    var barTab = function () {
+        try { return localStorage.getItem(TAB_KEY) === 'chain' ? 'chain' : 'meters' } catch (e) { return 'meters' }
     }
 
     var states = {}       // instance -> { root, panel, ... }
@@ -46,7 +50,8 @@ NHE.register('settings', function (mod) {
             unit: (p.units && p.units.symbol) || '',
             integer: has('integer'), logarithmic: has('logarithmic'),
             rangeSteps: p.rangeSteps || 0,
-            decimals: has('integer') ? 0 : (dec ? Number(dec[1]) : 2),
+            // the plugin's own precision when it gives one, else 'auto' (snapping)
+            decimals: has('integer') || /%d/.test(render) ? 0 : (dec ? Number(dec[1]) : 'auto'),
         }) }
     }
 
@@ -59,15 +64,25 @@ NHE.register('settings', function (mod) {
         if (!st) {
             st = states[instance] = {}
             st.root = $('<div class="nhe-settings">').appendTo(win)
-            var bar = $('<div class="nhe-settings__bar">').appendTo(st.root)
-            st.note = $('<div class="nhe-settings__note">').appendTo(bar)
-            st.close = NHE.textButton('Close', 'secondary', function () { mod.closeSettings(instance) })
-            $(st.close).addClass('nhe-settings__close').appendTo(bar)
             st.scroller = $('<div class="nhe-settings__scroll">').appendTo(st.root)
-            st.panelEl = $('<div>').appendTo(st.scroller)
+            var stage = $('<div class="nhe-settings__stage">').appendTo(st.scroller)
+            st.barEl = $('<div>').appendTo(stage)
+            st.panelEl = $('<div>').appendTo(stage)
+            var t = mod.tempo(), stats = mod.stats()
+            st.bar = new NHE.SystemBar(st.barEl[0], {
+                tempo: t.bpm, tempoLocked: t.locked, sync: t.sync,
+                cpu: stats.cpu, ram: stats.ram, xruns: stats.xruns,
+                tab: barTab(),
+                onTab: function (tab) { try { localStorage.setItem(TAB_KEY, tab) } catch (e) {} },
+                onExit: function () { mod.closeSettings(instance) },
+                onTempo: function (bpm) { mod.setTempo(bpm) },
+                // hop through the chain: open that plugin's settings
+                onHop: function (id) { mod.closeSettings(instance); mod.openSettings(id) },
+            })
             st.hint = NHE.scrollHint(st.scroller[0])
 
-            // the NHE / MOD switch sits in the window in both views
+            // the NHE / MOD switch floats in the window in both views (Close is
+            // the system bar's EXIT in the NHE view, MOD's own button in MOD's)
             st.switchEl = $('<div class="nhe-settings__switch">').appendTo(win)
             st.switcher = new NHE.Segmented($('<div>').appendTo(st.switchEl)[0], { options: ['NHE', 'MOD'], value: 0, onChange: function (i) {
                 setView(i ? 'mod' : 'nhe')
@@ -91,14 +106,15 @@ NHE.register('settings', function (mod) {
                 if (c) c.update({ binding: mod.binding(instance, symbol) })
             })
             mod.onPresetsChange(instance, function () { refreshPresets(instance) })
+            mod.onFilesChange(instance, function () { refreshFiles(instance) })
         }
         st.info = info
 
         // the column height follows the window
-        var h = Math.max(MIN_HEIGHT, Math.floor((st.root.innerHeight() || win.innerHeight()) - TOOLBAR - 8))
-        var notes = []
-        if (info.parameters.length) notes.push('Files and text settings: switch to MOD')
-        st.note.text(notes.join(' · '))
+        var h = Math.max(MIN_HEIGHT, Math.floor((st.root.innerHeight() || win.innerHeight()) - 8))
+
+        st.barEl.css('height', h + 'px')
+        st.bar.update({ plugin: info.label, chain: mod.neighbours(instance), tab: barTab() })
 
         st.panel = new NHE.Panel(st.panelEl[0], {
             height: h,
@@ -110,6 +126,9 @@ NHE.register('settings', function (mod) {
             onTrigger: function (id) { var p = mod.gui(instance).controls[id]; if (p) mod.setPortValue(instance, id, p.ranges.maximum) },
             onSettings: function (id) { mod.openAddressing(instance, id) },
             onPreset: function (action, p) { mod.presetAction(instance, action, p && p.id) },
+            files: fileOptions(instance),
+            onFile: function (uri, value) { mod.fileAction(instance, uri, value) },
+            onT3K: function (uri) { mod.fileT3K(instance, uri) },
         })
         st.hint.update()
     }
@@ -118,6 +137,16 @@ NHE.register('settings', function (mod) {
         var p = mod.presets(instance)
         var b = mod.binding(instance, ':presets')
         return { factory: p.factory, user: p.user, selected: p.selected, binding: b }
+    }
+
+    var fileOptions = function (instance) {
+        return mod.fileLists(instance).map(function (f) { return { uri: f.uri, title: f.label, items: f.items, t3k: f.t3k } })
+    }
+
+    var refreshFiles = function (instance) {
+        var st = states[instance]
+        if (!st || !st.panel || !st.panel.files) return
+        fileOptions(instance).forEach(function (f) { var c = st.panel.files[f.uri]; if (c) c.update({ items: f.items, t3k: f.t3k }) })
     }
 
     var refreshPresets = function (instance) {
@@ -141,17 +170,41 @@ NHE.register('settings', function (mod) {
         if (v === 'nhe') build(instance, win)
     }
 
+    // live system bar data, for every panel that exists
+    mod.onStats(function (stats) {
+        for (var i in states) if (states[i].bar) { states[i].bar.setStats({ cpu: stats.cpu, xruns: stats.xruns }); states[i].bar.setSysStats({ ram: stats.ram }) }
+    })
+    var tempoHooked = false
+    var hookTempo = function () {
+        if (tempoHooked) return
+        tempoHooked = true
+        mod.onTempo(function (t) { for (var i in states) if (states[i].bar) states[i].bar.setTempo(t.bpm, t.locked, t.sync) })
+    }
+
     mod.onSettingsOpen(function (instance, win) {
+        hookTempo()
         if (!states[instance]) build(instance, win)
         // build once the window is laid out, so the height is known
         setTimeout(function () { apply(instance, win) }, 0)
     })
 
+    // Rebuild only when the window really changes size. MOD's page fires
+    // 'resize' on window every few hundred ms (jquery.ba-resize, pedalboard
+    // adapting), and rebuilding on each one replaced the thumbs and rows under
+    // the pointer: lost clicks, broken drags.
+    var lastSize = window.innerWidth + 'x' + window.innerHeight
+    var resizeTimer = null
     $(window).on('resize', function (e) {
         if (e.target !== window) return
-        for (var i in states) {
-            var win = states[i].root.parent()
-            if (win.is(':visible') && win.hasClass('nhe-settings-on')) build(i, win)
-        }
+        var size = window.innerWidth + 'x' + window.innerHeight
+        if (size === lastSize) return
+        lastSize = size
+        clearTimeout(resizeTimer)
+        resizeTimer = setTimeout(function () {
+            for (var i in states) {
+                var win = states[i].root.parent()
+                if (win.is(':visible') && win.hasClass('nhe-settings-on')) build(i, win)
+            }
+        }, 200)
     })
 })

@@ -42,6 +42,7 @@
                 'components/slider/slider.js',
                 'components/controls/controls.css',
                 'components/controls/controls.js',
+                'components/controls/systembar.js',
                 'components/controls/panel.js',
                 'features/settings/settings.css',
                 'features/settings/index.js'

@@ -21,7 +21,9 @@
  *       controls: [{ id, type: 'slider'|'toggle'|'trigger'|'list',
  *                    group: null | { id, name, color },
  *                    options: { ...the component's options } }],
- *       onChange: fn(id, value), onSettings: fn(id), onBlocked: fn(id), onTrigger: fn(id), onPreset: fn(action, preset)
+ *       files: [{ uri, title, items: [{ kind: 'up'|'folder'|'file', name, value, selected }], t3k }],
+ *       onChange: fn(id, value), onSettings: fn(id), onBlocked: fn(id), onTrigger: fn(id), onPreset: fn(action, preset),
+ *       onFile: fn(uri, value), onT3K: fn(uri)
  *   })
  *   panel.control(id)   // the component instance, e.g. to setValue from MOD
  *   NHE.Panel.columns(controls, height)   // the layout alone, for tests
@@ -133,6 +135,15 @@
             pd.style.display = 'flex'
             pd.style.height = '100%'
         }
+
+        // file parameters: a column each, after the plugin column
+        this.files = {}
+        ;(o.files || []).forEach(function (f) {
+            self.files[f.uri] = new NHE.FileList(el('div', null, root), mix(f, {
+                onPick: function (value) { self.emit('onFile', f.uri, value) },
+                onT3K: function () { self.emit('onT3K', f.uri) }
+            }))
+        })
 
         columns(o.controls, o.height).forEach(function (col) {
             var color = col.group ? (col.group.color || 0) : 0
