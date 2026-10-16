@@ -36,6 +36,7 @@
     --nhe-color-lime-500: #c1da00;
     --nhe-color-olive-600: #8eab00;
     --nhe-color-amber-500: #da8e00;
+    --nhe-color-red-500: #e53935;
     --nhe-color-mod-group-0: #de7558;
     --nhe-color-mod-group-1: #16aca6;
     --nhe-color-mod-group-2: #74a16b;
@@ -117,6 +118,7 @@
     --nhe-border-focus: var(--nhe-accent-default);          /* value box outline, focus: follows the theme colour */
     --nhe-selection: var(--nhe-accent-default);             /* selected row, active segment: follows the theme colour */
     --nhe-status-warn: var(--nhe-color-amber-500);          /* blocked / warning outline */
+    --nhe-status-error: var(--nhe-color-red-500);           /* errors: xrun outline on the CPU meter */
     --nhe-fill-disabled: var(--nhe-color-grey-700);         /* slider fill while the control is bound */
     --nhe-shadow-thumb: rgba(0, 0, 0, .3);                  /* faux shadow under the slider thumb */
     --nhe-border-divider: var(--nhe-color-grey-500);        /* line between stacked control cells */
