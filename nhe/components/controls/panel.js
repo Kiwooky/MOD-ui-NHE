@@ -163,3 +163,40 @@
 
     NHE.Panel = Panel
 })();
+
+/*
+ * Scroll hint: wraps a horizontally scrolling area and shows a 60 px fade with
+ * an arrow at its right edge while there are more columns to the right
+ * (Figma: the 60 px gradient overlay with ArrowFatLineRight). Tapping the arrow
+ * scrolls right by most of a screen.
+ *
+ *   var hint = NHE.scrollHint(scrollingElement)   // returns { update() }
+ */
+(function () {
+    var NHE = window.NHE = window.NHE || {}
+    var el = NHE.controlHelpers.el
+
+    NHE.scrollHint = function (area) {
+        var wrap = document.createElement('div')
+        wrap.className = 'nhe-ctl nhe-scroll'
+        area.parentNode.insertBefore(wrap, area)
+        wrap.appendChild(area)
+        area.classList.add('nhe-scroll__area')
+        var hint = el('div', 'nhe-scroll-hint', wrap)
+        var btn = el('button', null, hint, NHE.icons.scrollRight)
+        btn.type = 'button'
+        btn.setAttribute('aria-label', 'Scroll right')
+        btn.addEventListener('click', function () {
+            var step = Math.max(120, area.clientWidth - 120)
+            if (area.scrollBy) area.scrollBy({ left: step, behavior: 'smooth' })
+            else area.scrollLeft += step
+        })
+        var update = function () {
+            wrap.classList.toggle('is-more', area.scrollLeft + area.clientWidth < area.scrollWidth - 1)
+        }
+        area.addEventListener('scroll', update, { passive: true })
+        window.addEventListener('resize', function (e) { if (e.target === window) update() })
+        update()
+        return { update: update }
+    }
+})();

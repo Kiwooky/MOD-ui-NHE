@@ -57,7 +57,7 @@
             <label><input type="checkbox" id="sync"> Tempo synced to MIDI clock (locked)</label>
             <label><input type="checkbox" id="ticking" checked> CPU / RAM ticking</label>
         </div>
-        <div class="scroll"><div class="stage"><div id="bar"></div><div id="panel"></div></div></div>
+        <div id="scroller"><div class="stage"><div id="bar"></div><div id="panel"></div></div></div>
     </section>
 
     <section>
@@ -103,6 +103,7 @@
         <h2>What to try</h2>
         <ul class="notes">
             <li>Change the column height: the Delay stack holds 3 cells at 646, wraps sooner at 400, and fits everything in one column at 900. Group bands and names follow the columns.</li>
+            <li>When the panel is wider than the window, a fade with an arrow shows at the right edge; it goes once you scroll to the end. Tap the arrow to scroll.</li>
             <li>Tap the system bar's chain cards to "hop" (see the log), tap the tempo to type a new one, tick "synced" to lock it, and simulate an xrun.</li>
             <li>Shared bindings work normally with the icon next to settings; tap it for the details. Locked ones are grey with the icon on the control; a tap shows the orange ring and the details.</li>
             <li>Preset list: Save, Rename and Delete only work for a user preset.</li>
@@ -184,7 +185,8 @@
         onTab: function (t) { write('tab', t) }
     })
     var barEl = document.getElementById('bar')
-    var setHeight = function (h) { barEl.style.height = h + 'px'; panelOptions.height = h; panel.update({ height: h }) }
+    var hint = NHE.scrollHint(document.getElementById('scroller'))
+    var setHeight = function (h) { barEl.style.height = h + 'px'; panelOptions.height = h; panel.update({ height: h }); hint.update() }
     setHeight(646)
     document.getElementById('height').addEventListener('change', function (e) { setHeight(Number(e.target.value)) })
     var xruns = 0
