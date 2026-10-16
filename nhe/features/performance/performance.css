@@ -1,7 +1,8 @@
 /* SPDX-FileCopyrightText: 2026 Niels
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * Performance view: pedal carousel + settings strip
+ * Performance view: pedal carousel, Flip and Hide on the centred pedal, the
+ * hidden pedals' tile, and the back of a flipped pedal
  */
 
 /* = FOOTER ICON
@@ -158,54 +159,44 @@ body.performance-mode #js-cv-addressing-toggle {
     font-size: 20px;
 }
 
-/* = SETTINGS STRIP
-================================================ */
-#performance-view .performance-strip {
-    flex: 0 0 auto;
-    position: relative;
-    background: #111;
-    border-top: 1px solid #2b2b2b;
-    min-height: 124px;
-    display: flex;
-    align-items: stretch;
-}
-#performance-view .performance-strip > .mod-settings.performance-settings {
-    flex: 1 1 auto;
-    min-width: 0;  /* let the controls row scroll instead of widening the strip */
-}
-
-/* = HIDE BUTTON
+/* = FLIP AND HIDE: pills (icon + label) on the centred pedal's top-left corner
 ================================================ */
 #performance-view .performance-tools {
-    flex: 0 0 auto;
+    position: absolute;
+    left: -22px;   /* half outside the pedal: clear of a pedal that fills the screen */
+    top: -22px;
+    z-index: 3;
     display: flex;
-    padding: 2px 0 2px 9px;
+    gap: 8px;
 }
+#performance-view .performance-flip,
 #performance-view .performance-hide {
-    width: 64px;
+    height: 44px;
+    padding: 0 18px 0 12px;
+    gap: 8px;
     border: 0;
-    border-radius: 0;
-    background: #212121;
-    color: #999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 10px;
+    border-radius: 22px;
+    font-size: 12px;
     font-weight: bold;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    background: #212121;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: color 0.15s, background 0.15s;
+    transition: background 0.15s;
 }
+#performance-view .performance-flip:hover,
+#performance-view .performance-flip:active,
 #performance-view .performance-hide:hover,
 #performance-view .performance-hide:active {
-    color: #fff;
-    background: #2b2b2b;
+    background: #883996;
 }
-
-/* = HIDDEN TILE (end of the carousel)
+/* = HIDDEN TILE (end of the carousel): the hidden pedals, full height,
+   a column at a time (performance.js sizes it: TILE_ITEM_W/H, TILE_HEAD)
 ================================================ */
 #performance-view .performance-tile-box {
     position: absolute;
@@ -213,54 +204,34 @@ body.performance-mode #js-cv-addressing-toggle {
     top: 0;
     right: 0;
     bottom: 0;
+    box-sizing: border-box;
+    padding: 0 16px 16px;
     border: 2px dashed #555;
     border-radius: 10px;
     background: rgba(0, 0, 0, 0.45);
     color: #bbb;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    text-align: center;
-}
-#performance-view .performance-tile-box svg {
-    width: 34px;
-    height: 34px;
-}
-#performance-view .performance-tile-box b {
-    font-size: 18px;
-    font-weight: normal;
-    color: #fff;
-}
-#performance-view .performance-tile-box small {
-    font-size: 12px;
-    color: #888;
-}
-#performance-view .performance-tile.active .performance-tile-box small {
-    visibility: hidden;  /* the shelf below is the next step */
-}
-
-/* = SHELF OF HIDDEN PEDALS (in the strip)
-================================================ */
-#performance-view .performance-shelf {
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 8px 12px 6px;
-    color: #fff;
 }
 #performance-view .performance-shelf-head {
+    flex: 0 0 auto;
+    height: 56px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
     font-size: 11px;
     font-weight: bold;
     text-transform: uppercase;
     color: #999;
-    margin-bottom: 8px;
+}
+#performance-view .performance-shelf-head svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+#performance-view .performance-shelf-head b {
+    flex: 1 1 auto;
+    color: #fff;
 }
 #performance-view .performance-show-all {
     border: 1px solid #883996;
@@ -276,29 +247,24 @@ body.performance-mode #js-cv-addressing-toggle {
     background: #883996;
 }
 #performance-view .performance-shelf-row {
-    display: flex;
-    gap: 10px;
-    width: max-content;
-    max-width: 100%;
-    margin: 0 auto;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    touch-action: pan-x;
-    scrollbar-width: thin;
-    scrollbar-color: #444 transparent;
+    display: grid;
+    grid-auto-flow: column;   /* down a column, then the next one */
+    grid-template-rows: repeat(var(--rows, 4), 96px);
+    grid-auto-columns: 120px;
+    gap: 8px;
 }
 #performance-view .performance-shelf-item {
-    flex: 0 0 auto;
-    width: 110px;
     border: 0;
-    border-radius: 0;
+    border-radius: 6px;
     background: #212121;
     color: #ddd;
     padding: 8px 6px 6px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    min-width: 0;
     cursor: pointer;
     transition: background 0.15s;
 }
@@ -313,7 +279,7 @@ body.performance-mode #js-cv-addressing-toggle {
 }
 #performance-view .performance-shelf-thumb img {
     max-height: 52px;
-    max-width: 96px;
+    max-width: 104px;
 }
 #performance-view .performance-shelf-label {
     font-size: 11px;
@@ -324,18 +290,55 @@ body.performance-mode #js-cv-addressing-toggle {
     white-space: nowrap;
 }
 
-/* the editor's settings window for the active pedal, shown as a strip */
-#performance-view .performance-strip > .mod-settings.performance-settings {
+/* = THE BACK OF A FLIPPED PEDAL (over the whole view)
+================================================ */
+#performance-view .performance-back {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    background: #212121;
+    overflow: hidden;
+}
+#performance-view .performance-back-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    height: 64px;
+    border-bottom: 1px solid #2b2b2b;
+    background: #111;
+}
+#performance-view .performance-back-title {
+    align-self: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+/* MOD's settings panel on the back (the default) */
+#performance-view .performance-back > .mod-settings.performance-settings {
     display: block !important;  /* other windows may try to close it */
     position: static !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     background: none !important;
     opacity: 1 !important;
     z-index: auto !important;
-    /* MOD's settings panel at 75%: the pedal gets the height back. zoom
-       (unlike transform) shrinks the layout box too, so scrolling and
-       centring keep working on the real size */
-    zoom: 0.75;
 }
+
+/* the flip: the pedal turns away, its back turns in (and the reverse) */
+@keyframes performance-turn-out { from { transform: perspective(1200px) rotateY(0); } to { transform: perspective(1200px) rotateY(90deg); } }
+@keyframes performance-turn-in  { from { transform: perspective(1200px) rotateY(-90deg); } to { transform: perspective(1200px) rotateY(0); } }
+#performance-view .performance-slide.performance-turn-out { animation: performance-turn-out 0.18s ease-in forwards; }
+#performance-view .performance-slide.performance-turn-in  { animation: performance-turn-in 0.18s ease-out; }
+#performance-view .performance-back.performance-back-in  { animation: performance-turn-in 0.18s ease-out; }
+#performance-view .performance-back.performance-back-out { animation: performance-turn-out 0.18s ease-in forwards; }
 #performance-view .performance-settings .mod-pedal-settings {
     position: static;
     overflow: visible;
@@ -378,3 +381,4 @@ body.performance-mode #js-cv-addressing-toggle {
     background: #444;
     border-radius: 3px;
 }
+

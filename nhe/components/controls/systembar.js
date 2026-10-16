@@ -12,6 +12,7 @@
  *       plugin: 'Can Abyss Delay',
  *       chain: { inputs:  [{ port: 'In',      items: [{ id, brand, name } | { device: true }] }],
  *                outputs: [{ port: 'Out (L)', items: [...] }] },
+ *       exitIcon: 'exit', exitLabel: 'Exit',   // the top-left button
  *       onExit, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab)
  *   })
  *   bar.setStats({ cpu, xruns })   // MOD websocket "stats"
@@ -35,7 +36,9 @@
         root.className = 'nhe-ctl nhe-system-bar'
         var n = this.n = {}
 
-        var exit = el('button', 'nhe-system-bar__exit', root, icon('exit') + '<span>Exit</span>')
+        // EXIT closes the settings; on a pedal's back in the performance view
+        // it is Flip (options.exitIcon / exitLabel)
+        var exit = el('button', 'nhe-system-bar__exit', root, icon(this.o.exitIcon || 'exit') + '<span>' + (this.o.exitLabel || 'Exit') + '</span>')
         exit.type = 'button'
         exit.addEventListener('click', function () { self.emit('onExit') })
 

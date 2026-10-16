@@ -58,7 +58,7 @@ Section **Control / System bar**, set **Control / System bar** (`81:17084`), 120
 | `Tab=Chain, State=Rest` | Current plugin as the title; IN → cards; OUT (L) → cards; OUT (R) → cards; tabs (Chain active). |
 | `Tab=Chain, State=Not connected` | An output with nothing on it says "Not connected". |
 
-- Plugin cards: brand (10, upper case) over the name (12, two lines, **original case**: upper case breaks long single-word names like "JtBassSynth"). Background: a vertical gradient, `surface/track-top` (lighter) at the top to `surface/track-bottom` (dark) at the bottom.
+- Plugin cards: brand (10, upper case) over the name (12, two lines, **original case**: upper case breaks long single-word names like "JtBassSynth"). Background: black (`surface/sunken`), corners `radius/md` (8).
 - New tokens: `color/red/500` (`#e53935`) and `status/error` (`--nhe-status-error`).
 
 ## Implementation (code)

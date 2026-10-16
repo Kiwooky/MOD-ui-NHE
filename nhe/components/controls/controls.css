@@ -495,8 +495,8 @@
     width: 100%;
     padding: var(--nhe-space-8);
     border: 0;
-    border-radius: var(--nhe-radius-lg);
-    background: linear-gradient(to bottom, var(--nhe-surface-track-top), var(--nhe-surface-track-bottom));
+    border-radius: var(--nhe-radius-md);
+    background: var(--nhe-surface-sunken);
     text-align: center;
     cursor: pointer;
 }

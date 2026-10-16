@@ -8,8 +8,14 @@
  * Performance view
  *
  * Shows the pedals of the current pedalboard one at a time, as large as the
- * screen allows (capped at 2x native size), in a swipeable carousel. The
- * active (centred) pedal's settings sit in a strip underneath.
+ * screen allows (capped at 2x native size), in a swipeable carousel. Flip
+ * and Hide sit in two pills on the active (centred) pedal's top-left
+ * corner. Pedals hidden from the view gather in a tile at the end.
+ *
+ * Each pedal has two sides. The front is its own GUI; Flip turns it over and
+ * its back opens out over the whole view with the pedal's settings. By
+ * default the back is MOD's own settings panel; options.renderBack can put
+ * something else there (NHE puts its settings screen).
  *
  * The pedal faces and settings shown here are the *same* DOM elements the
  * editor uses: they are moved in on enter and moved back on exit. So every
@@ -30,6 +36,10 @@ function PerformanceView(options) {
         view: null,         // #performance-view
         trigger: null,      // footer bolt icon
         exitTrigger: null,  // footer puzzle (Constructor) icon
+        // fills the back of a flipped pedal: fn(instance, container, api) ->
+        // true if it did; api = { flipBack(), flipTo(instance) }. When it
+        // returns false (or isn't given), the back shows MOD's settings panel.
+        renderBack: null,
     }, options)
 
     var MAX_SCALE   = 2.0
@@ -45,14 +55,14 @@ function PerformanceView(options) {
     var view     = options.view
     var stage    = view.find('.performance-stage')
     var track    = view.find('.performance-track')
-    var strip    = view.find('.performance-strip')
     var empty    = view.find('.performance-empty')
     var trigger  = options.trigger
 
     var isOpen       = false
     var slides       = []     // [{instance, slide, scaler, icon, settings, w, h}]
     var active       = -1
-    var shownSettings = null  // settings element currently in the strip
+    var shownSettings = null  // MOD's settings element currently on the back
+    var flipped      = null   // the slide whose back is showing
     var signature    = ''
     var builtFor     = null   // pedalboard bundle the carousel was last built for
     // A pedalboard's plugins arrive one by one over the websocket, in no
@@ -67,13 +77,17 @@ function PerformanceView(options) {
     var spacerL      = $('<div class="performance-spacer">')
     var spacerR      = $('<div class="performance-spacer">')
 
-    // strip furniture of our own: a hide button next to the borrowed settings
-    // panel, and the shelf of hidden pedals shown when the tile is centred
+    // Flip and Hide: pills on the centred pedal's top-left corner, half
+    // outside it (so they stay clear of a pedal that fills the screen)
+    var FLIP = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 10a8 8 0 0 1 14.3-4.9L20 7M20 3v4h-4M20 14a8 8 0 0 1-14.3 4.9L4 17M4 21v-4h4"/></svg>'
     var EYE_OFF = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c5.5 0 9 5.5 9.5 7-.3.8-1.3 2.6-3 4.2M6.6 6.6C4.4 8 3 10.2 2.5 12c.6 1.7 4 7 9.5 7 1.6 0 3-.4 4.3-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>'
-    var tools = $('<div class="performance-tools">').prependTo(strip)
-    var hideButton = $('<button type="button" class="performance-hide" title="Hide this pedal from the performance view">' + EYE_OFF + '<span>Hide</span></button>').appendTo(tools)
-    var shelf = $('<div class="performance-shelf">').appendTo(strip).hide()
-    var tile = null  // the "N hidden" slide, created on demand
+    var tools = $('<div class="performance-tools">')
+    var flipButton = $('<button type="button" class="performance-flip" title="Flip the pedal: its settings are on the back" aria-label="Flip">' + FLIP + '<span>Flip</span></button>').appendTo(tools)
+    var hideButton = $('<button type="button" class="performance-hide" title="Hide this pedal from the performance view" aria-label="Hide">' + EYE_OFF + '<span>Hide</span></button>').appendTo(tools)
+    var tile = null  // the "N hidden" slide at the end, created on demand
+    var TILE_ITEM_W = 120, TILE_ITEM_H = 104, TILE_HEAD = 56, TILE_PAD = 16
+    // the back of a flipped pedal, opened out over the whole view
+    var back = $('<div class="performance-back">').appendTo(view).hide()
 
     // set window.PERFORMANCE_VIEW_DEBUG = true in the console to trace
     var debug = function () {
@@ -215,6 +229,7 @@ function PerformanceView(options) {
         icon.appendTo(pb)
     }
 
+    // the default back: MOD's own settings panel, moved in
     var showSettings = function (settings) {
         if (shownSettings && shownSettings[0] === (settings && settings[0])) {
             return
@@ -224,23 +239,15 @@ function PerformanceView(options) {
             return
         }
         shownSettings = settings
-        settings.addClass('performance-settings').appendTo(strip)
+        settings.addClass('performance-settings').appendTo(back)
         // centre the controls when they fit, scroll from the start when they don't
         settings.find('.mod-controls').scrollLeft(0)
     }
 
-    // what the strip shows for a slide: its settings, or the hidden shelf
+    // Flip and Hide go on the centred pedal (not on the hidden tile)
     var showStrip = function (s) {
-        if (s && s.tile) {
-            hideSettings()
-            tools.hide()
-            renderShelf()
-            shelf.show()
-        } else {
-            shelf.hide()
-            tools.toggle(!!s)
-            showSettings(s && s.settings)
-        }
+        if (s && !s.tile) tools.appendTo(s.slide)
+        else tools.detach()
     }
 
     var thumbnailUrl = function (icon) {
@@ -255,15 +262,17 @@ function PerformanceView(options) {
         hiddenList().forEach(function (i) { hidden[i] = true })
         var ids = self.signalOrder().filter(function (i) { return hidden[i] })
 
-        shelf.empty()
+        var shelf = tile.box.empty()
         var head = $('<div class="performance-shelf-head">').appendTo(shelf)
-        $('<span>').text('Hidden from this view').appendTo(head)
+        $('<span>').html(EYE_OFF).appendTo(head)
+        $('<b>').text(ids.length + ' hidden').appendTo(head)
         if (ids.length > 1) {
             $('<button type="button" class="performance-show-all">Show all</button>').appendTo(head).click(function () {
                 saveHidden([])
                 rebuild({ focus: ids[0] })
             })
         }
+        // a column of pedals, more columns to the right as needed
         var row = $('<div class="performance-shelf-row">').appendTo(shelf)
         ids.forEach(function (instance) {
             var icon = plugins[instance]
@@ -286,6 +295,92 @@ function PerformanceView(options) {
         shownSettings = null
     }
 
+    // ------------------------------------------------------------------
+    // flipping: the back opens out over the whole view
+
+    var FLIP_MS = 180
+
+    var fillBack = function (s) {
+        back.children('.performance-back-bar').remove()
+        var api = { flipBack: function () { self.flipBack() }, flipTo: function (instance) { self.flipTo(instance) } }
+        if (typeof options.renderBack === 'function' && options.renderBack(s.instance, back, api)) {
+            hideSettings()
+            return
+        }
+        // MOD's panel, with a Flip back button above it
+        back.children().not(shownSettings || $()).detach()
+        var bar = $('<div class="performance-back-bar">').prependTo(back)
+        $('<button type="button" class="performance-flip">' + FLIP + '<span>Flip back</span></button>').appendTo(bar).click(function () { self.flipBack() })
+        $('<span class="performance-back-title">').text(s.icon.data('label') || s.instance.split('/').pop()).appendTo(bar)
+        showSettings(s.settings)
+    }
+
+    this.isFlipped = function () { return !!flipped }
+
+    this.flip = function () {
+        var s = slides[active]
+        if (!s || s.tile || flipped || !isOpen) return
+        flipped = s
+        // the pedal turns away, then its back turns in
+        s.slide.addClass('performance-turn-out')
+        setTimeout(function () {
+            if (flipped !== s) return
+            s.slide.removeClass('performance-turn-out')
+            view.addClass('performance-flipped')
+            back.show().removeClass('performance-back-out').addClass('performance-back-in')
+            fillBack(s)
+        }, FLIP_MS)
+    }
+
+    // now: no animation (closing the view, the pedal went away)
+    this.flipBack = function (now) {
+        var s = flipped
+        if (!s) return
+        flipped = null
+        var done = function () {
+            back.hide().removeClass('performance-back-in performance-back-out')
+            hideSettings()
+            view.removeClass('performance-flipped')
+            if (now) return
+            s.slide.addClass('performance-turn-in')
+            setTimeout(function () { s.slide.removeClass('performance-turn-in') }, FLIP_MS)
+        }
+        if (now) { done(); return }
+        back.removeClass('performance-back-in').addClass('performance-back-out')
+        setTimeout(done, FLIP_MS)
+    }
+
+    // straight to another pedal's back (the chain's hop). From a back that
+    // is showing, the new back replaces it at once (no flip, no slide: too
+    // much movement for the whole view); from the front, it flips as usual.
+    this.flipTo = function (instance) {
+        var wasFlipped = !!flipped
+        var idx = slides.findIndex(function (x) { return x.instance === instance })
+        if (idx < 0 && hiddenList().indexOf(instance) >= 0) {
+            // hidden from the view: show it again, it's what was asked for
+            saveHidden(hiddenList().filter(function (i) { return i !== instance }))
+            rebuild({ focus: instance })
+            idx = slides.findIndex(function (x) { return x.instance === instance })
+        }
+        if (idx < 0) return
+        settling = 0
+        setActive(idx, true)
+        scrollToIndex(idx, false)
+        if (wasFlipped && flipped) {
+            back.removeClass('performance-back-in performance-back-out')
+            flipped = slides[idx]
+            fillBack(flipped)
+            return
+        }
+        self.flipBack(true)
+        flipped = slides[idx]
+        view.addClass('performance-flipped')
+        back.show().removeClass('performance-back-out').addClass('performance-back-in')
+        fillBack(flipped)
+    }
+
+    flipButton.click(function () { self.flip() })
+
     hideButton.click(function () {
         var s = slides[active]
         if (!s || s.tile) return
@@ -302,6 +397,9 @@ function PerformanceView(options) {
 
     var rebuild = function (opts) {
         opts = opts || {}
+        // Flip and Hide ride on a slide: lift them off first, or removing that
+        // slide (jQuery's remove) would take their click handlers with it
+        tools.detach()
         var all = self.signalOrder()
         var hidden = {}
         hiddenList().forEach(function (i) { hidden[i] = true })
@@ -360,20 +458,19 @@ function PerformanceView(options) {
             if (g.icon && g.icon.parent().is(g.scaler) && g.icon.data('gui')) {
                 returnIcon(g.icon)
             }
-            if (shownSettings && g.settings && shownSettings[0] === g.settings[0]) {
-                hideSettings()
-            }
+            if (flipped === g) self.flipBack(true)
             g.slide.remove()
         }
 
         if (hiddenCount) {
             if (!tile) {
-                tile = { instance: TILE, tile: true, nw: 180, nh: 250, maxScale: 1.3 }
+                tile = { instance: TILE, tile: true, nw: 180, nh: 250, maxScale: 1 }
                 tile.slide  = $('<div class="performance-slide performance-tile">').attr('data-instance', TILE)
                 tile.scaler = $('<div class="performance-scaler">').appendTo(tile.slide)
-                tile.box    = $('<div class="performance-tile-box">').html(EYE_OFF + '<b></b><small>Tap to show</small>').appendTo(tile.scaler)
+                tile.box    = $('<div class="performance-tile-box">').appendTo(tile.scaler)
             }
-            tile.box.find('b').text(hiddenCount + ' hidden')
+            tile.count = hiddenCount
+            renderShelf()
             next.push(tile)
         }
 
@@ -445,6 +542,14 @@ function PerformanceView(options) {
 
         var availH = Math.max(40, stageH - PAD_Y * 2)
         var availW = Math.max(40, stageW * 0.86)
+        // the hidden tile: full height, a column of pedals, then more columns
+        if (tile && slides.indexOf(tile) >= 0) {
+            var rows = Math.max(1, Math.floor((availH - TILE_HEAD - TILE_PAD) / TILE_ITEM_H))
+            var cols = Math.max(1, Math.ceil((tile.count || 1) / rows))
+            tile.nh = availH
+            tile.nw = Math.max(180, cols * TILE_ITEM_W + (cols - 1) * 8 + TILE_PAD * 2)
+            tile.box.css('--rows', rows)
+        }
         slides.forEach(function (s, i) {
             var w = s.nw || 200, h = s.nh || 300
             var scale = Math.min(s.maxScale || MAX_SCALE, availH / h, availW / w)
@@ -607,7 +712,7 @@ function PerformanceView(options) {
     })
 
     // desktop.js cancels every touchmove that reaches <body> (no page
-    // scrolling or rubber-banding). Our carousel and strip need native
+    // scrolling or rubber-banding). Our carousel and the hidden tile need native
     // scrolling, so stop those events here. Knobs still cancel their own
     // touches, so dragging a knob turns it instead of scrolling.
     view[0].addEventListener('touchmove', function (e) {
@@ -615,7 +720,7 @@ function PerformanceView(options) {
     }, { passive: true })
 
     $(document).on('keydown', function (e) {
-        if (!isOpen || !view.is(':visible')) return
+        if (!isOpen || !view.is(':visible') || flipped) return
         if ($(e.target).is('input, textarea, select, [contenteditable]')) return
         if (e.keyCode === 37) { self.goTo(active - 1); e.preventDefault() }
         if (e.keyCode === 39) { self.goTo(active + 1); e.preventDefault() }
@@ -712,6 +817,7 @@ function PerformanceView(options) {
         clearTimeout(settleTimer)
         saveState()
 
+        self.flipBack(true)
         showStrip(null)
         slides.forEach(function (s) {
             if (s.icon && s.icon.parent().is(s.scaler) && s.icon.data('gui')) returnIcon(s.icon)

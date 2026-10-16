@@ -4,7 +4,8 @@
 /*
  * Performance view: wiring into MOD's page through NHE.mod.
  * The view itself is performance.js / performance.css (shared with the
- * performance-view branch of Kiwooky/mod-ui).
+ * performance-view branch of Kiwooky/mod-ui). NHE adds the back of a
+ * flipped pedal: its settings screen (docs/performance-flip-spec.md).
  */
 NHE.register('performance', function (mod) {
     mod.guardPedalboard()
@@ -16,7 +17,6 @@ NHE.register('performance', function (mod) {
                 '<div class="performance-track"></div>' +
                 '<div class="performance-empty" style="display:none">No plugins on this pedalboard</div>' +
             '</div>' +
-            '<div class="performance-strip"></div>' +
         '</div>')
 
     mod.desktop().performanceView = new PerformanceView({
@@ -24,5 +24,15 @@ NHE.register('performance', function (mod) {
         view: view,
         trigger: trigger,
         exitTrigger: mod.constructorIcon(),
+        // the back of a flipped pedal is NHE's settings screen (the settings
+        // feature); without it, the view shows MOD's settings panel there
+        renderBack: function (instance, container, api) {
+            if (!NHE.settingsScreen) return false
+            NHE.settingsScreen.mount(instance, container, {
+                exit: function () { api.flipBack() },        // the system bar's EXIT flips back
+                hop: function (id) { api.flipTo(id) },       // the chain: straight to that pedal's back
+            })
+            return true
+        },
     })
 })
