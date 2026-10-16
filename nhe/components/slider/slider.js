@@ -4,7 +4,7 @@
 /*
  * NHE slider: the control that replaces MOD's knob (.mod-knob) in the plugin
  * settings panel. Spec: docs/slider-spec.md. Needs theme/tokens.css,
- * components/slider/slider.css and icons.js.
+ * components/slider/slider.css and components/icons.js.
  *
  *   var s = new NHE.Slider(element, {
  *       title: 'Tone', value: 65, min: 0, max: 100, unit: '%',

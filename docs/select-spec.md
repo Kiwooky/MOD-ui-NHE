@@ -62,3 +62,7 @@ Notes:
 - **Preset actions follow MOD:** Save as is always available; Save, Rename and Delete only for a user preset, and not while the preset list is locked.
 - **Locked lists:** the selected row becomes `Selected locked` (grey, binding icon right). In Locked / Blocked variants that row is an exposed instance: set its `Binding type` to match the list's (Figma can't link a parent property into a nested instance).
 - **Settings panel mock-up** (`81:15319`): the preset list fills the plugin column under the on/off header, and a Division option list stacks with Tails and Reverse in the Delay group (44 + 169 + 169 + 241 = 623 of 646).
+
+## Implementation (code)
+
+`nhe/components/controls/controls.js` (`NHE.OptionList`, `NHE.Segmented`, `NHE.PresetList`) and `controls.css`. Checked in the browser on 2026-10-16: picking an option; locked list refused with the icon on the selected row; preset actions follow MOD (Save as always; Save / Rename / Delete only for a user preset, not while locked); no factory presets hides the switch; loading a preset from the other tab. Not wired into MOD yet.

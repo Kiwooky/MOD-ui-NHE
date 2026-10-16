@@ -19,7 +19,11 @@ nhe/
   version.json           bumped on deploy so browsers fetch new files
   adapter/mod.js         the ONLY code that touches MOD's internals
   theme/tokens.css       design tokens (--nhe-*), exported from the Figma file's Variables
-  components/slider/     the slider that will replace MOD's knob (not wired into MOD yet)
+  components/            controls, not wired into MOD yet:
+    icons.js             icons exported from the Figma file
+    slider/              the slider that will replace MOD's knob
+    controls/            toggle, trigger, plugin header, buttons, option list, preset list,
+                         system bar (systembar.js) and the panel layout with stacking (panel.js)
   features/performance/  performance.js + .css (shared with the mod-ui branch) and index.js (wiring)
   device/install.sh      run on the device: hooks NHE into MOD's UI (safe to repeat)
   device/uninstall.sh    run on the device: restores MOD's original index.html
@@ -43,7 +47,7 @@ MOD Desktop hides the device-only parts of the UI (File Manager, Banks, Plugin S
 
 ## Try components on their own
 
-`npm run playground`, then open http://localhost:18090/playground/slider.html: the slider with a properties panel, an event log, a sample settings panel and a theme-colour picker. It needs no MOD. (The same page is at /playground/slider.html on the `npm run dev` proxy.) Open only the playground page on :18090, not its root: the root is MOD's UI, and MOD wants one tab at a time.
+`npm run playground`, then open http://localhost:18090/playground/slider.html (the slider with a properties panel, an event log, a sample settings panel and a theme-colour picker) or http://localhost:18090/playground/controls.html (every other control, the system bar, and a full settings panel laid out with stacking, at different heights). It needs no MOD. (The same page is at /playground/slider.html on the `npm run dev` proxy.) Open only the playground page on :18090, not its root: the root is MOD's UI, and MOD wants one tab at a time.
 
 ## Put it on the Duo
 

@@ -60,3 +60,7 @@ Section **Control / System bar**, set **Control / System bar** (`81:17084`), 120
 
 - Plugin cards: brand (10, upper case) over the name (12, two lines, **original case**: upper case breaks long single-word names like "JtBassSynth"). Background: a vertical gradient, `surface/track-top` (lighter) at the top to `surface/track-bottom` (dark) at the bottom.
 - New tokens: `color/red/500` (`#e53935`) and `status/error` (`--nhe-status-error`).
+
+## Implementation (code)
+
+`nhe/components/controls/systembar.js` (`NHE.SystemBar` with `setStats`, `setSysStats`, `setTempo`) and `controls.css`. In the playground the stats are simulated. Checked in the browser on 2026-10-16: an xrun lights the red outline and floats the count; tempo locks under MIDI clock; typing a tempo; the chain tab lists neighbours and a card "hops" (event). The adapter functions (stats, tempo, neighbours, open settings) are not written yet.

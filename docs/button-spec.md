@@ -106,3 +106,7 @@ Notes:
 - **Cells stack.** Toggle and Trigger are 120 × 169 cells (title 33, control 88, footer 48) with a 1 px `border/divider` line along the top, so a column of them reads like the mock-up. The group band sits once at the top of the column, not in each cell.
 - **Hover / Pressed washes** are `text/primary` at 10–20 % opacity; Disabled is the whole button at 35 %.
 - `Button / Text` has one `Label` property for both variants (default "Save"); set it per button.
+
+## Implementation (code)
+
+`nhe/components/controls/controls.js` (`NHE.Toggle`, `NHE.Trigger`, `NHE.PluginHeader`, `NHE.iconButton`, `NHE.textButton`) and `controls.css`; stacking in `nhe/components/controls/panel.js` (`NHE.Panel`, `NHE.Panel.columns`). ES5, tokens only. Tried out in `playground/controls.html`. Checked in the browser on 2026-10-16: toggle flips; shared binding flips, footer icon, overlay "Shared"; locked binding refused, grey, face icon, no footer icon, overlay "Locked"; trigger shows Pressed ≥ 150 ms; plugin header off greys the name bar; stacking at 400 / 646 / 900 px (2 / 3 / 5 cells per column, lists wrap when they don't fit), group names 584 and 404 px. Not wired into MOD yet.

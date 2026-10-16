@@ -1,0 +1,246 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Niels -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Controls playground</title>
+<link rel="stylesheet" href="/nhe/theme/tokens.css">
+<link rel="stylesheet" href="/nhe/components/slider/slider.css">
+<link rel="stylesheet" href="/nhe/components/controls/controls.css">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--nhe-color-black); color: var(--nhe-text-primary); font: 14px/1.4 var(--nhe-font-family-base); }
+    header { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 12px 24px; background: #000; border-bottom: 1px solid #333; }
+    header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    header a { color: #bbb; }
+    header label, .tools label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #bbb; }
+    input, select { font: inherit; color: inherit; background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 6px; padding: 4px 8px; }
+    input[type=color] { padding: 2px; height: 30px; width: 44px; }
+    main { padding: 24px; }
+    h2 { margin: 0 0 12px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #aaa; }
+    section { margin-bottom: 40px; }
+    .tools { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin-bottom: 12px; }
+    .tools button { font: inherit; font-size: 13px; color: inherit; background: #222; border: 1px solid #3a3a3a; border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+    .tools button:hover { border-color: var(--nhe-accent-default); }
+    .scroll { overflow-x: auto; max-width: 100%; }
+    .stage { display: flex; align-items: flex-start; }
+    .row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+    .demo { display: flex; flex-direction: column; gap: 8px; }
+    .demo > small { color: #888; font-size: 12px; }
+    .surface { display: flex; align-items: flex-start; background: var(--nhe-surface-base); padding: 0 8px 8px; border-radius: 8px; }
+    .stack-demo { display: flex; flex-direction: column; background: var(--nhe-surface-base); border-radius: 8px; overflow: hidden; }
+    .log { height: 220px; overflow: auto; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .log div { color: #ccc; white-space: nowrap; }
+    .log b { color: var(--nhe-accent-default); font-weight: 600; }
+    .log .warn b { color: var(--nhe-status-warn); }
+    .notes { color: #999; font-size: 13px; max-width: 80ch; margin: 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+<header>
+    <h1>Controls playground</h1>
+    <a href="/playground/slider.html">Slider playground</a>
+    <label>Theme colour <input type="color" id="accent" value="#883996"></label>
+</header>
+
+<main>
+    <section>
+        <h2>A settings panel (layout engine) with the system bar</h2>
+        <div class="tools">
+            <label>Column height
+                <select id="height"><option>400</option><option selected>646</option><option>900</option></select>
+            </label>
+            <button type="button" id="xrun">Simulate an xrun</button>
+            <label><input type="checkbox" id="sync"> Tempo synced to MIDI clock (locked)</label>
+            <label><input type="checkbox" id="ticking" checked> CPU / RAM ticking</label>
+        </div>
+        <div class="scroll"><div class="stage"><div id="bar"></div><div id="panel"></div></div></div>
+    </section>
+
+    <section>
+        <h2>Event log</h2>
+        <div class="log" id="log"></div>
+    </section>
+
+    <section>
+        <h2>Toggles and triggers</h2>
+        <div class="row">
+            <div class="demo"><small>Toggle: on · off · shared (MIDI) · locked (CV)</small>
+                <div class="surface" id="toggles"></div></div>
+            <div class="demo"><small>Trigger: rest · shared · locked</small>
+                <div class="surface" id="triggers"></div></div>
+            <div class="demo"><small>Stacked (as in a panel column)</small>
+                <div class="stack-demo" id="stacked"></div></div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Plugin header, buttons</h2>
+        <div class="row">
+            <div class="demo"><small>On · off · locked (bound to a footswitch without feedback)</small>
+                <div class="row" id="headers"></div></div>
+            <div class="demo"><small>Icon buttons (enabled · disabled) and text buttons (primary · secondary · disabled)</small>
+                <div class="surface" id="buttons" style="gap:12px; padding:16px; align-items:center"></div></div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Selects</h2>
+        <div class="row">
+            <div class="demo"><small>Option list: rest · shared · locked</small>
+                <div class="surface" id="lists"></div></div>
+            <div class="demo"><small>Segmented</small>
+                <div class="surface" style="padding:16px; width:256px"><div id="seg" style="width:224px"></div></div></div>
+            <div class="demo"><small>Preset list: factory selected · user selected · no factory presets · locked</small>
+                <div class="row" id="presets"></div></div>
+        </div>
+    </section>
+
+    <section>
+        <h2>What to try</h2>
+        <ul class="notes">
+            <li>Change the column height: the Delay stack holds 3 cells at 646, wraps sooner at 400, and fits everything in one column at 900. Group bands and names follow the columns.</li>
+            <li>Tap the system bar's chain cards to "hop" (see the log), tap the tempo to type a new one, tick "synced" to lock it, and simulate an xrun.</li>
+            <li>Shared bindings work normally with the icon next to settings; tap it for the details. Locked ones are grey with the icon on the control; a tap shows the orange ring and the details.</li>
+            <li>Preset list: Save, Rename and Delete only work for a user preset.</li>
+        </ul>
+    </section>
+</main>
+
+<script src="/nhe/components/icons.js"></script>
+<script src="/nhe/components/slider/slider.js"></script>
+<script src="/nhe/components/controls/controls.js"></script>
+<script src="/nhe/components/controls/systembar.js"></script>
+<script src="/nhe/components/controls/panel.js"></script>
+<script>
+(function () {
+    var log = document.getElementById('log'), t0 = Date.now()
+    var write = function (kind, what, value, cls) {
+        var d = document.createElement('div'); if (cls) d.className = cls
+        d.innerHTML = '<span style="color:#666">' + ((Date.now() - t0) / 1000).toFixed(2) + 's</span> <b>' + kind + '</b> ' + what + (value !== undefined ? ' = ' + value : '')
+        log.insertBefore(d, log.firstChild)
+        while (log.childNodes.length > 200) log.removeChild(log.lastChild)
+    }
+    var div = function (parent) { var d = document.createElement('div'); parent.appendChild(d); return d }
+    var on = function (name) { return {
+        onChange: function (v) { write('change', name, v) },
+        onSettings: function () { write('settings', name) },
+        onBlocked: function () { write('blocked', name, undefined, 'warn') },
+        onTrigger: function () { write('trigger', name) } } }
+    var mix = function (a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o }
+    var MIDI = { type: 'midi', kind: 'MIDI', label: 'CC 21 · Ch 1' }
+    var CV = { type: 'cv', kind: 'CV', label: 'CV 1', locked: true }
+    var FS = { type: 'device', kind: 'Device', label: 'Footswitch 1', locked: true }
+    var DIV = [{ label: '1/4', value: 0 }, { label: '1/4T', value: 1 }, { label: '1/8', value: 2 }, { label: '1/8T', value: 3 }, { label: '1/8.', value: 4 }, { label: '1/16', value: 5 }]
+    var FACTORY = [{ id: 'f1', name: 'Default' }, { id: 'f2', name: 'Swimmingly' }, { id: 'f3', name: 'Mostly describing sound that is very long' }, { id: 'f4', name: 'Decent description' }, { id: 'f5', name: 'Give it to me baby' }, { id: 'f6', name: "There's a reason it sounds that way" }]
+    var USER = [{ id: 'u1', name: 'My clean' }, { id: 'u2', name: 'Swimmingly (gig)' }, { id: 'u3', name: 'Late night ambient wash with long tails' }, { id: 'u4', name: 'Practice' }]
+
+    // ---- the panel: Can Abyss Delay, in MOD's port order
+    var DELAY = { id: 'delay', name: 'Delay', color: 0 }, MODU = { id: 'mod', name: 'Modulation', color: 1 }
+    var controls = [
+        { id: 'gain', type: 'slider', options: { title: 'Gain', value: -3.5, min: -60, max: 12, unit: 'dB' } },
+        { id: 'tempomode', type: 'toggle', options: { title: 'Tempo mode', value: true } },
+        { id: 'tone', type: 'slider', options: { title: 'Tone', value: 65, min: 0, max: 100, unit: '%', decimals: 0 } },
+        { id: 'tap', type: 'trigger', options: { title: 'Tap' } },
+        { id: 'time', type: 'slider', group: DELAY, options: { title: 'Time', value: 450, min: 10, max: 2000, unit: 'ms', decimals: 0, logarithmic: true } },
+        { id: 'feedback', type: 'slider', group: DELAY, options: { title: 'Feedback', value: 35, min: 0, max: 100, unit: '%', decimals: 0 } },
+        { id: 'sync', type: 'toggle', group: DELAY, options: { title: 'Sync', value: true } },
+        { id: 'pingpong', type: 'toggle', group: DELAY, options: { title: 'Ping-pong', value: false } },
+        { id: 'freeze', type: 'toggle', group: DELAY, options: { title: 'Freeze', value: false } },
+        { id: 'tails', type: 'toggle', group: DELAY, options: { title: 'Tails', value: true, binding: MIDI } },
+        { id: 'mix', type: 'slider', group: DELAY, options: { title: 'Mix', value: 40, min: 0, max: 100, unit: '%', decimals: 0 } },
+        { id: 'reverse', type: 'toggle', group: DELAY, options: { title: 'Reverse', value: false } },
+        { id: 'division', type: 'list', group: DELAY, options: { title: 'Division', options: DIV, value: 1 } },
+        { id: 'rate', type: 'slider', group: MODU, options: { title: 'Rate', value: 2.4, min: 0.1, max: 10, unit: 'Hz' } },
+        { id: 'modon', type: 'toggle', group: MODU, options: { title: 'Mod on', value: true } },
+        { id: 'depth', type: 'slider', group: MODU, options: { title: 'Depth', value: 60, min: 0, max: 100, unit: '%', decimals: 0 } },
+        { id: 'shape', type: 'slider', group: MODU, options: { title: 'Shape', value: 20, min: 0, max: 100, decimals: 0, minimised: true } },
+        { id: 'level', type: 'slider', options: { title: 'Level', value: -6, min: -60, max: 12, unit: 'dB' } }
+    ]
+    var panelEl = document.getElementById('panel')
+    var panelOptions = {
+        height: 646,
+        plugin: { name: 'Can Abyss Delay', on: true, presets: { factory: FACTORY, user: USER, selected: 'u2' } },
+        controls: controls,
+        onChange: function (id, v) { write('change', id, v) },
+        onSettings: function (id) { write('settings', id) },
+        onBlocked: function (id) { write('blocked', id, undefined, 'warn') },
+        onTrigger: function (id) { write('trigger', id) },
+        onPreset: function (a, p) { write('preset ' + a, p ? p.name : '') }
+    }
+    var panel = new NHE.Panel(panelEl, panelOptions)
+
+    var bar = new NHE.SystemBar(document.getElementById('bar'), {
+        tempo: 120, cpu: 24, ram: 41, plugin: 'Can Abyss Delay', sync: 'MIDI clock',
+        chain: { inputs: [{ port: 'In', items: [{ id: 'ab', brand: 'MOD', name: 'A/B Switch' }, { id: 'jt', brand: 'MOD Cookbook', name: 'JtBassSynth' }] }],
+                 outputs: [{ port: 'Out (L)', items: [{ id: 'ta', brand: 'NHE', name: 'Trance Atlantic' }] },
+                           { port: 'Out (R)', items: [{ id: 'tm', brand: 'NHE', name: 'Taj Mahal' }, { device: true }] }] },
+        onExit: function () { write('exit', 'system bar') },
+        onTempo: function (v) { write('tempo', 'system bar', v) },
+        onHop: function (id) { write('hop', 'to plugin', id) },
+        onTab: function (t) { write('tab', t) }
+    })
+    var barEl = document.getElementById('bar')
+    var setHeight = function (h) { barEl.style.height = h + 'px'; panelOptions.height = h; panel.update({ height: h }) }
+    setHeight(646)
+    document.getElementById('height').addEventListener('change', function (e) { setHeight(Number(e.target.value)) })
+    var xruns = 0
+    document.getElementById('xrun').addEventListener('click', function () { xruns++; bar.setStats({ xruns: xruns }); write('xrun', 'stats', xruns, 'warn') })
+    document.getElementById('sync').addEventListener('change', function (e) { bar.setTempo(120, e.target.checked, 'MIDI clock') })
+    var cpu = 24, ram = 41
+    setInterval(function () {
+        if (!document.getElementById('ticking').checked) return
+        cpu = Math.max(5, Math.min(95, cpu + (Math.random() - .5) * 8)); ram = Math.max(30, Math.min(60, ram + (Math.random() - .5) * 2))
+        bar.setStats({ cpu: cpu }); bar.setSysStats({ ram: ram })
+    }, 1000)
+
+    // ---- single components
+    var tg = document.getElementById('toggles')
+    new NHE.Toggle(div(tg), mix({ title: 'Tempo mode', value: true }, on('toggle on')))
+    new NHE.Toggle(div(tg), mix({ title: 'Tails', value: false }, on('toggle off')))
+    new NHE.Toggle(div(tg), mix({ title: 'Sync', value: true, binding: MIDI }, on('toggle shared')))
+    new NHE.Toggle(div(tg), mix({ title: 'Freeze', value: false, binding: CV }, on('toggle locked')))
+    var tr = document.getElementById('triggers')
+    new NHE.Trigger(div(tr), mix({ title: 'Tap' }, on('trigger')))
+    new NHE.Trigger(div(tr), mix({ title: 'Reset', binding: MIDI }, on('trigger shared')))
+    new NHE.Trigger(div(tr), mix({ title: 'Tap', binding: FS }, on('trigger locked')))
+    var sk = document.getElementById('stacked')
+    var a = div(sk); new NHE.Toggle(a, mix({ title: 'Tempo mode', value: true }, on('stacked toggle'))); a.classList.add('is-first')
+    new NHE.Trigger(div(sk), mix({ title: 'Tap' }, on('stacked trigger')))
+    new NHE.Toggle(div(sk), mix({ title: 'Tails', value: false, binding: { type: 'device', kind: 'Device', label: 'Knob 1' } }, on('stacked bound')))
+
+    var hd = document.getElementById('headers')
+    new NHE.PluginHeader(div(hd), mix({ name: 'Can Abyss Delay', on: true }, on('plugin on')))
+    new NHE.PluginHeader(div(hd), mix({ name: 'Can Abyss Delay', on: false }, on('plugin off')))
+    new NHE.PluginHeader(div(hd), mix({ name: 'Can Abyss Delay', on: true, binding: FS }, on('plugin locked')))
+    var bt = document.getElementById('buttons'); bt.classList.add('nhe-ctl')
+    ;['saveAs', 'save', 'rename', 'remove'].forEach(function (n, i) { bt.appendChild(NHE.iconButton(n, { label: n, disabled: i > 1, onClick: function () { write('icon', n) } })) })
+    bt.appendChild(NHE.textButton('Cancel', 'secondary', function () { write('text button', 'Cancel') }))
+    bt.appendChild(NHE.textButton('Save', 'primary', function () { write('text button', 'Save') }))
+    var dis = NHE.textButton('Save', 'primary'); dis.disabled = true; bt.appendChild(dis)
+
+    var ls = document.getElementById('lists')
+    new NHE.OptionList(div(ls), mix({ title: 'Division', options: DIV, value: 1 }, on('list')))
+    new NHE.OptionList(div(ls), mix({ title: 'Division', options: DIV, value: 2, binding: MIDI }, on('list shared')))
+    new NHE.OptionList(div(ls), mix({ title: 'Division', options: DIV.slice(0, 3), value: 0, binding: CV }, on('list locked')))
+    new NHE.Segmented(document.getElementById('seg'), { options: ['Factory', 'User'], value: 0, onChange: function (i) { write('segmented', i ? 'User' : 'Factory') } })
+    var ps = document.getElementById('presets')
+    var preset = function (opts, name) { var d = div(ps); d.style.height = '480px'; d.style.display = 'flex'; d.style.background = 'var(--nhe-surface-base)'
+        new NHE.PresetList(d, mix(opts, { onLoad: function (p) { write('load', name, p.name) }, onSaveAs: function () { write('save as', name) }, onSave: function (p) { write('save', name, p && p.name) }, onRename: function (p) { write('rename', name, p && p.name) }, onDelete: function (p) { write('delete', name, p && p.name) }, onSettings: function () { write('settings', name) }, onBlocked: function () { write('blocked', name, undefined, 'warn') } })) }
+    preset({ factory: FACTORY, user: USER, selected: 'f2' }, 'presets (factory)')
+    preset({ factory: FACTORY, user: USER, selected: 'u2' }, 'presets (user)')
+    preset({ factory: [], user: USER, selected: 'u1' }, 'presets (no factory)')
+    preset({ factory: FACTORY, user: USER, selected: 'f2', binding: { type: 'chain', kind: 'Control Chain', label: 'Footswitch 2', locked: true } }, 'presets (locked)')
+
+    document.getElementById('accent').addEventListener('input', function (e) {
+        var r = document.documentElement.style
+        r.setProperty('--nhe-accent-default', e.target.value)
+        r.setProperty('--nhe-accent-strong', 'color-mix(in srgb, ' + e.target.value + ' 55%, black)')
+    })
+})()
+</script>
+</body>
+</html>
