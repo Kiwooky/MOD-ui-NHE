@@ -7,7 +7,7 @@
  *
  *   NHE.accent.palette()          // [{ index, hex }]: the colours offered
  *   NHE.accent.apply(el, hex)     // recolour el and everything in it; null = system
- *   NHE.ColourDialog({ plugin, value: hex | null, onPick: fn(hex | null) })
+ *   NHE.ColourDialog({ plugin, value: hex | null, onPick: fn(hex | null) })   // onPick on Save
  *
  * The palette is MOD's 32 port-group colours (--group-N-color, copied into
  * tokens.css as --nhe-color-mod-group-N), minus the extremes: near-black ones
@@ -67,6 +67,7 @@
     var Dialog = function (options) {
         var self = this
         this.o = mix({ plugin: '', value: null }, options || {})
+        this.value = this.o.value
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
         var d = el('div', 'nhe-dialog nhe-colour-dialog', overlay)
         d.setAttribute('role', 'dialog')
@@ -89,7 +90,7 @@
             b.setAttribute('aria-label', label)
             b.style.setProperty('--swatch', hex || 'var(--nhe-color-purple-500)')
             if (!hex) el('span', null, b).textContent = 'System'
-            b.addEventListener('click', function () { self.pick(hex) })
+            b.addEventListener('click', function () { self.select(hex, b) })
         }
         swatch(null, 'System colour')
         NHE.accent.palette().forEach(function (c) { swatch(c.hex, 'MOD colour ' + c.index) })
@@ -98,6 +99,7 @@
 
         var foot = el('div', 'nhe-dialog__buttons', d)
         foot.appendChild(NHE.textButton('Cancel', 'secondary', function () { self.close() }))
+        foot.appendChild(NHE.textButton('Save', 'primary', function () { self.save() }))
 
         d.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); self.close() }
@@ -107,8 +109,16 @@
         setTimeout(function () { d.focus() }, 0)
     }
 
-    Dialog.prototype.pick = function (hex) {
-        if (typeof this.o.onPick === 'function') this.o.onPick(hex)
+    // a tap previews the colour in the dialog; Save applies it, Cancel doesn't
+    Dialog.prototype.select = function (hex, button) {
+        this.value = hex
+        var all = button.parentNode.children
+        for (var i = 0; i < all.length; i++) all[i].classList.toggle('is-selected', all[i] === button)
+        NHE.accent.apply(this.overlay, hex)
+    }
+
+    Dialog.prototype.save = function () {
+        if (typeof this.o.onPick === 'function' && this.value !== this.o.value) this.o.onPick(this.value)
         this.close()
     }
 

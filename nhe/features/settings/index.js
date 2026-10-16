@@ -178,7 +178,16 @@ NHE.register('settings', function (mod) {
             onChange: function (id, v) { send(instance, id, v) },
             onTrigger: function (id) { var p = mod.gui(instance).controls[id]; if (p) mod.setPortValue(instance, id, p.ranges.maximum) },
             onSettings: function (id) { openAddressing(instance, id, win) },
-            onPreset: function (action, p) { mod.presetAction(instance, action, p && p.id) },
+            onPreset: function (action, p) {
+                // Save as / Rename ask for the name in NHE's dialog
+                mod.presetAction(instance, action, p && p.id, function (ask, done) {
+                    NHE.NameDialog({
+                        plugin: info.label, pill: action === 'rename' ? 'Rename' : 'Save as',
+                        title: 'Preset name', icon: action === 'rename' ? 'rename' : 'saveAs',
+                        value: ask.name, accent: colourOf(instance), onSave: done
+                    })
+                })
+            },
             files: fileOptions(instance),
             onFile: function (uri, value) { mod.fileAction(instance, uri, value) },
             onT3K: function (uri) { mod.fileT3K(instance, uri) },

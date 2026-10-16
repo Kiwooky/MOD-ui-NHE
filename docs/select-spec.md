@@ -71,6 +71,7 @@ Section **Control / Selects** (`81:16403`), below Control / Buttons. All colours
 
 Notes:
 - **Preset actions follow MOD:** Save as is always available; Save, Rename and Delete only for a user preset, and not while the preset list is locked.
+- **Save as and Rename ask for the name in NHE's name dialog** (`components/controls/name.js`, the addressing dialog's frame: plugin name with a "Save as" / "Rename" pill, a Preset name field, Cancel / Save; Save is off while the name is empty). MOD's own buttons still do the work: the adapter swaps `desktop.openPresetSaveWindow` for the one click, so MOD's saving runs unchanged.
 - **Locked lists:** the selected row becomes `Selected locked` (grey, binding icon right). In Locked / Blocked variants that row is an exposed instance: set its `Binding type` to match the list's (Figma can't link a parent property into a nested instance).
 - **Settings panel mock-up** (`81:15319`): the preset list fills the plugin column under the on/off header, and a Division option list stacks with Tails and Reverse in the Delay group (44 + 169 + 169 + 241 = 623 of 646).
 

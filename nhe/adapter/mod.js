@@ -378,11 +378,25 @@
         }
         return { factory: read('.mod-preset-factory'), user: read('.mod-preset-user'), selected: gui ? gui.currentPreset : null, enabled: box.data('enabled') !== false }
     }
-    mod.presetAction = function (instance, action, id) {
+    // askName (optional): fn({ title, name }, done(newName)) replaces MOD's
+    // name window for Save as and Rename. MOD's buttons ask for the name
+    // through desktop.openPresetSaveWindow(title, name, callback)
+    // (desktop.js); that is swapped for the one click, so MOD's checks and
+    // saving (presetSaveNew / presetSaveReplace) run unchanged.
+    mod.presetAction = function (instance, action, id, askName) {
         var box = presetBox(instance)
         if (action === 'load') { box.find('[mod-role=enumeration-option][mod-uri="' + id + '"]').click(); return }
         var btn = { saveAs: '.preset-btn-save-as', save: '.preset-btn-save', rename: '.preset-btn-rename', delete: '.preset-btn-delete' }[action]
-        if (btn) box.find(btn).click()
+        if (!btn) return
+        var named = (action === 'saveAs' || action === 'rename') && typeof askName === 'function' && window.desktop
+        if (!named) { box.find(btn).click(); return }
+        var own = desktop.hasOwnProperty('openPresetSaveWindow'), orig = desktop.openPresetSaveWindow
+        var restore = function () { if (own) desktop.openPresetSaveWindow = orig; else delete desktop.openPresetSaveWindow }
+        desktop.openPresetSaveWindow = function (title, name, callback) {
+            restore()
+            askName({ title: title, name: name }, callback)
+        }
+        try { box.find(btn).click() } finally { restore() }
     }
     mod.onPresetsChange = function (instance, cb) {
         hook(instance, 'selectPreset', function () { cb() })

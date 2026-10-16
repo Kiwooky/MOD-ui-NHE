@@ -800,3 +800,6 @@
 }
 .nhe-plugin-header__colour svg { display: block; width: 100%; height: 100%; }
 .nhe-plugin-header.has-colour .nhe-plugin-header__name { padding-right: 40px; padding-left: 40px; }
+
+/* the name dialog (preset Save as / Rename) is short: no stretch above the buttons */
+.nhe-name-dialog .nhe-dialog__field { flex: none; }

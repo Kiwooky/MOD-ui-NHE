@@ -46,6 +46,7 @@
                 'components/controls/panel.js',
                 'components/controls/addressing.js',
                 'components/controls/colour.js',
+                'components/controls/name.js',
                 'features/settings/settings.css',
                 'features/settings/index.js'
             ]

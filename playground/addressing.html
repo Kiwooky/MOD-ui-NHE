@@ -37,7 +37,7 @@
 </header>
 <main>
     <section>
-        <h2>Plugin colour</h2>
+        <h2>Plugin colour and presets</h2>
         <div class="cases" id="colour"></div>
     </section>
     <section>
@@ -62,6 +62,7 @@
 <script src="/nhe/components/controls/controls.js"></script>
 <script src="/nhe/components/controls/addressing.js"></script>
 <script src="/nhe/components/controls/colour.js"></script>
+<script src="/nhe/components/controls/name.js"></script>
 <script>
 (function () {
     var log = function (what, data) {
@@ -158,6 +159,15 @@
         } })
     })
     document.getElementById('colour').appendChild(cb)
+
+    // preset Save as: the name dialog
+    var sb = document.createElement('button')
+    sb.innerHTML = 'Preset Save as<small>name dialog</small>'
+    sb.addEventListener('click', function () {
+        NHE.NameDialog({ plugin: 'Dragonfly Hall', pill: 'Save as', title: 'Preset name', icon: 'saveAs', value: 'Large Hall',
+                         accent: colour, onSave: function (name) { log('save as', name) } })
+    })
+    document.getElementById('colour').appendChild(sb)
 
     var box = document.getElementById('cases')
     CASES.forEach(function (c) {

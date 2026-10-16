@@ -9,8 +9,8 @@ A plugin can take one of MOD's colours in place of the system accent
   (the plugin header, top of the settings panel) opens the picker.
 - The picker is a dialog in the addressing dialog's frame: the plugin name
   with a "Colour" pill, then a grid of swatches. **System** (two cells wide)
-  goes back to the theme purple. Tapping a swatch applies it and closes;
-  Cancel or Escape leaves it as it was.
+  goes back to the theme purple. Tapping a swatch selects it and previews it in
+  the dialog; Save applies it, Cancel or Escape leaves it as it was.
 - The colour belongs to the plugin type: every copy of it, on every
   pedalboard. Kept per browser in `localStorage['nhe-plugin-colours']`
   (`{ pluginUri: '#rrggbb' }`).
