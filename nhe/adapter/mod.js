@@ -240,6 +240,122 @@
         if (gui && hw && gui.controls[symbol]) hw.open(instance, gui.controls[symbol], icon && icon.data('label'))
     }
 
+    // The NHE addressing dialog's model (components/controls/addressing.js).
+    // It opens MOD's own addressing form (hardware.js open(), the template
+    // include/addressing.html) hidden, reads what MOD shows in it and sets its
+    // fields, and Save presses MOD's Save: MOD's checks, defaults and saving
+    // (saveAddressing / addressNow) run unchanged. Depends on that form's
+    // markup: .js-type buttons (data-value), .device-table td (selected /
+    // disabled), select[name=cc-actuator|cv-port|steps|led-color-mode|
+    // momentary-sw-mode|cv-op-mode|divider], input[name=label|min|max|tempo],
+    // the .dynamic-field messages, .range / .tempo groups, .js-save / .js-close.
+    mod.addressing = function (instance, symbol) {
+        var gui = mod.gui(instance), icon = mod.plugins()[instance]
+        var hw = mod.pedalboard().data('hardwareManager')
+        var port = gui && gui.controls[symbol]
+        if (!hw || !port) return null
+        var pluginLabel = (icon && icon.data('label')) || ''
+        hw.open(instance, port, pluginLabel)
+        var form = $('body > .mod-pedal-settings-address').last()
+        if (!form.length) return null
+        form.addClass('nhe-hidden-form')
+        var root = form[0]
+
+        // shown in MOD's form: no hidden group between the element and the
+        // form (the "Advanced" box counts as open: NHE shows those directly)
+        var shown = function (el) {
+            for (var n = el && el[0] || el; n && n !== root; n = n.parentNode) {
+                if (n.classList && n.classList.contains('advanced-container')) continue
+                if (n.style && n.style.display === 'none') return false
+            }
+            return !!n
+        }
+        var text = function (el) { return $.trim($(el).text()).replace(/\s+/g, ' ') }
+        var optionsOf = function (sel) {
+            return sel.find('option').map(function () { return { label: text(this), value: this.value } }).get()
+        }
+        var CV_RANGE = { '-': '−10 – 0 V', 'b': '±5 V', '+': '0 – +10 V' }   // MOD's labels are sentences
+        var SETTINGS = [['steps', 'Sensitivity'], ['momentary-sw-mode', 'Mode'], ['led-color-mode', 'LED colour'], ['cv-op-mode', 'CV range']]
+
+        var model = {
+            state: function () {
+                // MOD Desktop marks Device and Control Chain 'desktop-app-locked':
+                // picking one shows its upsell card and leaves the type input alone
+                var picked = form.find('.js-type.selected')
+                var locked = picked.hasClass('desktop-app-locked')
+                var type = locked ? picked.attr('data-value') : form.find('input[name=type]').val()
+                var types = form.find('.js-type').filter(function () { return this.style.display !== 'none' })
+                    .map(function () { return { id: $(this).attr('data-value'), label: text(this) } }).get()
+
+                var targets = null, message = ''
+                var cells = form.find('.device-table td')
+                if (shown(form.find('.device-table')) && cells.length) {
+                    targets = cells.map(function (i) {
+                        var c = $(this), page = c.attr('data-page'), label = text(this)
+                        if (page !== undefined) label += ' · Page ' + (Number(page) + 1)
+                        return { id: 'td:' + i, label: label, selected: c.hasClass('selected'), disabled: c.hasClass('disabled') }
+                    }).get()
+                } else {
+                    ;['cc-actuator', 'cv-port'].forEach(function (name) {
+                        var sel = form.find('select[name=' + name + ']')
+                        if (targets || !shown(sel) || !sel.find('option').length) return
+                        targets = optionsOf(sel).map(function (op) { return { id: name + ':' + op.value, label: op.label, selected: op.value === sel.val() } })
+                    })
+                }
+                if (locked) {
+                    targets = null
+                    message = 'Only on a MOD device: assign this control to a knob or footswitch on a Duo, Duo X or Dwarf.'
+                } else if (!targets) {
+                    form.find('span.dynamic-field').each(function () { if (shown(this)) message = text(this) })
+                    if (!message && type !== 'null') message = 'Nothing available to assign this control to.'
+                }
+
+                var settings = []
+                SETTINGS.forEach(function (s) {
+                    var sel = form.find('select[name=' + s[0] + ']')
+                    var opts = optionsOf(sel)
+                    if (!shown(sel.closest('.form-group')) || sel.hasClass('disabled') || opts.length < 2) return
+                    if (s[0] === 'cv-op-mode') opts.forEach(function (op) { op.label = CV_RANGE[op.value] || op.label })
+                    settings.push({ id: s[0], title: s[1], options: opts, value: sel.val(), disabled: sel.prop('disabled') })
+                })
+
+                var tempo = null, tg = form.find('.tempo')
+                if (tg.length && shown(tg) && tg[0].style.display !== 'none') {
+                    var dv = form.find('select[name=divider]')
+                    tempo = { on: form.find('input[name=tempo]').prop('checked'), dividers: optionsOf(dv), divider: dv.val() }
+                }
+
+                return {
+                    types: types, type: type, targets: targets, message: message,
+                    label: form.find('input[name=label]').val(),
+                    min: form.find('input[name=min]').val(), max: form.find('input[name=max]').val(),
+                    range: shown(form.find('.range')),
+                    settings: settings, tempo: tempo,
+                    canSave: !locked && !form.find('.js-save').hasClass('disabled')
+                }
+            },
+            setType: function (id) { form.find('.js-type').filter(function () { return $(this).attr('data-value') === id }).click() },
+            setTarget: function (id) {
+                var m = /^td:(\d+)$/.exec(id)
+                if (m) { form.find('.device-table td').eq(Number(m[1])).click(); return }
+                var i = id.indexOf(':')
+                form.find('select[name=' + id.slice(0, i) + ']').val(id.slice(i + 1)).change()
+            },
+            setSetting: function (name, value) { form.find('select[name=' + name + ']').val(value).change() },
+            setTempo: function (on) { form.find('input[name=tempo]').prop('checked', !!on).change() },
+            setDivider: function (value) { form.find('select[name=divider]').val(value).change() },
+            save: function (v) {
+                form.find('input[name=label]').val(v.label)
+                if (v.min !== undefined) { form.find('input[name=min]').val(v.min); form.find('input[name=max]').val(v.max) }
+                form.find('.js-save').click()
+            },
+            // MOD's Cancel removes its form
+            cancel: function () { form.find('.js-close').first().click(); form.remove() }
+        }
+        var control = symbol === ':bypass' ? 'On/off' : symbol === ':presets' ? 'Presets' : (port.shortName || port.name || symbol)
+        return { model: model, plugin: pluginLabel, control: control }
+    }
+
     // plugin on/off: MOD's ':bypass' port is the inverse (1 = bypassed)
     mod.pluginOn = function (instance) {
         var gui = mod.gui(instance)

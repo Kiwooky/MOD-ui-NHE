@@ -497,3 +497,82 @@
     NHE.ControlBase = Base
     NHE.controlHelpers = { el: el, mix: mix, icon: icon, extend: extend }
 })();
+
+/*
+ * Drag to scroll, with NHE's own pointer handling: MOD cancels every
+ * touchmove on the page (desktop.js), so the browser never scrolls anything
+ * under a finger, and a mouse never drag-scrolls anyway.
+ *
+ *   NHE.dragScroll(root, { x: true })   // x: also pan root sideways
+ *
+ * The first few px decide the axis. Up/down scrolls the nearest element
+ * that scrolls vertically (a list, or root itself); sideways pans root, but
+ * not from a control (button, readout) outside a list. A drag never starts
+ * on an input or a slider thumb, and swallows the click that follows it.
+ * Listens on the document while dragging, as the slider does.
+ */
+(function () {
+    var NHE = window.NHE = window.NHE || {}
+
+    var START = 6                                      // px of travel before a press becomes a drag
+    var CONTROL = 'button, a, [tabindex]'
+    var NEVER = 'input, textarea, select, .nhe-slider__thumb'
+
+    NHE.dragScroll = function (root, options) {
+        var o = options || {}
+        var drag = null
+
+        var scrollerY = function (n) {
+            for (; n && n.nodeType === 1; n = n.parentNode) {
+                if (n.scrollHeight > n.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(n).overflowY)) return n
+                if (n === root) break
+            }
+            return null
+        }
+        var onMove = function (e) {
+            if (!drag || e.pointerId !== drag.id) return
+            var dx = e.clientX - drag.x, dy = e.clientY - drag.y
+            if (!drag.axis) {
+                if (Math.max(Math.abs(dx), Math.abs(dy)) < START) return
+                if (Math.abs(dy) > Math.abs(dx)) {
+                    if (!drag.list) { onUp(e); return }
+                    drag.axis = 'y'
+                } else {
+                    if (!o.x || drag.onControl || root.scrollWidth <= root.clientWidth) { onUp(e); return }
+                    drag.axis = 'x'
+                }
+                root.classList.add('is-dragging-scroll')
+            }
+            e.preventDefault()
+            if (drag.axis === 'x') root.scrollLeft = drag.left - dx
+            else drag.list.scrollTop = drag.top - dy
+        }
+        var onUp = function (e) {
+            if (!drag || (e && e.pointerId !== drag.id)) return
+            var moved = !!drag.axis
+            drag = null
+            root.classList.remove('is-dragging-scroll')
+            document.removeEventListener('pointermove', onMove)
+            document.removeEventListener('pointerup', onUp)
+            document.removeEventListener('pointercancel', onUp)
+            if (moved) {
+                var swallow = function (ev) { ev.stopPropagation(); ev.preventDefault() }
+                root.addEventListener('click', swallow, true)
+                setTimeout(function () { root.removeEventListener('click', swallow, true) }, 0)
+            }
+        }
+        root.addEventListener('pointerdown', function (e) {
+            if (drag || (e.pointerType === 'mouse' && e.button !== 0)) return
+            var t = e.target
+            if (!t.closest || t.closest(NEVER)) return
+            var list = scrollerY(t)
+            var onControl = !!t.closest(CONTROL)
+            if (onControl && !list) return       // a button, toggle or readout: leave it alone
+            drag = { id: e.pointerId, x: e.clientX, y: e.clientY, left: root.scrollLeft,
+                     list: list, top: list ? list.scrollTop : 0, onControl: onControl, axis: null }
+            document.addEventListener('pointermove', onMove)
+            document.addEventListener('pointerup', onUp)
+            document.addEventListener('pointercancel', onUp)
+        })
+    }
+})();

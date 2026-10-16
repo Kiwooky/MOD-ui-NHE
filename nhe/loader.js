@@ -44,6 +44,7 @@
                 'components/controls/controls.js',
                 'components/controls/systembar.js',
                 'components/controls/panel.js',
+                'components/controls/addressing.js',
                 'features/settings/settings.css',
                 'features/settings/index.js'
             ]

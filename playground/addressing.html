@@ -1,0 +1,162 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Niels -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Addressing playground</title>
+<link rel="stylesheet" href="/nhe/theme/tokens.css">
+<link rel="stylesheet" href="/nhe/components/slider/slider.css">
+<link rel="stylesheet" href="/nhe/components/controls/controls.css">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--nhe-color-black); color: var(--nhe-text-primary); font: 14px/1.4 var(--nhe-font-family-base); }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 12px 24px; border-bottom: 1px solid #333; }
+    header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    header a { color: #bbb; }
+    main { padding: 24px; }
+    h2 { margin: 0 0 12px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #aaa; }
+    section { margin-bottom: 32px; }
+    .cases { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cases button { font: inherit; font-size: 13px; color: inherit; background: #222; border: 1px solid #3a3a3a; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+    .cases button:hover { border-color: var(--nhe-accent-default); }
+    .cases small { display: block; color: #888; font-size: 11px; }
+    .log { height: 260px; overflow: auto; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .log div { color: #ccc; white-space: pre-wrap; }
+    .log b { color: var(--nhe-accent-default); font-weight: 600; }
+    .notes { color: #999; font-size: 13px; max-width: 80ch; margin: 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+<header>
+    <h1>Addressing playground</h1>
+    <a href="/playground/controls.html">Controls playground</a>
+    <a href="/playground/slider.html">Slider playground</a>
+</header>
+<main>
+    <section>
+        <h2>Open the dialog for</h2>
+        <div class="cases" id="cases"></div>
+    </section>
+    <section>
+        <h2>Event log</h2>
+        <div class="log" id="log"></div>
+    </section>
+    <section>
+        <h2>Notes</h2>
+        <ul class="notes">
+            <li>A fake MOD Duo: Knob 1–2, Footswitch 1–2 (Footswitch 1 is in use elsewhere), no Control Chain device, one plugin CV port.</li>
+            <li>The dialog keeps whatever you change between openings of the same case, as MOD would after a save.</li>
+            <li>Narrow the window below 480 px for the phone layout (full screen).</li>
+        </ul>
+    </section>
+</main>
+
+<script src="/nhe/components/icons.js"></script>
+<script src="/nhe/components/controls/controls.js"></script>
+<script src="/nhe/components/controls/addressing.js"></script>
+<script>
+(function () {
+    var log = function (what, data) {
+        var box = document.getElementById('log'), d = document.createElement('div')
+        d.innerHTML = '<b>' + what + '</b> ' + (data === undefined ? '' : JSON.stringify(data))
+        box.insertBefore(d, box.firstChild)
+    }
+
+    // the fake device
+    var DEVICE = [
+        { id: 'knob1', label: 'Knob 1', kinds: ['float', 'integer', 'enum'] },
+        { id: 'knob2', label: 'Knob 2', kinds: ['float', 'integer', 'enum'] },
+        { id: 'fs1', label: 'Footswitch 1', kinds: ['toggle', 'trigger', 'enum'], used: true },
+        { id: 'fs2', label: 'Footswitch 2', kinds: ['toggle', 'trigger', 'enum'] },
+    ]
+    var CV_PORTS = [{ id: 'cv1', label: 'Button to CV · CV Out' }]
+    var DIVIDERS = [['1/1', 1], ['1/2', 2], ['1/2T', 3], ['1/4', 4], ['1/4T', 6], ['1/8', 8], ['1/8T', 12], ['1/16', 16]]
+
+    var CASES = [
+        { title: 'Time (float)', sub: 'Can Abyss Delay', plugin: 'Can Abyss Delay', control: 'Time', kind: 'float', min: 20, max: 2000, tempo: true, slider: true },
+        { title: 'Tap (toggle)', sub: 'on Footswitch 2', plugin: 'Can Abyss Delay', control: 'Tap', kind: 'toggle', min: 0, max: 1, type: 'device', target: 'fs2' },
+        { title: 'Mix (float)', sub: 'mapped to MIDI CC 7', plugin: 'Dragonfly Hall', control: 'Dry level', kind: 'float', min: 0, max: 100, type: 'midi', midi: 'MIDI Ch.1 CC#7', slider: true },
+        { title: 'Division (list)', sub: '4 options', plugin: 'Bollie Delay', control: 'Div. L', kind: 'enum', min: 0, max: 3 },
+        { title: 'Width (float)', sub: 'minimised, on CV', plugin: 'Dragonfly Hall', control: 'Width', kind: 'float', min: 50, max: 150, type: 'cv', target: 'cv1', slider: true, minimised: true },
+        { title: 'Plugin on/off', sub: ':bypass', plugin: 'Bollie Delay', control: 'On/off', kind: 'toggle', min: 0, max: 1 },
+    ]
+
+    var Model = function (c) {
+        this.c = c
+        this.s = { type: c.type || 'none', target: c.target || null, label: c.label || c.control, min: c.min, max: c.max,
+                   steps: 'medium', momentary: '0', led: '0', cvmode: '+', tempo: false, divider: 4 }
+        this.saved = !!c.type
+    }
+    Model.prototype.state = function () {
+        var c = this.c, s = this.s
+        var types = [{ id: 'none', label: 'None' }, { id: 'device', label: 'Device' }]
+        if (c.kind !== 'enum') types.push({ id: 'midi', label: 'MIDI' })
+        types.push({ id: 'cc', label: 'Control Chain' })
+        if (c.kind === 'float' || c.kind === 'integer') types.push({ id: 'cv', label: 'CV' })
+
+        var targets = null, message = ''
+        if (s.type === 'device') {
+            targets = DEVICE.filter(function (d) { return d.kinds.indexOf(c.kind) >= 0 }).map(function (d) {
+                return { id: d.id, label: d.label, selected: d.id === s.target, disabled: d.used && d.id !== s.target }
+            })
+        } else if (s.type === 'cv') {
+            targets = CV_PORTS.map(function (p) { return { id: p.id, label: p.label, selected: p.id === s.target } })
+        } else if (s.type === 'midi') {
+            message = c.midi
+                ? 'This control is mapped to ' + c.midi + '. To map a different MIDI control, press Save and move it on your MIDI device. Cancel keeps the current mapping.'
+                : 'To map this control to your MIDI controller, press Save and move the control on your MIDI device.'
+        } else if (s.type === 'cc') {
+            message = 'No Control Chain device detected. Make sure the cable is firmly seated and connected to the MAIN port on the Control Chain device.'
+        }
+
+        var settings = []
+        var dev = s.type === 'device' && DEVICE.filter(function (d) { return d.id === s.target })[0]
+        if (dev && dev.id.indexOf('knob') === 0 && c.kind === 'float') settings.push({ id: 'steps', title: 'Sensitivity', value: s.steps, disabled: s.tempo, options: [{ label: 'Low', value: 'low' }, { label: 'Medium', value: 'medium' }, { label: 'High', value: 'high' }] })
+        if (dev && dev.id.indexOf('fs') === 0 && c.kind === 'toggle') settings.push({ id: 'momentary', title: 'Mode', value: s.momentary, options: [{ label: 'Latching', value: '0' }, { label: 'Momentary on', value: '1' }, { label: 'Momentary off', value: '2' }] })
+        if (dev && dev.id.indexOf('fs') === 0 && c.kind === 'enum') settings.push({ id: 'led', title: 'LED colour', value: s.led, options: [{ label: 'Static', value: '0' }, { label: 'Cycle', value: '1' }] })
+        if (s.type === 'cv' && s.target) settings.push({ id: 'cvmode', title: 'CV range', value: s.cvmode, options: [{ label: '−10 – 0', value: '-' }, { label: '±5', value: 'b' }, { label: '0 – +10', value: '+' }] })
+
+        var tempo = c.tempo && (s.type === 'none' || s.type === 'device')
+            ? { on: s.tempo, divider: s.divider, dividers: DIVIDERS.map(function (d) { return { label: d[0], value: d[1] } }) } : null
+
+        var canSave = s.type === 'midi' || ((s.type === 'device' || s.type === 'cv') && !!s.target) || (s.type === 'none' && (this.saved || s.tempo))
+        return { types: types, type: s.type, targets: targets, message: message, label: s.label, min: s.min, max: s.max,
+                 range: c.kind === 'float' || c.kind === 'integer', settings: settings, tempo: tempo, canSave: canSave }
+    }
+    Model.prototype.setType = function (id) { this.s.type = id; this.s.target = id === this.c.type ? this.c.target : null; log('type', id) }
+    Model.prototype.setTarget = function (id) { this.s.target = id; log('target', id) }
+    Model.prototype.setSetting = function (id, v) { this.s[id] = v; log('setting', [id, v]) }
+    Model.prototype.setTempo = function (on) { this.s.tempo = on; log('tempo', on) }
+    Model.prototype.setDivider = function (v) { this.s.divider = v; log('divider', v) }
+    Model.prototype.save = function (v) {
+        this.s.label = v.label
+        if (v.min !== undefined) { this.s.min = v.min; this.s.max = v.max }
+        var c = this.c, s = this.s
+        c.type = s.type; c.target = s.target; c.label = s.label; c.min = s.min; c.max = s.max
+        this.saved = this.s.type !== 'none'
+        log('save', { type: this.s.type, target: this.s.target, label: v.label, min: v.min, max: v.max })
+    }
+    Model.prototype.cancel = function () { log('cancel') }
+
+    var box = document.getElementById('cases')
+    CASES.forEach(function (c) {
+        var b = document.createElement('button')
+        b.innerHTML = c.title + '<small>' + c.sub + '</small>'
+        b.addEventListener('click', function () {
+            var model = new Model(c)
+            NHE.AddressingDialog({
+                plugin: c.plugin, control: c.control, model: model,
+                minimised: c.slider ? !!c.minimised : null,
+                onMinimise: function (v) { c.minimised = v; log('minimised', v) },
+                onClose: function (saved) { log('closed', saved) }
+            })
+        })
+        box.appendChild(b)
+    })
+})()
+</script>
+</body>
+</html>

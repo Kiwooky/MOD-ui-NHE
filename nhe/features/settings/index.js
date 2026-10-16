@@ -15,6 +15,7 @@
 NHE.register('settings', function (mod) {
     var VIEW_KEY = 'nhe-settings-view'     // 'nhe' | 'mod', per browser
     var TAB_KEY = 'nhe-system-bar-tab'     // 'meters' | 'chain', per browser
+    var MINI_KEY = 'nhe-minimised'         // { 'instance/symbol': true }, per browser
     var MIN_HEIGHT = 400
 
     var view = function () {
@@ -26,6 +27,31 @@ NHE.register('settings', function (mod) {
     // the system bar opens on the tab used last, in every plugin's window
     var barTab = function () {
         try { return localStorage.getItem(TAB_KEY) === 'chain' ? 'chain' : 'meters' } catch (e) { return 'meters' }
+    }
+    // minimised sliders (set in the addressing dialog)
+    var minimisedAll = function () {
+        try { return JSON.parse(localStorage.getItem(MINI_KEY) || '{}') || {} } catch (e) { return {} }
+    }
+    var isMinimised = function (instance, symbol) { return !!minimisedAll()[instance + '/' + symbol] }
+    var setMinimised = function (instance, symbol, on) {
+        var all = minimisedAll()
+        if (on) all[instance + '/' + symbol] = true
+        else delete all[instance + '/' + symbol]
+        try { localStorage.setItem(MINI_KEY, JSON.stringify(all)) } catch (e) {}
+    }
+
+    // the addressing dialog, over MOD's own (hidden) addressing form
+    var openAddressing = function (instance, symbol, win) {
+        var a = mod.addressing(instance, symbol)
+        if (!a) { mod.openAddressing(instance, symbol); return }
+        var st = states[instance]
+        var c = st && st.panel && st.panel.control(symbol)
+        var slider = !!(c && NHE.Slider && c instanceof NHE.Slider)
+        NHE.AddressingDialog({
+            plugin: a.plugin, control: a.control, model: a.model,
+            minimised: slider ? isMinimised(instance, symbol) : null,
+            onMinimise: function (on) { setMinimised(instance, symbol, on); build(instance, win) }
+        })
     }
 
     var states = {}       // instance -> { root, panel, ... }
@@ -47,6 +73,7 @@ NHE.register('settings', function (mod) {
         var dec = /%\.(\d+)f/.exec(render)
         return { id: p.symbol, type: 'slider', group: group, options: mix(base, {
             value: p.value, min: p.ranges.minimum, max: p.ranges.maximum,
+            minimised: isMinimised(instance, p.symbol),
             unit: (p.units && p.units.symbol) || '',
             integer: has('integer'), logarithmic: has('logarithmic'),
             rangeSteps: p.rangeSteps || 0,
@@ -124,7 +151,7 @@ NHE.register('settings', function (mod) {
             onInput: function (id, v) { send(instance, id, v) },
             onChange: function (id, v) { send(instance, id, v) },
             onTrigger: function (id) { var p = mod.gui(instance).controls[id]; if (p) mod.setPortValue(instance, id, p.ranges.maximum) },
-            onSettings: function (id) { mod.openAddressing(instance, id) },
+            onSettings: function (id) { openAddressing(instance, id, win) },
             onPreset: function (action, p) { mod.presetAction(instance, action, p && p.id) },
             files: fileOptions(instance),
             onFile: function (uri, value) { mod.fileAction(instance, uri, value) },

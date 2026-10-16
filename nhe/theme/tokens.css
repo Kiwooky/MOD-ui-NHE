@@ -124,6 +124,9 @@
     --nhe-border-divider: var(--nhe-color-grey-500);        /* line between stacked control cells */
     --nhe-surface-switch-on: var(--nhe-color-white);        /* lit half of the plugin on/off switch */
     --nhe-text-on-switch: var(--nhe-color-black);           /* text on that lit half */
+    --nhe-surface-field: var(--nhe-color-grey-300);         /* text fields in the addressing dialog */
+    --nhe-text-on-field: var(--nhe-color-black);            /* text in those fields */
+    --nhe-surface-scrim: rgba(0, 0, 0, .6);                 /* under a dialog on tablet and desktop */
 
     /* Theme: port groups. MOD's own --group-<n>-color (css/pedals.css) wins when present;
      * the fallback is the same colour, copied into Figma as color/mod-group/<n>. */

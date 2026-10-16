@@ -39,3 +39,7 @@
 
 /* the system bar at the left, then the panel; they scroll together */
 .nhe-settings__stage { display: flex; align-items: flex-start; }
+
+/* MOD's addressing form, open behind the NHE addressing dialog: the dialog
+   reads and sets it (adapter: mod.addressing) */
+.mod-pedal-settings-address.nhe-hidden-form { display: none !important; }
