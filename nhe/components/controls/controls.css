@@ -764,11 +764,12 @@
 
 /* ---- plugin colour (components/controls/colour.js) ---------------------- */
 
-.nhe-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: var(--nhe-space-10); flex: none; }
+/* two hues to a row (bright, muted, deep); System fills the last row */
+.nhe-swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--nhe-space-8); flex: none; }
 
 .nhe-swatch {
     position: relative;
-    height: 52px;
+    height: 44px;
     padding: 0;
     background: var(--swatch);
     border: 0;
@@ -776,9 +777,34 @@
     cursor: pointer;
 }
 
-/* System spans two cells and says so */
-.nhe-swatch:first-child { grid-column: span 2; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
+.nhe-swatch--system { grid-column: span 3; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
 .nhe-swatch.is-selected { box-shadow: 0 0 0 2px var(--nhe-surface-base), 0 0 0 4px var(--nhe-text-primary); }
+
+/* custom colour: the preview swatch and three bars */
+.nhe-custom { display: flex; gap: var(--nhe-space-16); align-items: stretch; flex: none; }
+.nhe-custom__preview { width: 72px; height: auto; flex: none; }
+.nhe-custom__bars { display: flex; flex-direction: column; gap: var(--nhe-space-10); flex: 1 1 auto; min-width: 0; }
+.nhe-custom__row { display: flex; flex-direction: column; gap: var(--nhe-space-4); }
+.nhe-custom__label { font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; opacity: .8; }
+
+.nhe-range {
+    position: relative;
+    height: 24px;
+    border-radius: var(--nhe-radius-full);
+    cursor: pointer;
+    touch-action: none;
+}
+.nhe-range__knob {
+    position: absolute;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: 0 0 0 3px var(--nhe-text-primary), 0 1px 4px rgba(0, 0, 0, .6);
+    pointer-events: none;
+}
 
 .nhe-dialog__note { margin-top: var(--nhe-space-16); font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-normal); opacity: .7; }
 

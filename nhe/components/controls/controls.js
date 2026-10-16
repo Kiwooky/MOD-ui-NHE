@@ -524,7 +524,7 @@
 
     var START = 6                                      // px of travel before a press becomes a drag
     var CONTROL = 'button, a, [tabindex]'
-    var NEVER = 'input, textarea, select, .nhe-slider__thumb'
+    var NEVER = 'input, textarea, select, .nhe-slider__thumb, .nhe-range'
 
     NHE.dragScroll = function (root, options) {
         var o = options || {}
