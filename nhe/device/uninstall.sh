@@ -1,5 +1,5 @@
 #!/bin/sh
-# SPDX-FileCopyrightText: 2026 Niels
+# SPDX-FileCopyrightText: 2026 New Horizon Electronics
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
 # Removes the NHE hooks from MOD's web UI. Run ON THE MOD DEVICE:

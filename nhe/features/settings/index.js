@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Niels
+// SPDX-FileCopyrightText: 2026 New Horizon Electronics
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 /*
@@ -120,7 +120,7 @@ NHE.register('settings', function (mod) {
     var createScreen = function (instance, host, kind, actions) {
         hookTempo()
         var st = { instance: instance, host: host, kind: kind, actions: actions }
-        st.root = $('<div class="nhe-settings">').appendTo(host)
+        st.root = $('<div class="nhe-settings">').attr('data-instance', instance).appendTo(host)
         st.scroller = $('<div class="nhe-settings__scroll">').appendTo(st.root)
         var stage = $('<div class="nhe-settings__stage">').appendTo(st.scroller)
         st.barEl = $('<div>').appendTo(stage)

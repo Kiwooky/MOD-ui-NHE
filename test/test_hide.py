@@ -26,7 +26,7 @@ async def main():
     ok('hide removes pedal, next slides in', '/graph/echo' not in s and await ev(act)=='/graph/trem', (s, await ev(act)))
     ok('tile appears with count', await ev("$('.performance-tile b').text()")=='1 hidden' and s[-1]==':hidden')
     ok('hidden icon back on canvas', await ev("$('#pedalboard-dashboard').data('plugins')['/graph/echo'].parent().is('#pedalboard-dashboard')"))
-    ok('strip shows new active settings', await ev("$('.performance-strip > .mod-settings').attr('mod-instance')")=='/graph/trem')
+    ok('Flip and Hide move to the new active pedal', await ev("$('.performance-tools').closest('.performance-slide').attr('data-instance')")=='/graph/trem')
     # hide the last pedal -> previous slides in
     await ev("desktop.performanceView.goTo($('.performance-slide').index($('.performance-slide[data-instance=\"/graph/eq\"]')))"); await pg.wait_for_timeout(900)
     await pg.click('.performance-hide'); await pg.wait_for_timeout(900)
@@ -36,16 +36,16 @@ async def main():
     sym=await ev("Object.keys($('#pedalboard-dashboard').data('plugins')['/graph/echo'].data('gui').controls).filter(function(k){return k[0]!=':'})[0]")
     await ev("ws.onmessage({data: 'param_set /graph/echo %s 50'})"%sym); await pg.wait_for_timeout(200)
     ok('update to hidden pedal reaches its GUI', await ev("$('#pedalboard-dashboard').data('plugins')['/graph/echo'].data('gui').controls['%s'].value"%sym)==50)
-    # tap the tile (neighbour) -> shelf
+    # tap the tile (neighbour): it holds the hidden pedals
     await ev("$('.performance-tile')[0].scrollIntoView()"); 
     box=await ev("JSON.stringify($('.performance-tile')[0].getBoundingClientRect())")
     import json; bx=json.loads(box)
     await pg.mouse.click(min(bx['x']+bx['width']/2, 1170), bx['y']+bx['height']/2); await pg.wait_for_timeout(1000)
     ok('tile becomes active', await ev(act)==':hidden', await ev(act))
-    ok('shelf shows hidden pedals in signal order', await ev("$('.performance-shelf-item .performance-shelf-label').map(function(){return $(this).text()}).get()"), await ev("$('.performance-shelf-item .performance-shelf-label').map(function(){return $(this).text()}).get()"))
-    ok('shelf has show all, hide button hidden, no settings', await ev("$('.performance-show-all').is(':visible') && !$('.performance-hide').is(':visible') && $('.performance-strip > .mod-settings').length===0"))
+    ok('tile shows hidden pedals in signal order', await ev("$('.performance-shelf-item .performance-shelf-label').map(function(){return $(this).text()}).get()"), await ev("$('.performance-shelf-item .performance-shelf-label').map(function(){return $(this).text()}).get()"))
+    ok('tile has show all; no Flip / Hide on it', await ev("$('.performance-show-all').is(':visible') && !$('.performance-hide').is(':visible') && !$('.performance-flip').is(':visible')"))
     await pg.screenshot(path='h_shelf.png')
-    # restore echo from shelf
+    # restore echo from the tile
     await pg.click('.performance-shelf-item >> nth=0'); await pg.wait_for_timeout(1000)
     ok('restored pedal back in place and active', (await ev(slides))[2]=='/graph/echo' and await ev(act)=='/graph/echo', (await ev(slides), await ev(act)))
     ok('tile count 1', await ev("$('.performance-tile b').text()")=='1 hidden')
@@ -62,7 +62,7 @@ async def main():
         await ev("desktop.performanceView.goTo(0)"); await pg.wait_for_timeout(500)
         if await ev(act)==':hidden': break
         await pg.click('.performance-hide'); await pg.wait_for_timeout(600)
-    ok('all hidden: only tile, shelf visible', await ev(slides)==[':hidden'] and await ev("$('.performance-shelf').is(':visible')"), await ev(slides))
+    ok('all hidden: only the tile, its pedals visible', await ev(slides)==[':hidden'] and await ev("$('.performance-shelf-row').is(':visible')"), await ev(slides))
     await pg.screenshot(path='h_all.png')
     await pg.click('.performance-show-all'); await pg.wait_for_timeout(1000)
     s=await ev(slides)

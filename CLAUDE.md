@@ -1,6 +1,6 @@
 # Working on mod-ui-nhe (for Claude Code and other agents)
 
-Read README.md first, then HANDOVER.md for current status and the next task. This repo extends MOD's web UI **without changing MOD's code**.
+Read README.md first, then ROADMAP.md for current status and what's next. This repo extends MOD's web UI **without changing MOD's code**.
 
 ## Rules
 
@@ -33,4 +33,4 @@ Read README.md first, then HANDOVER.md for current status and the next task. Thi
 
 ## Tests
 
-`test/` holds the Playwright suites written for the performance view (34 + 20 checks plus touch). They were built against mod-ui in dev mode with MOD's plugin data (guitarix plugins), not MOD Desktop's plugin set; see test/README.md. Run them after changing the performance view or the adapter.
+`test/` holds the Playwright suites written for the performance view (34 + 20 checks plus touch). They were built against mod-ui in dev mode with MOD's plugin data (guitarix plugins), not MOD Desktop's plugin set; see test/README.md. Run them after changing the performance view or the adapter. The flip checks haven't been run since the flip was added.

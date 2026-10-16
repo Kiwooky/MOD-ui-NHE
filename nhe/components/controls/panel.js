@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Niels
+// SPDX-FileCopyrightText: 2026 New Horizon Electronics
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 /*
@@ -150,6 +150,7 @@
             if (col.kind === 'slider') {
                 var c = col.control
                 var d = el('div', null, root)
+                d.setAttribute('data-id', c.id)      // the port symbol (tests, tools)
                 var group = { kind: col.groupKind, name: col.group ? col.group.name : '', color: color, width: col.groupWidth }
                 self.instances[c.id] = new NHE.Slider(d, mix(mix(c.options, { group: group }), cb(c.id)))
                 return
@@ -163,6 +164,7 @@
             el('div', 'nhe-stack__name', band).textContent = col.group ? col.group.name : ''
             col.cells.forEach(function (c, i) {
                 var d = el('div', null, st)
+                d.setAttribute('data-id', c.id)
                 var Ctor = c.type === 'toggle' ? NHE.Toggle : c.type === 'trigger' ? NHE.Trigger : NHE.OptionList
                 self.instances[c.id] = new Ctor(d, mix(c.options, cb(c.id)))
                 if (i === 0) d.classList.add('is-first')

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Niels
+// SPDX-FileCopyrightText: 2026 New Horizon Electronics
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Same file as html/js/performance.js on the performance-view branch of
 // Kiwooky/mod-ui. Keep them in sync: this layer is where it is developed,

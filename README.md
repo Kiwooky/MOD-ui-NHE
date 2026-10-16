@@ -2,7 +2,40 @@
 
 Extensions for the [MOD](https://mod.audio) web UI (MOD Duo, Duo X, Dwarf, MOD Desktop), kept **outside MOD's code**.
 
-The first feature is the **performance view**: your pedalboard's pedals one at a time as big as the screen allows, in a swipeable carousel, with the centred pedal's settings in a strip underneath.
+![The NHE settings screen for Bollie Delay: the system bar on the left, then the plugin header and presets, option lists, toggles and sliders](docs/images/settings-screen.png)
+
+## What it adds
+
+- **A new plugin settings screen.** A pedal's gear opens big, touch-friendly controls in place of MOD's knobs: sliders, toggles, triggers, option lists, presets and file lists (NAM models, IRs), stacked into columns that fit the screen and scroll sideways. A system bar on the left shows tempo, CPU / RAM and the signal chain; tap a neighbouring plugin to jump to it. The **NHE / MOD** switch at the top right brings back MOD's own panel.
+- **A clearer assignment dialog.** A control's settings icon opens one screen for assigning it to a footswitch, knob, MIDI, Control Chain or CV, with its label, range and options.
+- **Plugin colours.** Give each plugin one of MOD's colours in place of the purple.
+- **A performance view.** The bolt icon in the footer shows your pedals one at a time, as big as the screen allows. **Flip** a pedal to get to its settings on the back; **Hide** the ones you don't need while playing.
+
+Values, presets and assignments all go through MOD's own code, so everything stays in step with MOD's editor, the device and other browsers. On the device NHE adds its own folder and two small hooks into MOD's page, and nothing else (see "How it fits into MOD").
+
+## Install it on your MOD
+
+You need a Mac or Linux computer (on Windows, use [WSL](https://learn.microsoft.com/windows/wsl/)) and your MOD device connected over USB.
+
+1. **Get this repository.** Either `git clone https://github.com/Kiwooky/MOD-ui-NHE.git`, or on GitHub choose **Code → Download ZIP** and unzip it.
+2. **Connect the MOD** over USB and check that http://192.168.51.1 opens MOD's web UI in your browser.
+3. **Run the installer** from the repository's folder, in a terminal:
+
+   ```sh
+   sh tools/deploy.sh
+   ```
+
+   It asks for the MOD's password twice: it is `mod`. (Run `ssh-copy-id root@192.168.51.1` once and it won't ask again.)
+4. **Reload** http://192.168.51.1. No reboot is needed.
+
+For a MOD on your network instead of USB, add its address: `sh tools/deploy.sh 192.168.1.50`.
+
+- **Update:** get the new version of the repository and run `sh tools/deploy.sh` again.
+- **After a MOD OS update:** run `sh tools/deploy.sh` again (the update removes the hooks).
+- **Uninstall:** `ssh root@192.168.51.1 'sh /data/nhe/device/uninstall.sh'` puts MOD's original page back.
+- Use **one MOD tab at a time**: MOD's UI expects one browser, and a second tab can hang on "Loading pedalboard…".
+
+Status and what's next: [ROADMAP.md](ROADMAP.md).
 
 ## How it fits into MOD
 
@@ -19,11 +52,13 @@ nhe/
   version.json           bumped on deploy so browsers fetch new files
   adapter/mod.js         the ONLY code that touches MOD's internals
   theme/tokens.css       design tokens (--nhe-*), exported from the Figma file's Variables
-  components/            controls, not wired into MOD yet:
+  components/            the NHE controls:
     icons.js             icons exported from the Figma file
     slider/              the slider that will replace MOD's knob
     controls/            toggle, trigger, plugin header, buttons, option list, preset list,
-                         system bar (systembar.js) and the panel layout with stacking (panel.js)
+                         system bar (systembar.js), the panel layout with stacking (panel.js),
+                         the addressing dialog (addressing.js), plugin colours (colour.js),
+                         the name dialog (name.js)
   features/performance/  performance.js + .css (shared with the mod-ui branch) and index.js (wiring)
   features/settings/     the NHE plugin settings panel in MOD's settings window (NHE / MOD switch)
   device/install.sh      run on the device: hooks NHE into MOD's UI (safe to repeat)
@@ -32,7 +67,7 @@ tools/
   devproxy.js            local preview: MOD's real UI + this repo's files, live
   deploy.sh              copy to the device and install
 playground/              component playgrounds, no MOD needed (npm run playground)
-docs/                    specs (docs/slider-spec.md)
+docs/                    specs (slider, buttons, selects, system bar, addressing, plugin colour, performance flip)
 test/                    browser tests (see test/README.md)
 ```
 
@@ -48,7 +83,7 @@ MOD Desktop hides the device-only parts of the UI (File Manager, Banks, Plugin S
 
 ## The settings panel
 
-With the `settings` feature on (the default), a pedal's gear opens MOD's settings window with the NHE panel: sliders, toggles, triggers, option lists, presets and plugin on/off, stacked into columns. The **NHE / MOD** switch at the top right shows MOD's own panel instead (remembered per browser). Values go through MOD's own path both ways, bindings show as shared or locked, and the binding dialog, presets and on/off use MOD's existing functions. The system bar sits on the left (tempo, CPU / RAM, the signal chain; EXIT closes the window). The NHE panel doesn't handle file or text settings yet (e.g. NAM's model, Button to CV's texts): use the MOD view for those. The performance view's strip still shows MOD's controls.
+With the `settings` feature on (the default), a pedal's gear opens MOD's settings window with the NHE screen: sliders, toggles, triggers, option lists, presets, file lists and plugin on/off, stacked into columns. The **NHE / MOD** switch at the top right shows MOD's own panel instead (remembered per browser). Values go through MOD's own path both ways, bindings show as shared or locked, and the addressing dialog, presets and on/off drive MOD's existing functions. The system bar sits on the left (tempo, CPU / RAM, the signal chain; EXIT closes the window). Text settings (e.g. Button to CV's texts) aren't handled yet: use the MOD view for those. The same screen is the back of a flipped pedal in the performance view.
 
 Turn it off with `NHE.mod.setPreference('nhe-settings', 'false')`.
 
@@ -56,15 +91,9 @@ Turn it off with `NHE.mod.setPreference('nhe-settings', 'false')`.
 
 `npm run playground`, then open http://localhost:18090/playground/slider.html (the slider with a properties panel, an event log, a sample settings panel and a theme-colour picker) or http://localhost:18090/playground/controls.html (every other control, the system bar, and a full settings panel laid out with stacking, at different heights). It needs no MOD. (The same page is at /playground/slider.html on the `npm run dev` proxy.) Open only the playground page on :18090, not its root: the root is MOD's UI, and MOD wants one tab at a time.
 
-## Put it on the Duo
+## Deploying while developing
 
-```sh
-npm run deploy            # or: tools/deploy.sh 192.168.51.1
-```
-
-This copies `nhe/` to `/data/nhe`, then runs `device/install.sh` on the Duo. Root's password is `mod`. Run `ssh-copy-id root@192.168.51.1` once and you won't be asked again. Reload the MOD UI; no reboot needed.
-
-To remove it: `ssh root@192.168.51.1 'sh /data/nhe/device/uninstall.sh'`.
+`npm run deploy` is `tools/deploy.sh` (see "Install it on your MOD"): it copies `nhe/` to `/data/nhe`, then runs `device/install.sh` on the device, and stamps a new version so browsers fetch the new files.
 
 ## Switching features off
 
@@ -79,6 +108,8 @@ NHE.mod.setPreference('nhe-performance', 'false')   // in the browser console; r
 - MOD OS 1.14 (tested against 1.14 RC4, `v1.14.0.3366`) or MOD Desktop on the same version.
 - A browser at least as new as MOD 1.14 needs: iOS/iPadOS 13.4+; for the performance view, Safari 14.1+ or any current Chrome, Firefox or Edge.
 
-## License
+## Licence
 
-AGPL-3.0-or-later, like mod-ui.
+AGPL-3.0-or-later, like mod-ui ([LICENSE](LICENSE)). © 2026 New Horizon Electronics.
+
+MOD, MOD Duo, Duo X, Dwarf and MOD Desktop are products of MOD Audio. This is an independent extension, not affiliated with or endorsed by MOD Audio.

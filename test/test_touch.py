@@ -27,11 +27,14 @@ async def main():
         await swipe(x,y,dx)
         await pg.wait_for_timeout(1200)
         print(label, await ev(st))
-    # swipe on the strip must not move the carousel
+    # flip the pedal: a swipe on its back scrolls the settings, not the carousel
     before=await ev(st)
-    await swipe(900,604,-400)
+    await pg.tap('.performance-slide.active .performance-flip'); await pg.wait_for_timeout(700)
+    await swipe(900,500,-400)
     await pg.wait_for_timeout(800)
-    print('strip swipe', before, await ev(st), await ev("$('.performance-strip .mod-controls')[0].scrollLeft"))
+    print('back swipe', before, await ev(st), await ev("$('.performance-back .nhe-settings:visible .nhe-scroll__area')[0].scrollLeft"))
+    await pg.tap('.performance-back .nhe-settings:visible .nhe-system-bar__exit'); await pg.wait_for_timeout(700)
+    print('flipped back', not await ev('desktop.performanceView.isFlipped()'))
     # drag a knob on the active pedal: knob turns, carousel stays
     kq="(function(){var a=$('.performance-slide.active'); var k=a.find('[mod-role=input-control-port]').first(); var r=k[0].getBoundingClientRect(); return [k.attr('mod-port-symbol'), a.attr('data-instance'), r.left+r.width/2, r.top+r.height/2]})()"
     sym,inst,kx,ky=await ev(kq)

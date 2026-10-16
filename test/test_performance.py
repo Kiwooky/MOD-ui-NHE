@@ -68,49 +68,51 @@ async def main():
     ok('AC11 click neighbour selects it', await act()==nb, (nb, await act()))
     ok('AC11 neighbour knob untouched', vals_before==vals_after)
     c=await centred(); ok('AC8 centred after tap', abs(c)<=2, c)
-    # AC15 strip shows active settings
-    ok('AC15 strip shows active pedal settings', await ev("$('.performance-strip > .mod-settings').attr('mod-instance')")==nb)
-    # AC16 centred when fits, scrollable from the left when not
-    q="""(function(){var g=$('.performance-strip .mod-control-group')[0], c=$('.performance-strip .mod-controls')[0]; var gr=g.getBoundingClientRect(), cr=c.getBoundingClientRect(); return [Math.round(gr.left-cr.left), Math.round(cr.right-gr.right), c.scrollWidth>c.clientWidth]})()"""
-    for inst in ['/graph/phaser','/graph/comp']:
-        await ev("desktop.performanceView.goTo($('.performance-slide').index($('.performance-slide[data-instance=\""+inst+"\"]')))"); await pg.wait_for_timeout(900)
-        cen=await ev(q)
-        if cen[2]: ok('AC16 %s overflows: starts at left, scrolls'%inst, cen[0]==0, cen)
-        else: ok('AC16 %s fits: centred'%inst, abs(cen[0]-cen[1])<=2, cen)
-    # strip scroll must not move the carousel (AC17): use the pedal with the most controls
-    await ev("desktop.performanceView.goTo($('.performance-slide').index($('.performance-slide[data-instance=\"/graph/eq\"]')))"); await pg.wait_for_timeout(900)
-    cen=await ev(q); ok('AC16 /graph/eq overflows: starts at left, scrolls', cen[2] and cen[0]==0, cen)
+    # AC15 Flip shows the active pedal's settings on its back (NHE's settings screen)
+    BACK="$('.performance-back').children('.nhe-settings:visible')"
+    await pg.click('.performance-slide.active .performance-flip'); await pg.wait_for_timeout(700)
+    ok('AC15 flip shows the active pedal on the back', await ev("desktop.performanceView.isFlipped()") and await ev(BACK+".attr('data-instance')")==nb, await ev(BACK+".attr('data-instance')"))
+    ok('AC15 the back covers the view', await ev("$('.performance-back').is(':visible')"))
+    # AC16/17 a wide panel scrolls sideways on the back; the carousel stays put
+    await ev("desktop.performanceView.flipTo('/graph/eq')"); await pg.wait_for_timeout(700)
+    ok('AC16 the chain hop goes straight to another back', await ev(BACK+".attr('data-instance')")=='/graph/eq' and await act()=='/graph/eq')
+    AREA=BACK+".find('.nhe-scroll__area')[0]"
     sl=await ev("$('.performance-stage')[0].scrollLeft")
-    await ev("$('.performance-strip .mod-controls')[0].scrollLeft=200")
-    await pg.mouse.move(600, 700); await pg.mouse.wheel(150,0); await pg.wait_for_timeout(500)
-    ok('AC17 strip scroll leaves carousel alone', await ev("$('.performance-stage')[0].scrollLeft")==sl and await ev("$('.performance-strip .mod-controls')[0].scrollLeft")>0)
+    wide=await ev(AREA+".scrollWidth>"+AREA+".clientWidth")
+    await pg.mouse.move(600, 400); await pg.mouse.wheel(150,0); await pg.wait_for_timeout(500)
+    ok('AC17 back scrolls, carousel alone', await ev("$('.performance-stage')[0].scrollLeft")==sl and (not wide or await ev(AREA+".scrollLeft")>0), (wide, await ev(AREA+".scrollLeft")))
+    await pg.click('.performance-back .nhe-settings:visible .nhe-system-bar__exit'); await pg.wait_for_timeout(700)
+    ok('AC15 Flip on the back turns the pedal back', not await ev("desktop.performanceView.isFlipped()") and not await ev("$('.performance-back').is(':visible')"))
     await ev("desktop.performanceView.goTo($('.performance-slide').index($('.performance-slide[data-instance=\"/graph/trem\"]')))"); await pg.wait_for_timeout(900)
-    # AC18 knob turned on the pedal face updates strip + editor gui
+    # AC18 knob turned on the pedal face shows on the back
     box=json.loads(await ev("JSON.stringify($('.performance-slide.active [mod-role=input-control-port][mod-port-symbol=depth]')[0].getBoundingClientRect())"))
     await pg.mouse.move(box['x']+box['width']/2, box['y']+box['height']/2); await pg.mouse.down()
     await pg.mouse.move(box['x']+box['width']/2, box['y']-80, steps=8); await pg.mouse.up(); await pg.wait_for_timeout(400)
-    v=await ev("$('#pedalboard-dashboard').data('plugins')['/graph/trem'].data('gui').controls.depth.value")
-    strip=await ev("$('.performance-strip [mod-role=input-control-value][mod-port-symbol=depth]').text()")
-    ok('AC18 face knob -> strip value', strip and abs(float(strip.split()[0])-v)<0.01, (v,strip))
-    # AC19 external change (what host.js does on param_set)
-    sym,mid=await ev("(function(){var c=$('#pedalboard-dashboard').data('plugins')['/graph/trem'].data('gui').controls; var k=Object.keys(c).filter(function(x){return x[0]!=':' && x!='depth'})[0]; var r=c[k].ranges; return [k, r.minimum+(r.maximum-r.minimum)*0.37]})()")
+    v,lo,hi=await ev("(function(){var c=$('#pedalboard-dashboard').data('plugins')['/graph/trem'].data('gui').controls.depth; return [c.value, c.ranges.minimum, c.ranges.maximum]})()")
+    await pg.click('.performance-slide.active .performance-flip'); await pg.wait_for_timeout(700)
+    shown=await ev(BACK+".find('[data-id=depth] .nhe-slider__value').text()")
+    ok('AC18 face knob -> back value', shown and abs(float(shown)-v)<=0.02*(hi-lo), (v, shown))
+    # AC19 external change (what host.js does on param_set) reaches the back
+    sym,mid,span=await ev("(function(){var c=$('#pedalboard-dashboard').data('plugins')['/graph/trem'].data('gui').controls; var k=Object.keys(c).filter(function(x){return x[0]!=':' && x!='depth' && c[x].properties.indexOf('toggled')<0 && c[x].properties.indexOf('enumeration')<0})[0]; var r=c[k].ranges; return [k, r.minimum+(r.maximum-r.minimum)*0.37, r.maximum-r.minimum]})()")
     await ev("ws.onmessage({data: 'param_set /graph/trem %s %f'})"%(sym,mid))
-    await pg.wait_for_timeout(200)
-    strip=await ev("$('.performance-strip [mod-role=input-control-value][mod-port-symbol=%s]').text()"%sym)
-    ok('AC19 external param_set reaches strip', strip and abs(float(strip.split()[0])-mid)<0.05*max(1,abs(mid)), (sym, mid, strip))
-    # AC20 bypass from host, both directions
-    q="[$('.performance-slide.active [mod-role=bypass-light]').attr('class'), $('.performance-strip [mod-role=bypass-light]').attr('class')]"
+    await pg.wait_for_timeout(600)
+    shown=await ev(BACK+".find('[data-id=%s] .nhe-slider__value').text()"%sym)
+    ok('AC19 external param_set reaches the back', shown and abs(float(shown)-mid)<=0.05*span, (sym, mid, shown))
+    # AC20 bypass from host reaches face and back, both directions
+    q="[$('.performance-slide.active [mod-role=bypass-light]').attr('class'), "+BACK+".find('.nhe-plugin-header').hasClass('is-on')]"
     b0=await ev(q)
     await ev("ws.onmessage({data: 'param_set /graph/trem :bypass 1'})"); await pg.wait_for_timeout(200)
     b1=await ev(q)
     await ev("ws.onmessage({data: 'param_set /graph/trem :bypass 0'})"); await pg.wait_for_timeout(200)
     b2=await ev(q)
-    ok('AC20 external bypass reaches face+strip', b0==b2 and b1!=b0 and b1[0]==b1[1], (b0,b1,b2))
-    # and the strip's on/off switch flips the face LED
-    await ev("$('.performance-strip [mod-role=bypass]').click()"); await pg.wait_for_timeout(200)
+    ok('AC20 external bypass reaches face+back', b0==b2 and b1[0]!=b0[0] and b1[1]!=b0[1], (b0,b1,b2))
+    # and the back's on/off switch flips the face LED
+    await pg.click('.performance-back .nhe-settings:visible .nhe-plugin-header__switch'); await pg.wait_for_timeout(300)
     b3=await ev(q)
-    await ev("$('.performance-strip [mod-role=bypass]').click()"); await pg.wait_for_timeout(200)
-    ok('AC20 strip on/off -> face LED', b3!=b0 and b3[0]==b3[1], (b0,b3))
+    await pg.click('.performance-back .nhe-settings:visible .nhe-plugin-header__switch'); await pg.wait_for_timeout(300)
+    ok('AC20 back on/off -> face LED', b3[0]!=b0[0] and b3[1]!=b0[1] and await ev(q)==b0, (b0,b3))
+    await pg.screenshot(path='t_trem_back.png')
+    await pg.click('.performance-back .nhe-settings:visible .nhe-system-bar__exit'); await pg.wait_for_timeout(700)
     await pg.screenshot(path='t_trem.png')
     # AC13 resize / rotate
     a=await act()
