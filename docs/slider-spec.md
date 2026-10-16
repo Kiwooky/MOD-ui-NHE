@@ -102,7 +102,7 @@ All colours, radii, spacing and type sizes are bound to the variables. New Theme
 | Fine | Thumb ring in the accent colour, magnifier in the value box. |
 | Editing | Caret in the large box, focus border 2 px. |
 | Bound (shared) | Normal look and behaviour; the binding-type icon sits next to the settings icon (refinement 12). |
-| Locked | Fill goes grey (`fill/disabled`); value box loses its border; the binding-type icon sits on the thumb only. Value still moves live. |
+| Locked | Fill goes grey (`fill/disabled`); value box loses its border; the binding-type icon sits on the thumb only. **The thumb parks at the bottom and stays still**: only the grey fill moves with the value (an LFO on CV no longer drags the thumb about). The fill's scale starts above the parked thumb, so the whole range still shows. |
 | Blocked | Shown briefly when a touch on a locked slider is refused (MOD's `prevent`). Looks like Locked, plus an orange (`status/warn`) 2 px stroke on the thumb and the binding overlay. |
 | Not addressable | Looks like Rest: there is simply never a binding icon. |
 | Group | See refinement 10. |

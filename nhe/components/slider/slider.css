@@ -449,6 +449,15 @@
 .nhe-slider.is-locked .nhe-slider__readout { border-color: var(--nhe-border-default); cursor: default; }
 .nhe-slider.is-locked .nhe-slider__thumb { cursor: not-allowed; }
 
+/* Locked (driven by CV, e.g. an LFO): the thumb parks at the bottom and
+   stays still; only the grey fill moves with the value. The fill's scale
+   starts above the parked thumb, so the whole range still shows. */
+.nhe-slider.is-locked .nhe-slider__thumb { bottom: 0; }
+.nhe-slider.is-locked .nhe-slider__fill { height: calc(var(--nhe-slider-thumb) + (100% - var(--nhe-slider-thumb)) * var(--pos, 0)); }
+.nhe-slider.is-locked.is-bipolar .nhe-slider__fill { bottom: calc(var(--nhe-slider-thumb) + (100% - var(--nhe-slider-thumb)) * var(--lo, 0)); height: calc((100% - var(--nhe-slider-thumb)) * (var(--hi, 0) - var(--lo, 0))); }
+.nhe-slider.is-locked .nhe-slider__lower { height: calc(var(--nhe-slider-thumb) + (100% - var(--nhe-slider-thumb)) * var(--zero, 0)); }
+.nhe-slider.is-locked .nhe-slider__zero { bottom: calc(var(--nhe-slider-thumb) + (100% - var(--nhe-slider-thumb)) * var(--zero, 0)); }
+
 /* blocked: a refused touch on a locked slider (refinement 7) */
 .nhe-slider.is-blocked .nhe-slider__knob { box-shadow: inset 0 0 0 2px var(--nhe-status-warn); }
 
