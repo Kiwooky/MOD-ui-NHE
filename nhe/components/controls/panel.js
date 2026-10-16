@@ -177,9 +177,14 @@
 
 /*
  * Scroll hint: wraps a horizontally scrolling area and shows a 60 px fade with
- * an arrow at its right edge while there are more columns to the right
- * (Figma: the 60 px gradient overlay with ArrowFatLineRight). Tapping the arrow
- * scrolls right by most of a screen.
+ * an arrow at each edge that has more columns past it (Figma: the 60 px
+ * gradient overlay with ArrowFatLineRight; the left one is its mirror).
+ * Tapping an arrow scrolls by most of a screen that way.
+ *
+ * The area also pans by dragging its background sideways (mouse or finger),
+ * and a vertical wheel over the background scrolls it sideways. Neither
+ * starts on a control: thumbs, buttons, rows, readouts and inputs keep their
+ * own pointer and wheel handling.
  *
  *   var hint = NHE.scrollHint(scrollingElement)   // returns { update() }
  */
@@ -187,26 +192,90 @@
     var NHE = window.NHE = window.NHE || {}
     var el = NHE.controlHelpers.el
 
+    var PAN_START = 6     // px of sideways travel before a press becomes a pan
+    var CONTROL = 'button, input, textarea, select, a, [tabindex], .nhe-slider__thumb'
+
     NHE.scrollHint = function (area) {
         var wrap = document.createElement('div')
         wrap.className = 'nhe-ctl nhe-scroll'
         area.parentNode.insertBefore(wrap, area)
         wrap.appendChild(area)
         area.classList.add('nhe-scroll__area')
-        var hint = el('div', 'nhe-scroll-hint', wrap)
-        var btn = el('button', null, hint, NHE.icons.scrollRight)
-        btn.type = 'button'
-        btn.setAttribute('aria-label', 'Scroll right')
-        btn.addEventListener('click', function () {
-            var step = Math.max(120, area.clientWidth - 120)
+
+        var by = function (dir) {
+            var step = dir * Math.max(120, area.clientWidth - 120)
             if (area.scrollBy) area.scrollBy({ left: step, behavior: 'smooth' })
             else area.scrollLeft += step
-        })
+        }
+        var arrow = function (side, dir, label) {
+            var hint = el('div', 'nhe-scroll-hint nhe-scroll-hint--' + side, wrap)
+            var btn = el('button', null, hint, NHE.icons.scrollRight)
+            btn.type = 'button'
+            btn.setAttribute('aria-label', label)
+            btn.addEventListener('click', function () { by(dir) })
+        }
+        arrow('left', -1, 'Scroll left')
+        arrow('right', 1, 'Scroll right')
+
         var update = function () {
+            wrap.classList.toggle('is-less', area.scrollLeft > 1)
             wrap.classList.toggle('is-more', area.scrollLeft + area.clientWidth < area.scrollWidth - 1)
         }
         area.addEventListener('scroll', update, { passive: true })
         window.addEventListener('resize', function (e) { if (e.target === window) update() })
+
+        // drag the background to pan; listen on the document so the pan keeps
+        // going when the pointer leaves the area (as the slider does)
+        var pan = null
+        var onMove = function (e) {
+            if (!pan || e.pointerId !== pan.id) return
+            var dx = e.clientX - pan.x
+            if (!pan.moving) {
+                if (Math.abs(dx) < PAN_START) return
+                if (Math.abs(e.clientY - pan.y) > Math.abs(dx)) { onUp(e); return }   // a vertical swipe: leave it
+                pan.moving = true
+                wrap.classList.add('is-panning')
+            }
+            e.preventDefault()
+            area.scrollLeft = pan.left - dx
+        }
+        var onUp = function (e) {
+            if (!pan || (e && e.pointerId !== pan.id)) return
+            var moved = pan.moving
+            pan = null
+            wrap.classList.remove('is-panning')
+            document.removeEventListener('pointermove', onMove)
+            document.removeEventListener('pointerup', onUp)
+            document.removeEventListener('pointercancel', onUp)
+            // a pan is not a tap: swallow the click that follows it
+            if (moved) {
+                var swallow = function (ev) { ev.stopPropagation(); ev.preventDefault() }
+                area.addEventListener('click', swallow, true)
+                setTimeout(function () { area.removeEventListener('click', swallow, true) }, 0)
+            }
+        }
+        area.addEventListener('pointerdown', function (e) {
+            if (pan || (e.pointerType === 'mouse' && e.button !== 0)) return
+            if (e.target.closest && e.target.closest(CONTROL)) return
+            if (area.scrollWidth <= area.clientWidth) return
+            pan = { id: e.pointerId, x: e.clientX, y: e.clientY, left: area.scrollLeft, moving: false }
+            document.addEventListener('pointermove', onMove)
+            document.addEventListener('pointerup', onUp)
+            document.addEventListener('pointercancel', onUp)
+        })
+
+        // a vertical wheel over the background scrolls sideways (sliders take
+        // their own wheel and cancel it; lists that scroll keep theirs)
+        area.addEventListener('wheel', function (e) {
+            if (e.defaultPrevented || e.shiftKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return
+            if (area.scrollWidth <= area.clientWidth) return
+            for (var n = e.target; n && n !== area; n = n.parentNode) {
+                if (n.scrollHeight > n.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(n).overflowY)) return
+            }
+            e.preventDefault()
+            area.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 16 : 1)
+        }, { passive: false })
+
         update()
         return { update: update }
     }

@@ -536,7 +536,8 @@
 /* ---- scroll hint: more columns to the right ------------------------------ */
 
 .nhe-scroll { position: relative; }
-.nhe-scroll__area { overflow-x: auto; overflow-y: hidden; max-width: 100%; -webkit-overflow-scrolling: touch; }
+.nhe-scroll__area { overflow-x: auto; overflow-y: hidden; max-width: 100%; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.nhe-scroll.is-panning .nhe-scroll__area { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 
 /* 60 wide, as tall as the columns; fades from transparent to the panel colour */
 .nhe-scroll-hint {
@@ -556,7 +557,17 @@
     pointer-events: none;
 }
 
-.nhe-scroll.is-more .nhe-scroll-hint { opacity: 1; visibility: visible; }
+/* the left one mirrors the right: fade and arrow point the other way */
+.nhe-scroll-hint--left {
+    right: auto;
+    left: 0;
+    justify-content: flex-start;
+    background: linear-gradient(to left, transparent, var(--nhe-surface-base));
+}
+.nhe-scroll-hint--left svg { transform: scaleX(-1); }
+
+.nhe-scroll.is-more .nhe-scroll-hint--right,
+.nhe-scroll.is-less .nhe-scroll-hint--left { opacity: 1; visibility: visible; }
 
 .nhe-scroll-hint button {
     display: flex;

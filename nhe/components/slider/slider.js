@@ -167,6 +167,8 @@
         // --- wheel over the whole control; keys on the thumb
         r.addEventListener('wheel', function (e) {
             if (self.o.minimised || self.editing) return
+            // mostly sideways: leave it to the panel, which scrolls horizontally
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
             e.preventDefault()
             if (self.locked()) { self.blocked(); return }
             self.wheelBuffer = (self.wheelBuffer || 0) + e.deltaY

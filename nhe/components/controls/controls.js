@@ -459,7 +459,7 @@
         this.list = el('div', 'nhe-list', root)
         this.list.setAttribute('role', 'listbox')
         var f = el('div', 'nhe-footer', root)
-        this.t3k = NHE.textButton('T3K', 'secondary', function () { if (typeof self.o.onT3K === 'function') self.o.onT3K() })
+        this.t3k = NHE.textButton('Browse T3K', 'primary', function () { if (typeof self.o.onT3K === 'function') self.o.onT3K() })
         this.t3k.classList.add('nhe-file-list__t3k')
         this.t3k.title = 'Browse tones on Tone3000'
         f.appendChild(this.t3k)
