@@ -317,19 +317,16 @@ function PerformanceView(options) {
 
     this.isFlipped = function () { return !!flipped }
 
+    // The pedal itself never moves: turning it would narrow it mid-flip and
+    // make the carousel wobble. Only the back turns, in over the pedal and
+    // away again.
     this.flip = function () {
         var s = slides[active]
         if (!s || s.tile || flipped || !isOpen) return
         flipped = s
-        // the pedal turns away, then its back turns in
-        s.slide.addClass('performance-turn-out')
-        setTimeout(function () {
-            if (flipped !== s) return
-            s.slide.removeClass('performance-turn-out')
-            view.addClass('performance-flipped')
-            back.show().removeClass('performance-back-out').addClass('performance-back-in')
-            fillBack(s)
-        }, FLIP_MS)
+        view.addClass('performance-flipped')
+        back.show().removeClass('performance-back-out').addClass('performance-back-in')
+        fillBack(s)
     }
 
     // now: no animation (closing the view, the pedal went away)
@@ -341,13 +338,10 @@ function PerformanceView(options) {
             back.hide().removeClass('performance-back-in performance-back-out')
             hideSettings()
             view.removeClass('performance-flipped')
-            if (now) return
-            s.slide.addClass('performance-turn-in')
-            setTimeout(function () { s.slide.removeClass('performance-turn-in') }, FLIP_MS)
         }
         if (now) { done(); return }
         back.removeClass('performance-back-in').addClass('performance-back-out')
-        setTimeout(done, FLIP_MS)
+        setTimeout(function () { if (!flipped) done() }, FLIP_MS)
     }
 
     // straight to another pedal's back (the chain's hop). From a back that

@@ -332,11 +332,10 @@ body.performance-mode #js-cv-addressing-toggle {
     z-index: auto !important;
 }
 
-/* the flip: the pedal turns away, its back turns in (and the reverse) */
+/* the flip: the back turns in over the pedal, and away again; the pedal
+   itself stays put so the carousel doesn't wobble */
 @keyframes performance-turn-out { from { transform: perspective(1200px) rotateY(0); } to { transform: perspective(1200px) rotateY(90deg); } }
 @keyframes performance-turn-in  { from { transform: perspective(1200px) rotateY(-90deg); } to { transform: perspective(1200px) rotateY(0); } }
-#performance-view .performance-slide.performance-turn-out { animation: performance-turn-out 0.18s ease-in forwards; }
-#performance-view .performance-slide.performance-turn-in  { animation: performance-turn-in 0.18s ease-out; }
 #performance-view .performance-back.performance-back-in  { animation: performance-turn-in 0.18s ease-out; }
 #performance-view .performance-back.performance-back-out { animation: performance-turn-out 0.18s ease-in forwards; }
 #performance-view .performance-settings .mod-pedal-settings {
