@@ -32,11 +32,10 @@ Figma component): `nhe/components/controls/addressing.js`, playground
     - Nothing available: MOD's message (no Control Chain device, all its
       actuators in use, no CV ports and how to add one).
     - None: empty.
-- **Control label:** a text field, the control's name by default.
-- **Min / Max:** two number fields. Hidden for toggles, triggers and lists
-  (MOD does the same).
 - **More settings** (shown directly, no "Advanced" layer), each a titled
-  row with a Segmented control, only when it applies:
+  row with a Segmented control, only when it applies. They come straight
+  after Assign to, since they belong to the assignment; the control's own
+  label and range follow them:
   - Sensitivity: Low / Medium / High (device knobs, not for MIDI or CV);
   - Mode: Latching / Momentary on / Momentary off (footswitches, for
     toggles);
@@ -45,6 +44,9 @@ Figma component): `nhe/components/controls/addressing.js`, playground
   - Tempo: a toggle "Follow tempo" plus the note values, for controls MOD
     can sync to tempo; Min / Max and Sensitivity are switched off while it
     is on.
+- **Control label:** a text field, the control's name by default.
+- **Min / Max:** two number fields. Hidden for toggles, triggers and lists
+  (MOD does the same).
 - **Cancel / Save** at the bottom (Secondary / Primary text buttons). Save is
   off when there is nothing to save (None on a control that had no
   assignment, or no CC / CV source). Enter saves, Escape cancels.

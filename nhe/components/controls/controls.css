@@ -722,6 +722,7 @@
 .nhe-dialog__pair { display: flex; gap: var(--nhe-space-10); flex: none; }
 
 .nhe-dialog__setting { margin-top: var(--nhe-space-16); flex: none; }
+.nhe-dialog__settings + .nhe-dialog__field .nhe-dialog__title { margin-top: var(--nhe-space-16); }
 .nhe-dialog__setting-title {
     margin-bottom: var(--nhe-space-8);
     font-size: var(--nhe-font-size-sm);

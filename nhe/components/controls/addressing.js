@@ -60,6 +60,9 @@
         n.right = el('div', 'nhe-dialog__right', assign)
 
         n.tempo = el('div', 'nhe-dialog__tempo', d)
+        // the settings that go with the assignment sit right under it; label
+        // and range (the control's own) come after
+        n.settings = el('div', 'nhe-dialog__settings', d)
 
         n.labelBox = el('div', 'nhe-dialog__field', d)
         el('div', 'nhe-dialog__title', n.labelBox, icon('tag') + '<span>Control label</span>')
@@ -80,8 +83,6 @@
         n.max = field('Max')
         n.min.value = st.min === undefined || st.min === null ? '' : st.min
         n.max.value = st.max === undefined || st.max === null ? '' : st.max
-
-        n.settings = el('div', 'nhe-dialog__settings', d)
 
         n.extras = el('div', 'nhe-dialog__pair nhe-dialog__extras', d)
         n.minimise = el('button', 'nhe-dialog__extra', n.extras)
