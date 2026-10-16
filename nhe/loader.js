@@ -33,6 +33,19 @@
                 'features/performance/performance.js',
                 'features/performance/index.js'
             ]
+        },
+        {
+            id: 'settings',
+            files: [
+                'components/icons.js',
+                'components/slider/slider.css',
+                'components/slider/slider.js',
+                'components/controls/controls.css',
+                'components/controls/controls.js',
+                'components/controls/panel.js',
+                'features/settings/settings.css',
+                'features/settings/index.js'
+            ]
         }
     ]
 

@@ -25,6 +25,7 @@ nhe/
     controls/            toggle, trigger, plugin header, buttons, option list, preset list,
                          system bar (systembar.js) and the panel layout with stacking (panel.js)
   features/performance/  performance.js + .css (shared with the mod-ui branch) and index.js (wiring)
+  features/settings/     the NHE plugin settings panel in MOD's settings window (NHE / MOD switch)
   device/install.sh      run on the device: hooks NHE into MOD's UI (safe to repeat)
   device/uninstall.sh    run on the device: restores MOD's original index.html
 tools/
@@ -44,6 +45,12 @@ test/                    browser tests (see test/README.md)
 To preview against the Duo instead (over USB): `npm run dev:duo`.
 
 MOD Desktop hides the device-only parts of the UI (File Manager, Banks, Plugin Store, Settings, hardware addressing). Work on those against the Duo.
+
+## The settings panel
+
+With the `settings` feature on (the default), a pedal's gear opens MOD's settings window with the NHE panel: sliders, toggles, triggers, option lists, presets and plugin on/off, stacked into columns. The **NHE / MOD** switch at the top right shows MOD's own panel instead (remembered per browser). Values go through MOD's own path both ways, bindings show as shared or locked, and the binding dialog, presets and on/off use MOD's existing functions. Plugins with file or text settings (e.g. NAM's model, Button to CV's texts) say so: use the MOD view for those. The performance view's strip still shows MOD's controls.
+
+Turn it off with `NHE.mod.setPreference('nhe-settings', 'false')`.
 
 ## Try components on their own
 

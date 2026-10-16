@@ -120,4 +120,157 @@
             return original.apply(this, arguments)
         }
     }
+
+    // ------------------------------------------------------------------
+    // Plugin settings (the NHE settings panel)
+    //
+    // Relies on modgui.js's GUI object (gui.controls, gui.effect,
+    // gui.setPortValue, gui.setPortWidgetsValue, gui.enable / disable /
+    // addressPort, gui.selectPreset, gui.currentPreset, gui.settings) and on
+    // pedalboard.js keeping the settings window in icon.data('settings') and
+    // the hardware manager in pedalboard.data('hardwareManager'). Preset
+    // actions click MOD's own (hidden) preset elements so MOD's dialogs and
+    // requests are reused unchanged.
+
+    // the settings windows ('.mod-settings') fire 'windowopen' / 'windowclose'
+    // (window.js); both bubble, so one listener sees every plugin
+    mod.onSettingsOpen = function (cb) {
+        $('body').on('windowopen', '.mod-settings', function (e) {
+            if (e.target !== this) return
+            var instance = $(this).attr('mod-instance')
+            if (instance) cb(instance, $(this))
+        })
+    }
+
+    mod.closeSettings = function (instance) {
+        var icon = mod.plugins()[instance]
+        var s = icon && icon.data('settings')
+        if (s) s.window('close')
+    }
+
+    // the plugin's description, for building the panel
+    mod.pluginInfo = function (instance) {
+        var gui = mod.gui(instance), icon = mod.plugins()[instance]
+        if (!gui) return null
+        var e = gui.effect || {}
+        var ports = ((e.ports && e.ports.control && e.ports.control.input) || []).map(function (p) {
+            return gui.controls[p.symbol] || p      // controls[] has the live value and sample-rate ranges
+        })
+        return {
+            instance: instance,
+            label: (icon && icon.data('label')) || e.label || e.name,
+            name: e.name, brand: e.brand,
+            ports: ports,
+            // LV2 parameters (files, strings): not handled by the NHE panel yet
+            parameters: (e.parameters || []).filter(function (p) { return p.writable }),
+            customTemplate: !!(e.gui && e.gui.settingsTemplate),
+        }
+    }
+
+    mod.portValue = function (instance, symbol) {
+        var gui = mod.gui(instance)
+        return gui && gui.controls[symbol] ? gui.controls[symbol].value : null
+    }
+
+    // through MOD's own path: tells the host and updates MOD's widgets
+    mod.setPortValue = function (instance, symbol, value) {
+        var gui = mod.gui(instance)
+        if (!gui || !gui.controls[symbol]) return
+        gui.setPortValue(symbol, value)
+    }
+
+    // wrap a GUI method once, calling every listener after MOD's own code
+    var listeners = {}
+    var hook = function (instance, method, cb) {
+        var gui = mod.gui(instance)
+        if (!gui) return
+        var key = instance + '|' + method
+        if (!listeners[key]) {
+            listeners[key] = []
+            var original = gui[method]
+            gui[method] = function () {
+                var r = original.apply(this, arguments)
+                var args = arguments
+                listeners[key].forEach(function (fn) { try { fn.apply(null, args) } catch (err) { if (window.console) console.error(err) } })
+                return r
+            }
+        }
+        listeners[key].push(cb)
+    }
+
+    // values from anywhere (host feedback, MIDI, presets, snapshots, our own changes)
+    mod.onPortValue = function (instance, cb) {
+        hook(instance, 'setPortWidgetsValue', function (symbol, value) { cb(symbol, value) })
+    }
+
+    // bindings changed (MOD calls these when addressing or unaddressing)
+    mod.onBindingChange = function (instance, cb) {
+        ['enable', 'disable', 'addressPort'].forEach(function (m) { hook(instance, m, function (symbol) { cb(symbol) }) })
+    }
+
+    // { type: 'midi'|'cv'|'device'|'chain'|'tempo', kind, label, locked } or null.
+    // locked = MOD disabled the control (the source takes no feedback)
+    mod.binding = function (instance, symbol) {
+        var hw = mod.pedalboard().data('hardwareManager') || (desktop && desktop.hardwareManager)
+        var gui = mod.gui(instance)
+        if (!hw || !gui) return null
+        var key = instance + '/' + symbol
+        var uri = hw.addressingsByPortSymbol && hw.addressingsByPortSymbol[key]
+        if (!uri || uri === 'null') return null
+        var data = (hw.addressingsData && hw.addressingsData[key]) || {}
+        var port = gui.controls[symbol]
+        var locked = port ? port.enabled === false : false
+        var m
+        if (uri === '/midi-learn') return { type: 'midi', kind: 'MIDI', label: 'Learning…', locked: locked }
+        if ((m = /^\/midi-custom_Ch\.(\d+)_CC#(\d+)/.exec(uri))) return { type: 'midi', kind: 'MIDI', label: 'CC ' + m[2] + ' · Ch ' + m[1], locked: locked }
+        if ((m = /^\/midi-custom_Ch\.(\d+)_Pbend/.exec(uri))) return { type: 'midi', kind: 'MIDI', label: 'Pitchbend · Ch ' + m[1], locked: locked }
+        if (uri === '/bpm') return { type: 'midi', kind: 'Tempo', label: 'BPM', locked: locked }
+        var actuator = null
+        ;(window.HARDWARE_PROFILE || []).forEach(function (a) { if (a.uri === uri) actuator = a })
+        var name = data.label || (actuator && actuator.name) || uri
+        if (uri.indexOf('/cv') === 0) return { type: 'cv', kind: 'CV', label: actuator ? actuator.name : uri.replace(/^\/cv\/(graph\/)?/, ''), locked: locked }
+        if (uri.indexOf('/hmi') === 0) return { type: 'device', kind: 'Device', label: (actuator && actuator.name) || name, locked: locked }
+        return { type: 'chain', kind: 'Control Chain', label: (actuator && actuator.name) || name, locked: locked }
+    }
+
+    // MOD's binding (addressing) dialog for a port, ':bypass' or ':presets'
+    mod.openAddressing = function (instance, symbol) {
+        var gui = mod.gui(instance), icon = mod.plugins()[instance]
+        var hw = mod.pedalboard().data('hardwareManager')
+        if (gui && hw && gui.controls[symbol]) hw.open(instance, gui.controls[symbol], icon && icon.data('label'))
+    }
+
+    // plugin on/off: MOD's ':bypass' port is the inverse (1 = bypassed)
+    mod.pluginOn = function (instance) {
+        var gui = mod.gui(instance)
+        return gui ? !(gui.controls[':bypass'] && gui.controls[':bypass'].value) : true
+    }
+    mod.setPluginOn = function (instance, on) { mod.setPortValue(instance, ':bypass', on ? 0 : 1) }
+
+    // presets, read from MOD's own preset elements (they follow saves,
+    // renames and deletes), and the current one
+    var presetBox = function (instance) {
+        var gui = mod.gui(instance)
+        return gui && gui.settings ? gui.settings.find('.mod-presets') : $()
+    }
+    mod.presets = function (instance) {
+        var box = presetBox(instance), gui = mod.gui(instance)
+        var read = function (sel) {
+            return box.find(sel + ' [mod-role=enumeration-option]').map(function () {
+                return { id: $(this).attr('mod-uri'), name: $(this).text() }
+            }).get()
+        }
+        return { factory: read('.mod-preset-factory'), user: read('.mod-preset-user'), selected: gui ? gui.currentPreset : null, enabled: box.data('enabled') !== false }
+    }
+    mod.presetAction = function (instance, action, id) {
+        var box = presetBox(instance)
+        if (action === 'load') { box.find('[mod-role=enumeration-option][mod-uri="' + id + '"]').click(); return }
+        var btn = { saveAs: '.preset-btn-save-as', save: '.preset-btn-save', rename: '.preset-btn-rename', delete: '.preset-btn-delete' }[action]
+        if (btn) box.find(btn).click()
+    }
+    mod.onPresetsChange = function (instance, cb) {
+        hook(instance, 'selectPreset', function () { cb() })
+        var box = presetBox(instance)[0]
+        if (box && window.MutationObserver) new MutationObserver(function () { cb() }).observe(box, { childList: true, subtree: true, characterData: true })
+    }
 })();

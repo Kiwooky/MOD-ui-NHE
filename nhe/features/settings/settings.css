@@ -1,0 +1,51 @@
+/* SPDX-FileCopyrightText: 2026 Niels
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * The NHE settings panel inside MOD's plugin settings window.
+ * MOD's own controls (.mod-pedal-settings) are hidden while the NHE view is
+ * on, but not when the performance view has borrowed the window for its
+ * strip (.performance-settings): there MOD's controls show as before.
+ */
+
+.mod-settings > .nhe-settings { display: none; }
+
+.mod-settings.nhe-settings-on:not(.performance-settings) > .mod-pedal-settings { display: none; }
+
+.mod-settings.nhe-settings-on:not(.performance-settings) > .nhe-settings {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--nhe-surface-base);
+    z-index: 1;
+}
+
+.nhe-settings__bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--nhe-space-16);
+    height: 44px;
+    flex: none;
+    padding: 0 var(--nhe-space-16) 0 var(--nhe-space-16);
+    font-family: var(--nhe-font-family-base);
+    color: var(--nhe-text-primary);
+}
+
+.nhe-settings__note { flex: 1 1 auto; font-size: var(--nhe-font-size-sm); opacity: .6; }
+
+.nhe-settings__close.nhe-text-button { height: 32px; min-width: 0; padding: 0 var(--nhe-space-16); font-size: var(--nhe-font-size-md); }
+
+.nhe-settings__scroll { flex: 1 1 auto; min-height: 0; }
+.nhe-settings .nhe-scroll { flex: 1 1 auto; min-height: 0; }
+
+/* the NHE / MOD switch: top right, left of Close, in both views */
+.mod-settings > .nhe-settings__switch {
+    position: absolute;
+    top: 6px;
+    right: 120px;
+    width: 140px;
+    z-index: 2;
+}
+
+.mod-settings.performance-settings > .nhe-settings__switch { display: none; }
