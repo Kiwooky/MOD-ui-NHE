@@ -803,3 +803,6 @@
 
 /* the name dialog (preset Save as / Rename) is short: no stretch above the buttons */
 .nhe-name-dialog .nhe-dialog__field { flex: none; }
+
+/* a field being typed into starts empty: the old value shows faintly */
+.nhe-ctl input::placeholder { color: inherit; opacity: .45; }

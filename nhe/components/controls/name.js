@@ -35,7 +35,10 @@
         el('div', 'nhe-dialog__title', f, icon(this.o.icon) + '<span>' + this.o.title + '</span>')
         var input = this.input = el('input', 'nhe-dialog__input', f)
         input.type = 'text'
-        input.value = this.o.value || ''
+        // start empty, the current name as placeholder: what's typed is the
+        // whole name; saving with the field empty keeps the current name
+        input.value = ''
+        input.placeholder = this.o.value || ''
         input.setAttribute('autocomplete', 'off')
         input.setAttribute('spellcheck', 'false')
 
@@ -43,7 +46,7 @@
         foot.appendChild(NHE.textButton('Cancel', 'secondary', function () { self.close() }))
         var save = this.saveButton = NHE.textButton('Save', 'primary', function () { self.save() })
         foot.appendChild(save)
-        var update = function () { save.disabled = !$trim(input.value) }
+        var update = function () { save.disabled = !$trim(input.value || input.placeholder) }
         input.addEventListener('input', update)
         update()
 
@@ -53,13 +56,13 @@
         })
         // MOD listens for keys on the page: keep ours in here
         d.addEventListener('keyup', function (e) { e.stopPropagation() })
-        setTimeout(function () { input.focus(); input.select() }, 0)
+        setTimeout(function () { input.focus() }, 0)
     }
 
     var $trim = function (s) { return String(s || '').replace(/^\s+|\s+$/g, '') }
 
     Dialog.prototype.save = function () {
-        var name = $trim(this.input.value)
+        var name = $trim(this.input.value || this.input.placeholder)
         if (!name) return
         this.close()
         if (typeof this.o.onSave === 'function') this.o.onSave(name)

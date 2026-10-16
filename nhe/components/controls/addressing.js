@@ -37,6 +37,18 @@
     var NHE = window.NHE = window.NHE || {}
     var H = NHE.controlHelpers, el = H.el, mix = H.mix, icon = H.icon
 
+    // tapping a field to type empties it, so what's typed is the whole value;
+    // the old value shows as the placeholder and comes back if left empty
+    var clearOnFocus = function (input) {
+        input.addEventListener('focus', function () {
+            input.placeholder = input.value
+            input.value = ''
+        })
+        input.addEventListener('blur', function () {
+            if (input.value === '') input.value = input.placeholder
+        })
+    }
+
     var Dialog = function (options) {
         var self = this
         this.o = mix({ plugin: '', control: '', model: null, minimised: null }, options || {})
@@ -71,6 +83,7 @@
         n.label = el('input', 'nhe-dialog__input', n.labelBox)
         n.label.type = 'text'
         n.label.value = st.label || ''
+        clearOnFocus(n.label)
 
         n.range = el('div', 'nhe-dialog__pair', d)
         var field = function (title) {
@@ -85,6 +98,8 @@
         n.max = field('Max')
         n.min.value = st.min === undefined || st.min === null ? '' : st.min
         n.max.value = st.max === undefined || st.max === null ? '' : st.max
+        clearOnFocus(n.min)
+        clearOnFocus(n.max)
 
         n.extras = el('div', 'nhe-dialog__pair nhe-dialog__extras', d)
         n.minimise = el('button', 'nhe-dialog__extra', n.extras)
@@ -200,9 +215,10 @@
         n.error.textContent = ''
         var mini = this.minimised !== this.o.minimised
         if (st.canSave) {
-            var values = { label: n.label.value }
+            var val = function (i) { return i.value === '' ? i.placeholder : i.value }   // a field still empty keeps its old value
+            var values = { label: val(n.label) }
             if (st.range && !n.min.disabled) {
-                var lo = parseFloat(String(n.min.value).replace(',', '.')), hi = parseFloat(String(n.max.value).replace(',', '.'))
+                var lo = parseFloat(String(val(n.min)).replace(',', '.')), hi = parseFloat(String(val(n.max)).replace(',', '.'))
                 if (isNaN(lo) || isNaN(hi)) { n.error.textContent = 'Min and Max need a number.'; return }
                 if (lo >= hi) { n.error.textContent = 'Min has to be lower than Max.'; return }
                 values.min = lo

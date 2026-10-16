@@ -144,9 +144,10 @@
         var input = el('input', null, r)
         input.type = 'text'
         input.setAttribute('inputmode', 'decimal')
-        input.value = Number(this.o.tempo).toFixed(2)
+        // start empty, the current tempo as placeholder; empty keeps it
+        input.value = ''
+        input.placeholder = Number(this.o.tempo).toFixed(2)
         input.focus()
-        input.select()
         var done = function (keep) {
             if (!self.editing) return
             self.editing = false

@@ -470,9 +470,11 @@
         }
         this.editing = true
         this.state('editing', true)
-        this.n.input.value = this.format(this.o.value, this.decimals())
+        // start empty, so what's typed is the whole new value; the current
+        // value shows as the placeholder, and leaving it empty changes nothing
+        this.n.input.value = ''
+        this.n.input.placeholder = this.format(this.o.value, this.decimals())
         this.n.input.focus()
-        this.n.input.select()
     }
 
     Slider.prototype.commit = function (keep) {

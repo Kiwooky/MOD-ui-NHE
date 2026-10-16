@@ -520,3 +520,4 @@
     height: calc(100% * var(--pos, 0));
     border-radius: var(--nhe-radius-full);
 }
+.nhe-slider__input::placeholder { color: inherit; opacity: .45; }   /* editing starts empty: the current value, faint */
