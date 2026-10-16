@@ -536,7 +536,7 @@
 /* ---- scroll hint: more columns to the right ------------------------------ */
 
 .nhe-scroll { position: relative; }
-.nhe-scroll__area { overflow-x: auto; overflow-y: hidden; max-width: 100%; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.nhe-scroll__area { overflow-x: auto; overflow-y: hidden; max-width: 100%; -webkit-overflow-scrolling: touch; touch-action: none; }
 .nhe-scroll.is-panning .nhe-scroll__area { cursor: grabbing; user-select: none; -webkit-user-select: none; }
 
 /* 60 wide, as tall as the columns; fades from transparent to the panel colour */

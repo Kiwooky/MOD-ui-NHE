@@ -182,9 +182,9 @@
  * Tapping an arrow scrolls by most of a screen that way.
  *
  * The area also pans by dragging its background sideways (mouse or finger),
- * and a vertical wheel over the background scrolls it sideways. Neither
- * starts on a control: thumbs, buttons, rows, readouts and inputs keep their
- * own pointer and wheel handling.
+ * and a vertical wheel over the background scrolls it sideways. Dragging up
+ * or down inside a list (options, presets, files, chain) scrolls that list.
+ * Thumbs, buttons, readouts and inputs keep their own pointer handling.
  *
  *   var hint = NHE.scrollHint(scrollingElement)   // returns { update() }
  */
@@ -192,8 +192,9 @@
     var NHE = window.NHE = window.NHE || {}
     var el = NHE.controlHelpers.el
 
-    var PAN_START = 6     // px of sideways travel before a press becomes a pan
-    var CONTROL = 'button, input, textarea, select, a, [tabindex], .nhe-slider__thumb'
+    var PAN_START = 6     // px of travel before a press becomes a drag
+    var CONTROL = 'button, a, [tabindex]'                                  // pans only inside a list
+    var NEVER = 'input, textarea, select, .nhe-slider__thumb'            // never starts a drag
 
     NHE.scrollHint = function (area) {
         var wrap = document.createElement('div')
@@ -224,30 +225,46 @@
         area.addEventListener('scroll', update, { passive: true })
         window.addEventListener('resize', function (e) { if (e.target === window) update() })
 
-        // drag the background to pan; listen on the document so the pan keeps
-        // going when the pointer leaves the area (as the slider does)
+        // Drag to scroll, with our own pointer handling: MOD cancels every
+        // touchmove on the page (desktop.js), so the browser never scrolls
+        // anything under a finger, and a mouse never drag-scrolls anyway.
+        // The first few px decide the axis: up/down scrolls the list (or
+        // chain) under the pointer, sideways pans the panel. Listening on the
+        // document keeps it going when the pointer leaves (as the slider does).
         var pan = null
+        var scrollerY = function (n) {
+            for (; n && n !== area; n = n.parentNode) {
+                if (n.nodeType === 1 && n.scrollHeight > n.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(n).overflowY)) return n
+            }
+            return null
+        }
         var onMove = function (e) {
             if (!pan || e.pointerId !== pan.id) return
-            var dx = e.clientX - pan.x
-            if (!pan.moving) {
-                if (Math.abs(dx) < PAN_START) return
-                if (Math.abs(e.clientY - pan.y) > Math.abs(dx)) { onUp(e); return }   // a vertical swipe: leave it
-                pan.moving = true
+            var dx = e.clientX - pan.x, dy = e.clientY - pan.y
+            if (!pan.axis) {
+                if (Math.max(Math.abs(dx), Math.abs(dy)) < PAN_START) return
+                if (Math.abs(dy) > Math.abs(dx)) {
+                    if (!pan.list) { onUp(e); return }
+                    pan.axis = 'y'
+                } else {
+                    if (pan.onControl || area.scrollWidth <= area.clientWidth) { onUp(e); return }
+                    pan.axis = 'x'
+                }
                 wrap.classList.add('is-panning')
             }
             e.preventDefault()
-            area.scrollLeft = pan.left - dx
+            if (pan.axis === 'x') area.scrollLeft = pan.left - dx
+            else pan.list.scrollTop = pan.top - dy
         }
         var onUp = function (e) {
             if (!pan || (e && e.pointerId !== pan.id)) return
-            var moved = pan.moving
+            var moved = !!pan.axis
             pan = null
             wrap.classList.remove('is-panning')
             document.removeEventListener('pointermove', onMove)
             document.removeEventListener('pointerup', onUp)
             document.removeEventListener('pointercancel', onUp)
-            // a pan is not a tap: swallow the click that follows it
+            // a drag is not a tap: swallow the click that follows it
             if (moved) {
                 var swallow = function (ev) { ev.stopPropagation(); ev.preventDefault() }
                 area.addEventListener('click', swallow, true)
@@ -256,9 +273,13 @@
         }
         area.addEventListener('pointerdown', function (e) {
             if (pan || (e.pointerType === 'mouse' && e.button !== 0)) return
-            if (e.target.closest && e.target.closest(CONTROL)) return
-            if (area.scrollWidth <= area.clientWidth) return
-            pan = { id: e.pointerId, x: e.clientX, y: e.clientY, left: area.scrollLeft, moving: false }
+            var t = e.target
+            if (!t.closest || t.closest(NEVER)) return
+            var list = scrollerY(t)
+            var onControl = !!t.closest(CONTROL)
+            if (onControl && !list) return       // a button, toggle or readout: leave it alone
+            pan = { id: e.pointerId, x: e.clientX, y: e.clientY, left: area.scrollLeft,
+                    list: list, top: list ? list.scrollTop : 0, onControl: onControl, axis: null }
             document.addEventListener('pointermove', onMove)
             document.addEventListener('pointerup', onUp)
             document.addEventListener('pointercancel', onUp)
