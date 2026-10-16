@@ -11,13 +11,15 @@
  *       integer: false, logarithmic: false, rangeSteps: 0, decimals: 2,
  *       minimised: false,
  *       group: { kind: 'none'|'single'|'start'|'middle'|'end', name: '', color: 0, width: 360 },
- *       binding: null | { type: 'midi'|'cv'|'device'|'chain', kind: 'MIDI', label: 'CC 7 · Ch 1' },
+ *       binding: null | { type: 'midi'|'cv'|'device'|'chain', kind: 'MIDI', label: 'CC 7 · Ch 1',
+ *                         locked: false },   // locked: the source takes no feedback (MOD: CV)
  *       onInput: fn(value),     // while dragging, typing, wheel, keys
  *       onChange: fn(value),    // when a gesture ends
  *       onSettings: fn(),       // settings icon
- *       onBlocked: fn()         // touch refused while bound
+ *       onBlocked: fn()         // touch refused while locked
  *   })
- *   s.setValue(v)        // from outside (host feedback, MIDI): no callbacks
+ *   s.setValue(v)        // from outside (host feedback, MIDI): no callbacks;
+ *                        // ignored while a finger is on the thumb or a value is being typed
  *   s.update(options)    // change any option
  *   s.destroy()
  *
@@ -110,6 +112,7 @@
         n.overlay = el('div', 'nhe-slider__overlay', r)
         n.overlayKind = el('span', 'nhe-slider__overlay-kind', n.overlay)
         n.overlayLabel = el('span', 'nhe-slider__overlay-label', n.overlay)
+        n.overlayStatus = el('span', 'nhe-slider__overlay-status', n.overlay)
 
         // --- thumb: drag, hold for fine, Shift for fine
         var drag = null
@@ -117,7 +120,7 @@
             if (e.button !== undefined && e.button !== 0) return
             e.preventDefault()
             if (self.o.minimised) return
-            if (self.o.binding) { self.blocked(); return }
+            if (self.locked()) { self.blocked(); return }
             try { n.thumb.setPointerCapture(e.pointerId) } catch (err) {}
             n.thumb.focus({ preventScroll: true })
             drag = { id: e.pointerId, y: e.clientY, x: e.clientX, pos: self.pos, moved: false, fine: false }
@@ -158,7 +161,7 @@
         r.addEventListener('wheel', function (e) {
             if (self.o.minimised || self.editing) return
             e.preventDefault()
-            if (self.o.binding) { self.blocked(); return }
+            if (self.locked()) { self.blocked(); return }
             self.wheelBuffer = (self.wheelBuffer || 0) + e.deltaY
             var notches = self.wheelBuffer < 0 ? Math.ceil(self.wheelBuffer / 40) : Math.floor(self.wheelBuffer / 40)
             if (!notches) return
@@ -179,7 +182,7 @@
             else if (k === 'End') d = Infinity
             else return
             e.preventDefault()
-            if (self.o.binding) { self.blocked(); return }
+            if (self.locked()) { self.blocked(); return }
             if (d === Infinity || d === -Infinity) self.setPos(d > 0 ? 1 : 0, true)
             else self.nudge(d, e.shiftKey)
             self.emit('onChange')
@@ -226,6 +229,7 @@
 
         var b = o.binding
         this.state('bound', !!b)
+        this.state('locked', !!(b && b.locked))
         if (b) {
             var icon = NHE.icons[b.type] || NHE.icons.midi
             n.binding.innerHTML = icon
@@ -233,16 +237,19 @@
             n.binding.setAttribute('aria-label', 'Bound to ' + (b.kind || '') + ' ' + (b.label || ''))
             n.overlayKind.textContent = b.kind || ''
             n.overlayLabel.textContent = b.label || ''
+            n.overlayStatus.textContent = b.locked ? 'Locked' : 'Shared'
         } else {
             this.info(false)
             this.state('blocked', false)
         }
 
         this.ticks()
-        this.setValue(o.value)
+        this.setValue(o.value, true)
     }
 
-    Slider.prototype.setValue = function (value) {
+    // the finger wins: an outside change while dragging or typing is ignored
+    Slider.prototype.setValue = function (value, force) {
+        if (!force && (this.has('dragging') || this.editing)) return
         this.o.value = this.clampValue(value)
         this.pos = this.posFromValue(this.o.value)
         this.render()
@@ -390,8 +397,15 @@
         this.state('fine', on)
     }
 
+    Slider.prototype.locked = function () {
+        return !!(this.o.binding && this.o.binding.locked)
+    }
+
+    // a refused touch on a locked slider: the orange ring, and the overlay
+    // saying what it is locked to
     Slider.prototype.blocked = function () {
         var self = this
+        this.info(true)
         this.state('blocked', true)
         clearTimeout(this.timers.blocked)
         this.timers.blocked = setTimeout(function () { self.state('blocked', false) }, BLOCKED_MS)
@@ -406,8 +420,8 @@
     }
 
     Slider.prototype.edit = function () {
-        if (this.editing || this.o.minimised || this.o.binding) {
-            if (this.o.binding) this.blocked()
+        if (this.editing || this.o.minimised || this.locked()) {
+            if (this.locked()) this.blocked()
             return
         }
         this.editing = true
@@ -426,7 +440,7 @@
             var v = parseFloat(text.replace(',', '.'))
             if (!isNaN(v)) {
                 var old = this.o.value
-                this.setValue(v)
+                this.setValue(v, true)
                 if (this.o.value !== old) { this.emit('onInput'); this.emit('onChange') }
             }
         }

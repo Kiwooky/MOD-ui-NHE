@@ -29,7 +29,7 @@ The slider replaces every `.mod-knob` in the plugin settings panel (and so in th
 | Double-click | Swallowed (no reset to default in MOD). |
 | Value scales | Linear, logarithmic (`logarithmic` with positive bounds), integer, `rangeSteps`. |
 | External changes | Host feedback, MIDI, snapshots and presets move the control without a `valuechange`. |
-| Bound (addressed) | Control is disabled: drag/click/wheel show a "blocked" icon and the notice "Parameter value change blocked by the active adressing"; the value field is not editable, but the value still updates live. |
+| Bound (addressed) | Depends on whether the source takes **feedback** (`setPortEnabled` in `pedalboard.js`, `addressPort` in `modgui.js`). **With feedback** (MIDI CC always; hardware actuators by default): the control **stays adjustable**, and a UI change is sent back to the device. **Without feedback** (CV ports always; any actuator its hardware profile marks so): the control is **locked**: drag/click/wheel show a "blocked" icon and the notice "Parameter value change blocked by the active adressing", the value field is not editable, the value still updates live. (Corrected 2026-10-16; earlier drafts treated every binding as locked.) |
 
 ## What the Figma states cover
 
@@ -81,7 +81,7 @@ Colours, spacing and type come from the Theme and Primitives variables only.
 
 ## The component (Figma, built 2026-10-16)
 
-Section **Control / Slider** (`71:3466`), component set `71:5625`, 36 variants: Regular (120) in every `State` (Rest, Hover, Dragging, Fine, Editing, Bound, Binding info, Blocked) × `Group` (None, Start, Middle, End), plus Minimised (60) in `State=Display` × `Group`. An **Examples** board (`71:8910`) shows real MOD content. The fill and thumb are a nested component, **Slider / Level** (`71:8543`, `Size` × `Value` 0–100 in steps of 10), exposed on the slider: set `Value` on the nested Level to move the fill. (Figma ignores size overrides on instance layers, so this is how a mock shows a value.)
+Section **Control / Slider** (`71:3466`), component set `71:5625`, Regular (120) in every `State` (Rest, Hover, Dragging, Fine, Editing, Bound, Binding info, Locked, Blocked) × `Group` (None, Start, Middle, End), plus Minimised (60) in `State=Display` × `Group`. An **Examples** board (`71:8910`) shows real MOD content. The fill and thumb are a nested component, **Slider / Level** (`71:8543`, `Size` × `Value` 0–100 in steps of 10), exposed on the slider: set `Value` on the nested Level to move the fill. (Figma ignores size overrides on instance layers, so this is how a mock shows a value.)
 
 Properties: text `Title`, `Binding kind`, `Binding label`, `Group name`; boolean `Steps`; instance swap `Binding type` (Icon / Binding / MIDI, CV, Device, Control Chain).
 
@@ -101,8 +101,9 @@ All colours, radii, spacing and type sizes are bound to the variables. New Theme
 | Hover | White 2 px ring on the thumb. |
 | Fine | Thumb ring in the accent colour, magnifier in the value box. |
 | Editing | Caret in the large box, focus border 2 px. |
-| Bound | Fill goes grey (`fill/disabled`); value box loses its border; the binding-type icon sits on the thumb and next to the settings icon (refinement 11). Value still moves live. |
-| Blocked | Shown briefly when a touch on a bound slider is refused (MOD's `prevent`). Looks like Bound, except the thumb gets an orange (`status/warn`) 2 px stroke with the binding icon centred in it. |
+| Bound (shared) | Normal look and behaviour; the binding-type icon sits next to the settings icon (refinement 12). |
+| Locked | Fill goes grey (`fill/disabled`); value box loses its border; the binding-type icon sits on the thumb only. Value still moves live. |
+| Blocked | Shown briefly when a touch on a locked slider is refused (MOD's `prevent`). Looks like Locked, plus an orange (`status/warn`) 2 px stroke on the thumb and the binding overlay. |
 | Not addressable | Looks like Rest: there is simply never a binding icon. |
 | Group | See refinement 10. |
 
@@ -140,7 +141,17 @@ All colours, radii, spacing and type sizes are bound to the variables. New Theme
 
 ## Implementation (code)
 
-`nhe/components/slider/` (`slider.js`, `slider.css`, `icons.js`; ES5, tokens only), tried out in `playground/slider.html` (`npm run playground`). Checked in the browser on 2026-10-16: quick drag (+10.08 for 40 px over 397 px of travel), hold-for-fine and Shift-drag (+1.01, 10× finer), track tap ignored, typing (42 sets, 500 clamps to max, Escape cancels), bound → blocked look for 0.6 s with the value unchanged, binding overlay, stepped port (5 ticks, snaps), log position, zero-crossing fill, readout fit. Not yet wired into MOD's settings panel; not yet tried on an iPad.
+`nhe/components/slider/` (`slider.js`, `slider.css`, `icons.js`; ES5, tokens only), tried out in `playground/slider.html` (`npm run playground`). Checked in the browser on 2026-10-16: quick drag (+10.08 for 40 px over 397 px of travel), hold-for-fine and Shift-drag (+1.01, 10× finer), track tap ignored, typing (42 sets, 500 clamps to max, Escape cancels), shared binding (adjustable, footer icon, overlay "Shared"), locked binding (refused, orange ring + overlay "Locked", readout not editable), finger wins over outside changes, stepped port (5 ticks, snaps), log position, zero-crossing fill, readout fit. Not yet wired into MOD's settings panel; not yet tried on an iPad.
+12. **Bound vs Locked** (Niels, after checking how MOD really behaves). A binding only locks the control when its source takes no feedback.
+    - **Bound (shared, e.g. MIDI, most hardware):** normal colours and behaviour; the binding-type icon sits next to the settings icon. Tapping it shows the overlay.
+    - **Locked (e.g. CV):** grey fill, the binding icon moves from the footer onto the thumb (none in the footer). A touch on the thumb, the readout, the wheel or the keys is refused: **Blocked** shows the orange ring *and* the overlay, so you see why.
+    - **Overlay:** three lines: kind (caption), detail, and the status, `Shared` in the accent colour or `Locked` in `status/warn`. 64 px high, so "Control Chain" fits on its own line.
+    - **The finger wins:** an outside change (MIDI, host feedback) while a finger is on the thumb or a value is being typed is ignored; the slider keeps what the user is doing.
+    - In code: `binding.locked`; in Figma: `State` = Bound · Binding info · Locked · Blocked.
+
+## Height
+
+The band (44), header (69) and footer (48) are fixed; **the track takes all remaining height** (`--nhe-slider-height`, 646 by default). Thumb and fill positions are computed from the measured track, so values stay true at any height: checked at 400, 646 and 900 px (track 239 / 485 / 739, thumb centre and fill top exactly at half travel for 50 %). In Figma the track also stretches, but Slider / Level's fill heights are drawn for the 485 px track, so a resized mock shows the wrong value position; Figma has no percentage heights. If mocks at other heights are needed, Level can gain a track-height variant.
 
 ## Still open
 

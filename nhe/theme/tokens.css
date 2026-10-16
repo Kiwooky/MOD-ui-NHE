@@ -114,11 +114,14 @@
     --nhe-text-on-accent: var(--nhe-color-white);
     --nhe-icon-default: var(--nhe-color-white);
     --nhe-border-default: var(--nhe-color-black);
-    --nhe-border-focus: var(--nhe-color-indigo-500);        /* value box outline, focus */
-    --nhe-selection: var(--nhe-color-indigo-500);           /* selected list item */
+    --nhe-border-focus: var(--nhe-accent-default);          /* value box outline, focus: follows the theme colour */
+    --nhe-selection: var(--nhe-accent-default);             /* selected row, active segment: follows the theme colour */
     --nhe-status-warn: var(--nhe-color-amber-500);          /* blocked / warning outline */
     --nhe-fill-disabled: var(--nhe-color-grey-700);         /* slider fill while the control is bound */
     --nhe-shadow-thumb: rgba(0, 0, 0, .3);                  /* faux shadow under the slider thumb */
+    --nhe-border-divider: var(--nhe-color-grey-500);        /* line between stacked control cells */
+    --nhe-surface-switch-on: var(--nhe-color-white);        /* lit half of the plugin on/off switch */
+    --nhe-text-on-switch: var(--nhe-color-black);           /* text on that lit half */
 
     /* Theme: port groups. MOD's own --group-<n>-color (css/pedals.css) wins when present;
      * the fallback is the same colour, copied into Figma as color/mod-group/<n>. */

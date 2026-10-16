@@ -107,6 +107,7 @@
                         </select>
                     </label>
                     <label class="wide">Detail <input name="bindingLabel"></label>
+                    <label class="check wide"><input name="bindingLocked" type="checkbox"> Locked (the source takes no feedback, like CV)</label>
                 </fieldset>
                 <fieldset>
                     <legend>Group</legend>
@@ -145,7 +146,8 @@
                 <li>Tap the track: nothing happens. Only the thumb drags, and it never jumps to your finger.</li>
                 <li>Press and hold the thumb without moving: the ring turns to the theme colour and a magnifier appears. Now drag: it moves 10× finer.</li>
                 <li>Tap the readout and type a value; Enter commits, Escape cancels. Out-of-range values are clamped.</li>
-                <li>Pick a binding: the fill goes grey and the binding icon appears. Touch the thumb: the blocked look. Tap the binding icon: the overlay.</li>
+                <li>Pick a binding: the slider still works (shared, like MIDI) and the binding icon appears next to the settings icon; tap it for the details. Tick "Locked": it goes grey, the icon moves onto the thumb, and a touch shows the orange ring and the details.</li>
+                <li>In the sample panel, Q is shared with MIDI and Pan is locked to CV.</li>
                 <li>"High cut" is logarithmic, "Voices" is stepped (ticks, snapping), "Pan" crosses zero (fill from zero).</li>
                 <li>Long values shrink to fit the readout (try "Low cut" while dragging).</li>
                 <li>Change the theme colour at the top: everything follows the accent token.</li>
@@ -197,7 +199,7 @@
     }
 
     var state = mix(PRESETS['Tone'], {
-        minimised: false, bindingType: '', bindingLabel: 'CC 7 · Ch 1',
+        minimised: false, bindingType: '', bindingLabel: 'CC 7 · Ch 1', bindingLocked: false,
         groupKind: 'single', groupName: 'Low band', groupColor: 0, groupWidth: 120
     })
 
@@ -206,7 +208,7 @@
         return mix(s, {
             value: Number(s.value), min: Number(s.min), max: Number(s.max),
             decimals: Number(s.decimals) || 0, rangeSteps: Number(s.rangeSteps) || 0,
-            binding: s.bindingType ? { type: s.bindingType, kind: KIND[s.bindingType], label: s.bindingLabel } : null,
+            binding: s.bindingType ? { type: s.bindingType, kind: KIND[s.bindingType], label: s.bindingLabel, locked: !!s.bindingLocked } : null,
             group: { kind: s.groupKind, name: s.groupName, color: Number(s.groupColor) || 0, width: Number(s.groupWidth) || 0 }
         })
     }
@@ -255,7 +257,7 @@
         { title: 'Rate', value: 2.4, min: 0.1, max: 10, unit: 'Hz', group: { kind: 'start', name: 'Modulation of the delayed and the feedback signal path', color: 3, width: 180 } },
         { title: 'Depth', value: 35, min: 0, max: 100, unit: '%', decimals: 0, minimised: true, group: { kind: 'end', color: 3 } },
         { title: 'Voices', value: 3, min: 1, max: 5, integer: true, group: { kind: 'none' } },
-        { title: 'Pan', value: -25, min: -100, max: 100, decimals: 0, group: { kind: 'none' }, binding: { type: 'chain', kind: 'Control Chain', label: 'Knob 2' } },
+        { title: 'Pan', value: -25, min: -100, max: 100, decimals: 0, group: { kind: 'none' }, binding: { type: 'cv', kind: 'CV', label: 'CV 1', locked: true } },
         { title: 'Mix', value: 50, min: 0, max: 100, unit: '%', decimals: 0, group: { kind: 'none' } }
     ]
     G.forEach(function (o) {
