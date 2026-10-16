@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "playground",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/devproxy.js", "--port", "18090"],
+      "port": 18090
+    }
+  ]
+}
