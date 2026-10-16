@@ -8,9 +8,9 @@
  */
 
 .nhe-slider {
-    /* geometry (spec: 120 x 646; band 44, header 69, footer 48) */
+    /* geometry (spec: 120 x 646; band 44, header 69, footer 48). The height
+       is inherited when set higher up (the panel sets it for every column). */
     --nhe-slider-width: 120px;
-    --nhe-slider-height: 646px;
     --nhe-slider-band: 44px;
     --nhe-slider-header: 69px;
     --nhe-slider-footer: 48px;
@@ -27,7 +27,7 @@
     flex-direction: column;
     align-items: center;
     width: var(--nhe-slider-width);
-    height: var(--nhe-slider-height);
+    height: var(--nhe-slider-height, 646px);
     flex: none;
     font-family: var(--nhe-font-family-base);
     color: var(--nhe-text-primary);
