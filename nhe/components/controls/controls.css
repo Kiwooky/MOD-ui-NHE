@@ -761,3 +761,42 @@
 .nhe-dialog__buttons .nhe-text-button { flex: 1 1 0; min-width: 0; }
 .nhe-dialog__setting .nhe-segmented button { padding: 0 var(--nhe-space-4); font-size: var(--nhe-font-size-sm); }
 .nhe-dialog .nhe-row--wide { text-transform: uppercase; }
+
+/* ---- plugin colour (components/controls/colour.js) ---------------------- */
+
+.nhe-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: var(--nhe-space-10); flex: none; }
+
+.nhe-swatch {
+    position: relative;
+    height: 52px;
+    padding: 0;
+    background: var(--swatch);
+    border: 0;
+    border-radius: var(--nhe-radius-md);
+    cursor: pointer;
+}
+
+/* System spans two cells and says so */
+.nhe-swatch:first-child { grid-column: span 2; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
+.nhe-swatch.is-selected { box-shadow: 0 0 0 2px var(--nhe-surface-base), 0 0 0 4px var(--nhe-text-primary); }
+
+.nhe-dialog__note { margin-top: var(--nhe-space-16); font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-normal); opacity: .7; }
+
+/* the colour button in the plugin name bar */
+.nhe-plugin-header__name { position: relative; }
+.nhe-plugin-header__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nhe-plugin-header__colour {
+    position: absolute;
+    top: 50%;
+    right: var(--nhe-space-4);
+    width: 32px;
+    height: 32px;
+    margin-top: -16px;
+    padding: 4px;
+    background: none;
+    border: 0;
+    color: var(--nhe-text-on-accent);
+    cursor: pointer;
+}
+.nhe-plugin-header__colour svg { display: block; width: 100%; height: 100%; }
+.nhe-plugin-header.has-colour .nhe-plugin-header__name { padding-right: 40px; padding-left: 40px; }

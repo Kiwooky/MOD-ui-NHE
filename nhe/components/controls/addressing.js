@@ -27,6 +27,7 @@
  *           cancel()
  *       },
  *       minimised: null | bool,     // null: not a slider, no Minimise item
+ *       accent: null | '#rrggbb',   // the plugin's colour (colour.js)
  *       onMinimise: fn(bool),       // on Save, when it changed
  *       onClose: fn(saved)
  *   })
@@ -44,6 +45,7 @@
 
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
         var d = this.root = el('div', 'nhe-dialog', overlay)
+        if (this.o.accent && NHE.accent) NHE.accent.apply(overlay, this.o.accent)   // the plugin's colour
         d.setAttribute('role', 'dialog')
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', this.o.control + ' settings')

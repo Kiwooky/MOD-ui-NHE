@@ -236,6 +236,14 @@
         this.init(root, 'nhe-plugin-header', options, { name: '', on: true, binding: null })
         var n = this.n = {}
         n.name = el('div', 'nhe-plugin-header__name', root)
+        n.nameText = el('span', 'nhe-plugin-header__text', n.name)
+        // the plugin's colour (colour.js), when the host offers it
+        if (typeof this.o.onColour === 'function') {
+            n.colour = NHE.iconButton('palette', { label: 'Plugin colour', onClick: function () { self.emit('onColour') } })
+            n.colour.className = 'nhe-plugin-header__colour'
+            n.name.appendChild(n.colour)
+            root.classList.add('has-colour')
+        }
         var row = el('div', 'nhe-plugin-header__row', root)
         n.sw = el('button', 'nhe-plugin-header__switch', row)
         n.sw.type = 'button'
@@ -255,7 +263,7 @@
     })
 
     PluginHeader.prototype.render = function () {
-        this.n.name.textContent = this.o.name
+        this.n.nameText.textContent = this.o.name
         this.n.label.textContent = this.o.on ? 'ON' : 'OFF'
         this.n.sw.setAttribute('aria-checked', this.o.on ? 'true' : 'false')
         this.n.sw.setAttribute('aria-label', 'Plugin on')

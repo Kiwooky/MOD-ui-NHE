@@ -159,7 +159,7 @@
         return {
             instance: instance,
             label: (icon && icon.data('label')) || e.label || e.name,
-            name: e.name, brand: e.brand,
+            name: e.name, brand: e.brand, uri: e.uri,
             ports: ports,
             // LV2 parameters (files, strings): not handled by the NHE panel yet
             parameters: (e.parameters || []).filter(function (p) { return p.writable }),

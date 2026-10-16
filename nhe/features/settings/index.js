@@ -16,6 +16,7 @@ NHE.register('settings', function (mod) {
     var VIEW_KEY = 'nhe-settings-view'     // 'nhe' | 'mod', per browser
     var TAB_KEY = 'nhe-system-bar-tab'     // 'meters' | 'chain', per browser
     var MINI_KEY = 'nhe-minimised'         // { 'instance/symbol': true }, per browser
+    var COLOUR_KEY = 'nhe-plugin-colours'  // { pluginUri: '#rrggbb' }, per browser: every copy of a plugin
     var MIN_HEIGHT = 400
 
     var view = function () {
@@ -40,6 +41,26 @@ NHE.register('settings', function (mod) {
         try { localStorage.setItem(MINI_KEY, JSON.stringify(all)) } catch (e) {}
     }
 
+    // plugin colours (colour.js), per plugin type
+    var colours = function () {
+        try { return JSON.parse(localStorage.getItem(COLOUR_KEY) || '{}') || {} } catch (e) { return {} }
+    }
+    var colourOf = function (instance) {
+        var info = mod.pluginInfo(instance)
+        return (info && info.uri && colours()[info.uri]) || null
+    }
+    var setColour = function (uri, hex) {
+        var all = colours()
+        if (hex) all[uri] = hex
+        else delete all[uri]
+        try { localStorage.setItem(COLOUR_KEY, JSON.stringify(all)) } catch (e) {}
+        // every open panel of that plugin follows
+        for (var i in states) {
+            var inf = states[i].info
+            if (inf && inf.uri === uri) NHE.accent.apply(states[i].root[0], hex)
+        }
+    }
+
     // the addressing dialog, over MOD's own (hidden) addressing form
     var openAddressing = function (instance, symbol, win) {
         var a = mod.addressing(instance, symbol)
@@ -50,6 +71,7 @@ NHE.register('settings', function (mod) {
         NHE.AddressingDialog({
             plugin: a.plugin, control: a.control, model: a.model,
             minimised: slider ? isMinimised(instance, symbol) : null,
+            accent: colourOf(instance),
             onMinimise: function (on) { setMinimised(instance, symbol, on); build(instance, win) }
         })
     }
@@ -136,6 +158,7 @@ NHE.register('settings', function (mod) {
             mod.onFilesChange(instance, function () { refreshFiles(instance) })
         }
         st.info = info
+        NHE.accent.apply(st.root[0], colourOf(instance))
 
         // the column height follows the window
         var h = Math.max(MIN_HEIGHT, Math.floor((st.root.innerHeight() || win.innerHeight()) - 8))
@@ -146,7 +169,10 @@ NHE.register('settings', function (mod) {
         st.panel = new NHE.Panel(st.panelEl[0], {
             height: h,
             plugin: { name: info.label, on: mod.pluginOn(instance), binding: mod.binding(instance, ':bypass'),
-                      presets: presetOptions(instance) },
+                      presets: presetOptions(instance),
+                      onColour: info.uri ? function () {
+                          NHE.ColourDialog({ plugin: info.label, value: colourOf(instance), onPick: function (hex) { setColour(info.uri, hex) } })
+                      } : null },
             controls: info.ports.filter(function (p) { return (p.properties || []).indexOf('notOnGUI') < 0 }).map(function (p) { return describe(instance, p) }),
             onInput: function (id, v) { send(instance, id, v) },
             onChange: function (id, v) { send(instance, id, v) },

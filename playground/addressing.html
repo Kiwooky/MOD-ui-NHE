@@ -37,6 +37,10 @@
 </header>
 <main>
     <section>
+        <h2>Plugin colour</h2>
+        <div class="cases" id="colour"></div>
+    </section>
+    <section>
         <h2>Open the dialog for</h2>
         <div class="cases" id="cases"></div>
     </section>
@@ -57,6 +61,7 @@
 <script src="/nhe/components/icons.js"></script>
 <script src="/nhe/components/controls/controls.js"></script>
 <script src="/nhe/components/controls/addressing.js"></script>
+<script src="/nhe/components/controls/colour.js"></script>
 <script>
 (function () {
     var log = function (what, data) {
@@ -141,6 +146,19 @@
     }
     Model.prototype.cancel = function () { log('cancel') }
 
+    // the plugin colour: picked here, it recolours the dialogs below
+    var colour = null
+    var cb = document.createElement('button')
+    cb.innerHTML = 'Pick a colour<small>System</small>'
+    cb.addEventListener('click', function () {
+        NHE.ColourDialog({ plugin: 'Dragonfly Hall', value: colour, onPick: function (hex) {
+            colour = hex
+            cb.querySelector('small').textContent = hex || 'System'
+            log('colour', hex)
+        } })
+    })
+    document.getElementById('colour').appendChild(cb)
+
     var box = document.getElementById('cases')
     CASES.forEach(function (c) {
         var b = document.createElement('button')
@@ -148,7 +166,7 @@
         b.addEventListener('click', function () {
             var model = new Model(c)
             NHE.AddressingDialog({
-                plugin: c.plugin, control: c.control, model: model,
+                plugin: c.plugin, control: c.control, model: model, accent: colour,
                 minimised: c.slider ? !!c.minimised : null,
                 onMinimise: function (v) { c.minimised = v; log('minimised', v) },
                 onClose: function (saved) { log('closed', saved) }

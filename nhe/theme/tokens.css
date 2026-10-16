@@ -8,8 +8,10 @@
  *
  * Features use the Theme roles (--nhe-accent-default, --nhe-surface-base...),
  * not the primitives. A user theme colour will override --nhe-accent-default
- * and --nhe-accent-strong on :root; a per-pedal colour, the same two on the
- * pedal's element.
+ * and --nhe-accent-strong on :root; a per-pedal colour sets those two plus
+ * --nhe-selection and --nhe-border-focus on the pedal's element (they resolve
+ * on :root, so they don't follow on their own): NHE.accent.apply in
+ * components/controls/colour.js.
  */
 
 :root {
