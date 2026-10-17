@@ -35,6 +35,10 @@
             ]
         },
         {
+            id: 'background',
+            files: ['features/background/index.js']
+        },
+        {
             id: 'settings',
             files: [
                 'components/icons.js',

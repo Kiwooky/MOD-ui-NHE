@@ -46,7 +46,7 @@ const TAG = '<script type="text/javascript" src="/nhe/loader.js?v=dev"></script>
 
 const TYPES = {
     '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
-    '.html': 'text/html', '.png': 'image/png', '.jpg': 'image/jpeg',
+    '.html': 'text/html', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
     '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.sh': 'text/plain',
 }
 

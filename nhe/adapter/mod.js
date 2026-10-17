@@ -173,6 +173,24 @@
         }
     }
 
+    // MOD's builder background: background.jpg on #pedalboard-dashboard
+    // (css/dashboard.css: '#111 url(../img/background.jpg) repeat', sized
+    // auto 1200px), which the performance view (#performance-view) shows
+    // too. url: an image to use in its place, or null for MOD's own; height:
+    // the tile's height in px (MOD's is 1200), else MOD's sizing stays.
+    mod.setBackground = function (url, height) {
+        var style = document.getElementById('nhe-background')
+        if (!url) { if (style) style.parentNode.removeChild(style); return }
+        if (!style) {
+            style = document.createElement('style')
+            style.id = 'nhe-background'
+            document.head.appendChild(style)
+        }
+        var u = String(url).replace(/["\\\n]/g, '')
+        var size = height ? ' background-size: auto ' + Math.round(height) + 'px !important; background-repeat: repeat !important;' : ''
+        style.textContent = '#pedalboard-dashboard, #performance-view { background-image: url("' + u + '") !important;' + size + ' }'
+    }
+
     mod.closeSettings = function (instance) {
         var icon = mod.plugins()[instance]
         var s = icon && icon.data('settings')
