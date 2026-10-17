@@ -376,8 +376,11 @@
         return n >= 2 ? Math.round(p * (n - 1)) / (n - 1) : p
     }
 
+    // the thumb's travel in on-screen px, like the pointer's moves: the panel
+    // may be scaled (upright on a phone, NHE.zoom)
     Slider.prototype.travel = function () {
-        return this.n.track.clientHeight - this.n.thumb.offsetHeight
+        var scale = this.n.track.clientHeight ? this.n.track.getBoundingClientRect().height / this.n.track.clientHeight : 1
+        return (this.n.track.clientHeight - this.n.thumb.offsetHeight) * (scale || 1)
     }
 
     // stepped ports: the value snaps at once, the thumb follows the finger

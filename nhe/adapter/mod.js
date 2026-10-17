@@ -142,6 +142,37 @@
         })
     }
 
+    mod.onSettingsClose = function (cb) {
+        $('body').on('windowclose', '.mod-settings', function (e) {
+            if (e.target !== this) return
+            var instance = $(this).attr('mod-instance')
+            if (instance) cb(instance, $(this))
+        })
+    }
+
+    // Full width on phones in landscape. MOD's page has no viewport tag, so a
+    // phone keeps it out of the notch areas (black bars at both sides). While
+    // an NHE screen shows, ask for viewport-fit=cover (its content keeps clear
+    // of the notch with env(safe-area-inset-*)); when none shows, MOD's page
+    // goes back to how it was. width=980 is the layout width phones use for a
+    // page without the tag, so MOD's layout doesn't change.
+    var bleeders = {}
+    mod.fullBleed = function (owner, on) {
+        if (on) bleeders[owner] = true
+        else delete bleeders[owner]
+        var want = Object.keys(bleeders).length > 0
+        var meta = document.querySelector('meta[name=viewport][data-nhe]')
+        if (want && !meta && !document.querySelector('meta[name=viewport]')) {
+            meta = document.createElement('meta')
+            meta.name = 'viewport'
+            meta.setAttribute('data-nhe', '')
+            meta.content = 'width=980, viewport-fit=cover'
+            document.head.appendChild(meta)
+        } else if (!want && meta) {
+            meta.parentNode.removeChild(meta)
+        }
+    }
+
     mod.closeSettings = function (instance) {
         var icon = mod.plugins()[instance]
         var s = icon && icon.data('settings')

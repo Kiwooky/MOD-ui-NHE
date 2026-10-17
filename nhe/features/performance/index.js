@@ -28,11 +28,23 @@ NHE.register('performance', function (mod) {
         // feature); without it, the view shows MOD's settings panel there
         renderBack: function (instance, container, api) {
             if (!NHE.settingsScreen) return false
+            mod.fullBleed('performance-back', true)
             NHE.settingsScreen.mount(instance, container, {
                 exit: function () { api.flipBack() },        // the system bar's EXIT flips back
                 hop: function (id) { api.flipTo(id) },       // the chain: straight to that pedal's back
             })
             return true
         },
+    })
+
+    // the back closes (Flip, leaving the view): give MOD's page its edges back
+    var pv = mod.desktop().performanceView
+    ;['flipBack', 'close'].forEach(function (m) {
+        var original = pv[m]
+        pv[m] = function () {
+            var r = original.apply(this, arguments)
+            if (!pv.isFlipped()) mod.fullBleed('performance-back', false)
+            return r
+        }
     })
 })

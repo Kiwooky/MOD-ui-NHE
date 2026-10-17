@@ -180,6 +180,7 @@
                  outputs: [{ port: 'Out (L)', items: [{ id: 'ta', brand: 'NHE', name: 'Trance Atlantic' }] },
                            { port: 'Out (R)', items: [{ id: 'tm', brand: 'NHE', name: 'Taj Mahal' }, { device: true }] }] },
         onExit: function () { write('exit', 'system bar') },
+        onSet: function () { write('set', 'system bar') },
         onTempo: function (v) { write('tempo', 'system bar', v) },
         onHop: function (id) { write('hop', 'to plugin', id) },
         onTab: function (t) { write('tab', t) }

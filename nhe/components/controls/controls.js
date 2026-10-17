@@ -553,7 +553,7 @@
             }
             e.preventDefault()
             if (drag.axis === 'x') root.scrollLeft = drag.left - dx
-            else drag.list.scrollTop = drag.top - dy
+            else drag.list.scrollTop = drag.top - dy / drag.scale
         }
         var onUp = function (e) {
             if (!drag || (e && e.pointerId !== drag.id)) return
@@ -576,11 +576,39 @@
             var list = scrollerY(t)
             var onControl = !!t.closest(CONTROL)
             if (onControl && !list) return       // a button, toggle or readout: leave it alone
+            // a list inside a scaled panel scrolls in its own px: divide the
+            // pointer's on-screen move by the scale
+            var scale = list && list.offsetHeight ? list.getBoundingClientRect().height / list.offsetHeight : 1
             drag = { id: e.pointerId, x: e.clientX, y: e.clientY, left: root.scrollLeft,
-                     list: list, top: list ? list.scrollTop : 0, onControl: onControl, axis: null }
+                     list: list, top: list ? list.scrollTop : 0, onControl: onControl, axis: null, scale: scale || 1 }
             document.addEventListener('pointermove', onMove)
             document.addEventListener('pointerup', onUp)
             document.addEventListener('pointercancel', onUp)
         })
     }
+})();
+
+/*
+ * Scale for phones held upright. MOD's page has no viewport tag, so a phone
+ * lays it out 980 px wide and shrinks it to fit: upright, NHE's screens get
+ * very tall and their sliders long and thin. Upright, the screens and
+ * dialogs are scaled up (CSS transform, which every browser measures the
+ * same way) so about ZOOM_TARGET px fill the width: the system bar, the
+ * presets column and one slider. Sideways and on a computer: 1.
+ *
+ *   NHE.zoom()   // the current factor; CSS reads it as var(--nhe-zoom)
+ */
+(function () {
+    var NHE = window.NHE = window.NHE || {}
+    var ZOOM_TARGET = 540, ZOOM_MAX = 3      // 540: bar, presets, one slider, and room for the NHE / MOD switch
+
+    NHE.zoom = function () {
+        var w = window.innerWidth, h = window.innerHeight
+        if (h <= w) return 1
+        return Math.max(1, Math.min(ZOOM_MAX, w / ZOOM_TARGET))
+    }
+    var apply = function () { document.documentElement.style.setProperty('--nhe-zoom', NHE.zoom()) }
+    apply()
+    window.addEventListener('resize', function (e) { if (e.target === window) apply() })
+    window.addEventListener('orientationchange', apply)
 })();

@@ -21,7 +21,7 @@ NHE.register('settings', function (mod) {
     var TAB_KEY = 'nhe-system-bar-tab'     // 'meters' | 'chain', per browser
     var MINI_KEY = 'nhe-minimised'         // { 'instance/symbol': true }, per browser
     var COLOUR_KEY = 'nhe-plugin-colours'  // { pluginUri: '#rrggbb' }, per browser: every copy of a plugin
-    var MIN_HEIGHT = 400
+    var MIN_HEIGHT = 300      // a phone held sideways can be under 400 tall
 
     var view = function () {
         try { return localStorage.getItem(VIEW_KEY) || 'nhe' } catch (e) { return 'nhe' }
@@ -124,7 +124,8 @@ NHE.register('settings', function (mod) {
         var st = { instance: instance, host: host, kind: kind, actions: actions, gui: mod.gui(instance) }
         st.root = $('<div class="nhe-settings">').attr('data-instance', instance).appendTo(host)
         st.scroller = $('<div class="nhe-settings__scroll">').appendTo(st.root)
-        var stage = $('<div class="nhe-settings__stage">').appendTo(st.scroller)
+        st.sizer = $('<div class="nhe-settings__sizer">').appendTo(st.scroller)
+        var stage = st.stage = $('<div class="nhe-settings__stage">').appendTo(st.sizer)
         st.barEl = $('<div>').appendTo(stage)
         st.panelEl = $('<div>').appendTo(stage)
         var t = mod.tempo(), stats = mod.stats()
@@ -138,6 +139,7 @@ NHE.register('settings', function (mod) {
             onExit: function () { st.actions.exit() },
             onTempo: function (bpm) { mod.setTempo(bpm) },
             onHop: function (id) { st.actions.hop(id) },
+            onSet: function () { openSet(st) },
         })
         st.hint = NHE.scrollHint(st.scroller[0])
 
@@ -170,8 +172,9 @@ NHE.register('settings', function (mod) {
         st.info = info
         NHE.accent.apply(st.root[0], colourOf(instance))
 
-        // the column height follows the host
-        var h = Math.max(MIN_HEIGHT, Math.floor((st.root.innerHeight() || st.host.innerHeight()) - 8))
+        // the column height follows the host, in the stage's own (scaled) px
+        var z = NHE.zoom ? NHE.zoom() : 1
+        var h = Math.max(MIN_HEIGHT, Math.floor(((st.root.innerHeight() || st.host.innerHeight()) - 8) / z))
 
         st.barEl.css('height', h + 'px')
         st.bar.update({ plugin: info.label, chain: mod.neighbours(instance), tab: barTab() })
@@ -202,6 +205,8 @@ NHE.register('settings', function (mod) {
             onFile: function (uri, value) { mod.fileAction(instance, uri, value) },
             onT3K: function (uri) { mod.fileT3K(instance, uri) },
         })
+        // the sizer takes the scaled stage's size, so the scroller can reach all of it
+        st.sizer.css({ width: Math.ceil(st.stage[0].offsetWidth * z) + 'px', height: Math.ceil(st.stage[0].offsetHeight * z) + 'px' })
         st.hint.update()
     }
 
@@ -244,6 +249,34 @@ NHE.register('settings', function (mod) {
         mod.onTempo(function (t) { screens.forEach(function (st) { st.bar.setTempo(t.bpm, t.locked, t.sync) }) })
     }
 
+    // ---- SET: NHE's own settings --------------------------------------------
+    //
+    // For now: which editor a plugin's settings window shows (NHE or MOD's
+    // own). More settings will join it here.
+    var openSet = function (st) {
+        var overlay = $('<div class="nhe-ctl nhe-dialog-overlay">').appendTo('body')
+        var d = $('<div class="nhe-dialog nhe-set-dialog" role="dialog" aria-modal="true" aria-label="NHE settings" tabindex="-1">').appendTo(overlay)
+        NHE.accent.apply(overlay[0], colourOf(st.instance))
+        var head = $('<div class="nhe-dialog__header">').appendTo(d)
+        $('<span class="nhe-dialog__plugin">').text('NHE').appendTo(head)
+        $('<span class="nhe-dialog__pill">').text('Settings').appendTo(head)
+        $('<div class="nhe-dialog__title">').html(NHE.icons.gear + '<span>Plugin settings editor</span>').appendTo(d)
+        var seg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
+        new NHE.Segmented(seg[0], { options: ['NHE', 'MOD'], value: view() === 'mod' ? 1 : 0, onChange: function (i) {
+            setView(i ? 'mod' : 'nhe')
+            // the open window follows at once; the back of a flipped pedal
+            // always shows NHE's screen
+            for (var k in windows) if (windows[k].host.is(':visible')) apply(windows[k])
+        } })
+        $('<div class="nhe-dialog__note">').text("What a plugin's gear opens: NHE's screen, or MOD's own settings panel. Remembered in this browser.").appendTo(d)
+        var foot = $('<div class="nhe-dialog__buttons">').appendTo(d)
+        var close = function () { overlay.remove() }
+        foot.append(NHE.textButton('Close', 'primary', close))
+        d.on('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close() } })
+        d.on('keyup', function (e) { e.stopPropagation() })
+        setTimeout(function () { d[0].focus() }, 0)
+    }
+
     // ---- MOD's settings window ---------------------------------------------
 
     var windows = {}      // instance -> the window's screen
@@ -265,6 +298,7 @@ NHE.register('settings', function (mod) {
     var apply = function (st) {
         var v = view()
         st.host.toggleClass('nhe-settings-on', v === 'nhe')
+        mod.fullBleed('window:' + st.instance, v === 'nhe')
         st.switcher.update({ value: v === 'nhe' ? 0 : 1 })
         if (v === 'nhe') build(st)
     }
@@ -288,6 +322,8 @@ NHE.register('settings', function (mod) {
         // build once the window is laid out, so the height is known
         setTimeout(function () { apply(st) }, 0)
     })
+
+    mod.onSettingsClose(function (instance) { mod.fullBleed('window:' + instance, false) })
 
     // ---- any other container: the back of a pedal in the performance view --
 

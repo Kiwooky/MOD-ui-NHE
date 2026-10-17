@@ -13,7 +13,7 @@
  *       chain: { inputs:  [{ port: 'In',      items: [{ id, brand, name } | { device: true }] }],
  *                outputs: [{ port: 'Out (L)', items: [...] }] },
  *       exitIcon: 'exit', exitLabel: 'Exit',   // the top-left button
- *       onExit, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab)
+ *       onExit, onSet, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab)
  *   })
  *   bar.setStats({ cpu, xruns })   // MOD websocket "stats"
  *   bar.setSysStats({ ram })       // MOD websocket "sys_stats"
@@ -41,6 +41,14 @@
         var exit = el('button', 'nhe-system-bar__exit', root, icon(this.o.exitIcon || 'exit') + '<span>' + (this.o.exitLabel || 'Exit') + '</span>')
         exit.type = 'button'
         exit.addEventListener('click', function () { self.emit('onExit') })
+
+        // SET: NHE's own settings (shown when the host gives onSet); the
+        // meters below give up its height
+        if (typeof this.o.onSet === 'function') {
+            var set = el('button', 'nhe-system-bar__exit nhe-system-bar__set', root, icon('gear') + '<span>Set</span>')
+            set.type = 'button'
+            set.addEventListener('click', function () { self.emit('onSet') })
+        }
 
         // meters page
         var mp = el('div', 'nhe-system-bar__page nhe-system-bar__meters-page', root)
