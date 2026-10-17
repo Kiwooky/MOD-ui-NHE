@@ -119,7 +119,9 @@ NHE.register('settings', function (mod) {
     // the system bar's EXIT and chain hop
     var createScreen = function (instance, host, kind, actions) {
         hookTempo()
-        var st = { instance: instance, host: host, kind: kind, actions: actions }
+        // st.gui: the plugin GUI this screen follows; a new one (pedalboard
+        // reloaded, plugin updated) needs a new screen (see current())
+        var st = { instance: instance, host: host, kind: kind, actions: actions, gui: mod.gui(instance) }
         st.root = $('<div class="nhe-settings">').attr('data-instance', instance).appendTo(host)
         st.scroller = $('<div class="nhe-settings__scroll">').appendTo(st.root)
         var stage = $('<div class="nhe-settings__stage">').appendTo(st.scroller)
@@ -246,6 +248,20 @@ NHE.register('settings', function (mod) {
 
     var windows = {}      // instance -> the window's screen
 
+    // the screen kept for an instance, if it still belongs to the plugin
+    // that is there now and (for a window) to that window; else it is dropped
+    var current = function (store, instance, host) {
+        var st = store[instance]
+        if (st && st.gui === mod.gui(instance) && (!host || st.host[0] === host[0])) return st
+        if (st) {
+            st.root.remove()
+            if (st.switchEl) st.switchEl.remove()
+            screens.splice(screens.indexOf(st), 1)
+            delete store[instance]
+        }
+        return null
+    }
+
     var apply = function (st) {
         var v = view()
         st.host.toggleClass('nhe-settings-on', v === 'nhe')
@@ -254,7 +270,7 @@ NHE.register('settings', function (mod) {
     }
 
     mod.onSettingsOpen(function (instance, win) {
-        var st = windows[instance]
+        var st = current(windows, instance, win)
         if (!st) {
             st = windows[instance] = createScreen(instance, win, 'window', {
                 exit: function () { mod.closeSettings(instance) },
@@ -281,7 +297,7 @@ NHE.register('settings', function (mod) {
         // shows the plugin's screen in host (alone: other screens there are
         // detached), built for the host's current size
         mount: function (instance, host, actions) {
-            var st = backs[instance]
+            var st = current(backs, instance)
             if (!st) st = backs[instance] = createScreen(instance, host, 'back', actions)
             st.actions = actions
             host.children('.nhe-settings').not(st.root).detach()

@@ -179,23 +179,26 @@
         gui.setPortValue(symbol, value)
     }
 
-    // wrap a GUI method once, calling every listener after MOD's own code
-    var listeners = {}
+    // Wrap a GUI method once, calling every listener after MOD's own code.
+    // The listeners live on the GUI object itself, not under the instance
+    // name: reloading a pedalboard, or updating a plugin, gives the same
+    // instance name a new GUI, and that one has to be wrapped too (keyed by
+    // name, the new GUI went unwrapped and NHE stopped following MOD).
     var hook = function (instance, method, cb) {
         var gui = mod.gui(instance)
         if (!gui) return
-        var key = instance + '|' + method
-        if (!listeners[key]) {
-            listeners[key] = []
+        var all = Object.prototype.hasOwnProperty.call(gui, '__nheListeners') ? gui.__nheListeners : (gui.__nheListeners = {})
+        if (!all[method]) {
+            var list = all[method] = []
             var original = gui[method]
             gui[method] = function () {
                 var r = original.apply(this, arguments)
                 var args = arguments
-                listeners[key].forEach(function (fn) { try { fn.apply(null, args) } catch (err) { if (window.console) console.error(err) } })
+                list.forEach(function (fn) { try { fn.apply(null, args) } catch (err) { if (window.console) console.error(err) } })
                 return r
             }
         }
-        listeners[key].push(cb)
+        all[method].push(cb)
     }
 
     // values from anywhere (host feedback, MIDI, presets, snapshots, our own changes)
