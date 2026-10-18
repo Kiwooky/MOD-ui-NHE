@@ -19,7 +19,12 @@ set -e
 HTML=${NHE_TEST_HTML:-/usr/share/mod/html}
 DATA=${NHE_TEST_DATA:-/data/nhe}
 BACKUP=${NHE_TEST_BACKUP:-/data/nhe-backup}
-TAG='<script type="text/javascript" src="nhe/loader.js?v=1"></script>'
+# The loader's address carries this deploy's version (from version.json),
+# so browsers fetch the new loader after each deploy: MOD's server lets them
+# cache static files for a year, and the loader holds the feature list.
+VERSION=$(sed -n 's/.*"version"[^"]*"\([^"]*\)".*/\1/p' "${NHE_TEST_DATA:-/data/nhe}/version.json" 2>/dev/null | tr -cd 'A-Za-z0-9._-')
+[ -n "$VERSION" ] || VERSION=1
+TAG='<script type="text/javascript" src="nhe/loader.js?v='"$VERSION"'"></script>'
 
 [ -f "$DATA/loader.js" ] || { echo "No $DATA/loader.js: copy the nhe folder to /data first."; exit 1; }
 
@@ -54,8 +59,10 @@ fi
 sed -i 's#<script[^>]*performance-inject\.js[^>]*></script>##g' "$HTML/index.html"
 rm -f "$HTML/js/performance-inject.js"
 
-# add the loader tag once
-if ! grep -q 'nhe/loader\.js' "$HTML/index.html"; then
+# the loader tag: once, with this deploy's version (replacing an older one)
+if grep -q 'nhe/loader\.js' "$HTML/index.html"; then
+    sed -i "s#<script[^>]*nhe/loader\.js[^>]*></script>#$TAG#" "$HTML/index.html"
+else
     sed -i "s#</body>#$TAG</body>#" "$HTML/index.html"
 fi
 grep -q 'nhe/loader\.js' "$HTML/index.html" || { echo "Could not add the loader tag."; exit 1; }

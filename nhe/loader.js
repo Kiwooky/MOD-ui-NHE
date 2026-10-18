@@ -4,13 +4,15 @@
 /*
  * NHE loader: the only file MOD's index.html points at.
  *
- *   <script type="text/javascript" src="nhe/loader.js?v=1"></script>
+ *   <script type="text/javascript" src="nhe/loader.js?v=<version>"></script>
  *
  * Keep this file small and stable. MOD's server tells browsers to cache
  * static files for a year, so the loader asks for version.json fresh on
- * every page load and uses that version to fetch everything else: a deploy
- * that bumps version.json reaches every browser on the next reload, without
- * touching index.html again.
+ * every page load and uses that version to fetch everything else. The
+ * loader itself is fetched anew because device/install.sh (run by every
+ * deploy) writes the deploy's version into the tag's ?v=: without that, a
+ * browser kept its old loader, and a feature added to the list below never
+ * loaded.
  *
  * Features are listed below. Each can be switched off with a MOD preference
  * "nhe-<id>" = "false" (the same store as Settings' "Show MOD Labs plugins").
