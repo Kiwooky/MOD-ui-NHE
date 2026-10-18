@@ -269,6 +269,25 @@ NHE.register('settings', function (mod) {
             for (var k in windows) if (windows[k].host.is(':visible')) apply(windows[k])
         } })
         $('<div class="nhe-dialog__note">').text("What a plugin's gear opens: NHE's screen, or MOD's own settings panel. Remembered in this browser.").appendTo(d)
+
+        // the work surface: the builder's background (features/background)
+        if (NHE.backgroundList) {
+            $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.palette + '<span>Work surface</span>').appendTo(d)
+            var select = $('<select class="nhe-dialog__input nhe-dialog__select" aria-label="Work surface">').appendTo(d)
+            NHE.backgroundList(function (list) {
+                var current = NHE.backgroundCurrent()
+                $('<option>').val(NHE.backgroundMod).text("MOD's wood").appendTo(select)
+                list.forEach(function (b) { $('<option>').val(b.file).text(b.file).appendTo(select) })
+                select.val(current)
+                select.data('list', list)
+            })
+            select.on('change', function () {
+                var file = select.val(), found = null
+                ;(select.data('list') || []).forEach(function (b) { if (b.file === file) found = b })
+                if (file === NHE.backgroundMod) NHE.background(null)
+                else NHE.background(file, found && found.height)
+            })
+        }
         var foot = $('<div class="nhe-dialog__buttons">').appendTo(d)
         var close = function () { overlay.remove() }
         foot.append(NHE.textButton('Close', 'primary', close))

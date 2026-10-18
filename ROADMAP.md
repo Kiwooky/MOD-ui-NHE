@@ -23,6 +23,7 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 ## Next
 
 - **Slider titles get cut off** (seen on the Duo): a minimised slider's title can be clipped at the column edge ("FEEDBACK" shows as "FEEDBAC"), and possibly a regular slider's too. Check whether it is the title's width / overflow or the next column drawn over it (stacking order).
+- **Locked slider's fill at 50 % opacity:** while CV drives a slider (thumb parked at the bottom), the grey fill showing the value can be half-transparent: still visible, less distracting.
 - **Darker overlay behind dialogs:** the 60 % black under NHE's dialogs (`--nhe-surface-scrim`) can go a bit darker.
 - **Control settings full screen on a phone**, not a card over the overlay. The dialog already has a full-screen layout for narrow screens (`@media (max-width: 480px)` in controls.css), but it never applies: MOD's page is laid out 980 px wide on a phone, so it needs to go by the phone itself (as `NHE.zoom` does) instead.
 - **System bar, Chain tab:** bigger IN / OUT headings and cards (a larger font), so the chain is easier to step through. Explore how to hop through parallel chains (where a plugin feeds or is fed by more than one): harder, but worth trying.

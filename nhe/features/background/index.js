@@ -12,6 +12,10 @@
  *   NHE.background(null)               // MOD's own wood
  *   NHE.background()                   // which one is on
  *
+ * The images on offer are listed in nhe/backgrounds/backgrounds.json
+ * ({ file, height }: the tile's height in px); SET's Work surface dropdown
+ * shows them (NHE.backgroundList).
+ *
  * Until something is chosen, DEFAULT shows. The choice is remembered in this
  * browser. The image tiles like MOD's (1200 px tall), on the builder and in
  * the performance view.
@@ -45,6 +49,27 @@ NHE.register('background', function (mod) {
         mod.setBackground(resolve(name), savedHeight())
         return name ? resolve(name) : "MOD's own"
     }
+
+    // the list in nhe/backgrounds/backgrounds.json, fetched once
+    var list = null, waiting = []
+    NHE.backgroundList = function (cb) {
+        if (list) { cb(list); return }
+        waiting.push(cb)
+        if (waiting.length > 1) return
+        var xhr = new XMLHttpRequest()
+        xhr.open('GET', NHE.base + 'backgrounds/backgrounds.json?v=' + encodeURIComponent(NHE.version || ''))
+        var done = function () {
+            try { list = JSON.parse(xhr.responseText) } catch (e) { list = [] }
+            if (!list || !list.length) list = [{ file: DEFAULT, height: DEFAULT_HEIGHT }]
+            waiting.splice(0).forEach(function (fn) { fn(list) })
+        }
+        xhr.onload = done
+        xhr.onerror = done
+        xhr.send()
+    }
+    // the file on now, or MOD (the wood)
+    NHE.backgroundCurrent = function () { return saved() }
+    NHE.backgroundMod = MOD
 
     mod.setBackground(resolve(saved()), savedHeight())
 })

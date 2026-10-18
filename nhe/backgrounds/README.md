@@ -1,6 +1,6 @@
 # Builder backgrounds
 
-`perforated.jpg` shows by default, tiled 300 px tall (a quarter of MOD's 1200). Images to try in place of MOD's wood (`img/background.jpg`, 2000 x 1420, tiled at 1200 px tall). Drop a JPEG, PNG or WebP here, reload MOD, then in the browser console:
+`perforated.jpg` shows by default, tiled 300 px tall (a quarter of MOD's 1200). Images to try in place of MOD's wood (`img/background.jpg`, 2000 x 1420, tiled at 1200 px tall). Drop a JPEG, PNG or WebP here and add it to `backgrounds.json` (`file`, and `height`: the tile's height in px). It then shows in **SET → Work surface**. Or, in the browser console:
 
 ```js
 NHE.background('your-image.jpg')        // try it (remembered in this browser)

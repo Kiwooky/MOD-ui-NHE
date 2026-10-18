@@ -1,0 +1,7 @@
+[
+    { "file": "perforated.jpg",       "height": 300 },
+    { "file": "perforated-dark.jpg",  "height": 300 },
+    { "file": "perforated-small.jpg", "height": 355 },
+    { "file": "staggered-dark.jpg",   "height": 300 },
+    { "file": "staggered-small.jpg",  "height": 390 }
+]

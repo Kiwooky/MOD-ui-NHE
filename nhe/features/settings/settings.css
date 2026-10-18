@@ -73,3 +73,16 @@
 
 /* SET's dialog: short, nothing to stretch */
 .nhe-set-dialog .nhe-dialog__setting { margin-top: 0; }
+
+/* SET's work surface dropdown: the text field's look, with an arrow */
+.nhe-set-dialog__section { margin-top: var(--nhe-space-16); }
+.nhe-dialog__select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+    cursor: pointer;
+}
