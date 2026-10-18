@@ -22,6 +22,16 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 
 ## Next
 
+- **Slider titles get cut off** (seen on the Duo): a minimised slider's title can be clipped at the column edge ("FEEDBACK" shows as "FEEDBAC"), and possibly a regular slider's too. Check whether it is the title's width / overflow or the next column drawn over it (stacking order).
+- **Darker overlay behind dialogs:** the 60 % black under NHE's dialogs (`--nhe-surface-scrim`) can go a bit darker.
+- **Control settings full screen on a phone**, not a card over the overlay. The dialog already has a full-screen layout for narrow screens (`@media (max-width: 480px)` in controls.css), but it never applies: MOD's page is laid out 980 px wide on a phone, so it needs to go by the phone itself (as `NHE.zoom` does) instead.
+- **System bar, Chain tab:** bigger IN / OUT headings and cards (a larger font), so the chain is easier to step through. Explore how to hop through parallel chains (where a plugin feeds or is fed by more than one): harder, but worth trying.
+- **System bar, Meters tab** (the "dashboard"): CPU / RAM need not take all the height. It could hold actions that now mean a trip to the builder: transport (start / stop, for MIDI clock), snapshots, and so on.
+- **Phones and tablets, MOD's own screens:**
+  - On first load, MOD's top and bottom bars need proper scaling for the screen.
+  - The builder (constructor) should be about wiring: fewer tap interactions on a pedal there, so taps don't fight with making connections.
+  - When pedals are shown below a certain size, all plugin editing goes to the settings screen rather than the pedal's own controls.
+  - Bigger icons above each pedal (in proportion), so they are easy to hit on tablets, phones and small screens.
 - Run it on a Duo and a tablet; fix what turns up.
 - **Add to surface**: a performance surface that gathers starred controls from every plugin on the pedalboard on one screen. The star is in the addressing dialog, switched off for now.
 - Text parameters (e.g. Button to CV's labels), not handled by the NHE screen yet: use the MOD view.
