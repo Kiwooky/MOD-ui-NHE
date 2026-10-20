@@ -506,6 +506,14 @@
 .nhe-card__brand { font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-medium); text-transform: uppercase; opacity: .8; }
 .nhe-card__name { font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-snug); font-weight: var(--nhe-font-weight-semibold); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .nhe-card:active { opacity: .7; }
+/* the whole card is the button: its text never takes the tap itself */
+.nhe-card > * { pointer-events: none; }
+.nhe-card:not(:disabled):hover { background: var(--nhe-color-grey-800); box-shadow: inset 0 0 0 1px var(--nhe-accent-default); }
+.nhe-card:disabled { cursor: default; }
+/* a mouse (desktop): taller cards, easier to hit */
+@media (hover: hover) and (pointer: fine) {
+    .nhe-system-bar .nhe-card { padding-top: var(--nhe-space-16); padding-bottom: var(--nhe-space-16); }
+}
 
 .nhe-tabs { display: flex; justify-content: space-between; width: 100%; height: 48px; flex: none; align-items: center; padding: 0 var(--nhe-space-8); }
 .nhe-tabs button { display: flex; padding: var(--nhe-space-4) var(--nhe-space-8); border: 0; border-radius: var(--nhe-radius-md); background: none; color: var(--nhe-icon-default); cursor: pointer; }
