@@ -1,0 +1,270 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 New Horizon Electronics -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Constructor playground</title>
+<link rel="stylesheet" href="/nhe/theme/tokens.css">
+<link rel="stylesheet" href="/nhe/components/controls/controls.css">
+<link rel="stylesheet" href="/nhe/components/constructor/constructor.css">
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--nhe-color-black); color: var(--nhe-text-primary); font: 14px/1.4 var(--nhe-font-family-base); }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 12px 24px; border-bottom: 1px solid #333; }
+    header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    header a { color: #bbb; }
+    main { padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+    h2 { margin: 0 0 12px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #aaa; }
+    .tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tools button { font: inherit; font-size: 13px; color: inherit; background: #222; border: 1px solid #3a3a3a; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+    .tools button:hover { border-color: var(--nhe-accent-default); }
+    .box { background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 12px; font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 120px; }
+    .box div { color: #ccc; white-space: pre-wrap; }
+    .box b { color: var(--nhe-accent-default); font-weight: 600; }
+    .box .gone { color: #e07070; text-decoration: line-through; }
+    .notes { color: #999; font-size: 13px; padding-left: 18px; margin: 0; }
+    .grid { display: grid; gap: 6px; margin-bottom: 12px; }
+    .cell { height: 54px; border: 0; border-radius: 6px; font: inherit; font-size: 11px; line-height: 1.2; color: inherit; padding: 4px; overflow: hidden; }
+    .cell.pedal { background: #3a2a40; }
+    .cell.port { background: #000; color: #aaa; }
+    .cell.plus { background: #1d1d1d; color: #888; font-size: 22px; cursor: pointer; }
+    .cell.plus:hover { background: #2a2a2a; color: #fff; }
+    .cell.edge { background: none; }
+</style>
+</head>
+<body>
+<header>
+    <h1>Constructor playground</h1>
+    <a href="/playground/controls.html">Controls playground</a>
+    <a href="/playground/addressing.html">Addressing playground</a>
+</header>
+<main>
+    <section>
+        <h2>Pretend pedalboard</h2>
+        <div class="tools">
+            <button id="add">+ Add a pedal</button>
+            <button id="reset">Start the board again</button>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="box" id="board"></div>
+        <h2 style="margin-top:24px">Notes</h2>
+        <ul class="notes">
+            <li id="source"></li>
+            <li>Tap a + on the grid: the pedals nearest it come first in Input from and Output to (before the + leads the inputs, after it the outputs). Place puts the new pedal in that cell.</li>
+            <li>Place adds the pedal and its wires to this pretend board, so the next + can pick it as an input or output.</li>
+            <li>For the phone layout, use the browser's phone size: the dialog goes full screen.</li>
+        </ul>
+    </section>
+    <section>
+        <h2>Last Place</h2>
+        <div class="box" id="log"></div>
+    </section>
+</main>
+
+<script src="/nhe/components/icons.js"></script>
+<script src="/nhe/components/controls/controls.js"></script>
+<script src="/nhe/components/constructor/autowire.js"></script>
+<script src="/nhe/components/constructor/add.js"></script>
+<script>
+(function () {
+    var CAT_ORDER = ['Delay', 'Distortion', 'Dynamics', 'Filter', 'Generator', 'Instrument', 'MIDI', 'Modulator', 'Reverb', 'Simulator', 'Spectral', 'Utility', 'ControlVoltage']
+    var LABEL = { ControlVoltage: 'Control Voltage' }
+    var plugins = [], categories = [], board, nextId = 1
+    var COLS = 6, ROWS = 3     // the pretend surface: MOD's ports sit just outside it
+
+    // MOD's ports, on the edges of the surface
+    var SYSTEM = [
+        { id: 'in_l', name: 'Audio In (L)', kind: 'input', icon: 'assign', channel: 'L', cell: { col: -1, row: 0 }, ports: { audio: { out: ['capture_1'] } } },
+        { id: 'in_r', name: 'Audio In (R)', kind: 'input', icon: 'assign', channel: 'R', cell: { col: -1, row: 1 }, ports: { audio: { out: ['capture_2'] } } },
+        { id: 'midi_in', name: 'MIDI In', kind: 'input', icon: 'midi', cell: { col: -1, row: 2 }, ports: { midi: { out: ['midi_capture'] } } },
+        { id: 'out_l', name: 'Audio Out (L)', kind: 'output', icon: 'assign', channel: 'L', cell: { col: COLS, row: 0 }, ports: { audio: { in: ['playback_1'] } } },
+        { id: 'out_r', name: 'Audio Out (R)', kind: 'output', icon: 'assign', channel: 'R', cell: { col: COLS, row: 1 }, ports: { audio: { in: ['playback_2'] } } },
+        { id: 'midi_out', name: 'MIDI Out', kind: 'output', icon: 'midi', cell: { col: COLS, row: 2 }, ports: { midi: { in: ['midi_playback'] } } }
+    ]
+
+    var thumbUrl = function (uri) { return '/effect/image/thumbnail.png?uri=' + encodeURIComponent(uri) }
+
+    // MOD's /effect/get ports -> { audio: { in, out }, midi, cv } of symbols
+    var portsOf = function (p) {
+        var out = {}
+        ;['audio', 'midi', 'cv'].forEach(function (t) {
+            var x = (p.ports && p.ports[t]) || {}
+            out[t] = { in: (x.input || []).map(function (q) { return q.symbol }), out: (x.output || []).map(function (q) { return q.symbol }) }
+        })
+        return out
+    }
+    var getJSON = function (url, done) {
+        var xhr = new XMLHttpRequest()
+        xhr.open('GET', url)
+        xhr.onload = function () { try { done(JSON.parse(xhr.responseText)) } catch (e) { done(null) } }
+        xhr.onerror = function () { done(null) }
+        xhr.send()
+    }
+    // the info page: what MOD's plugin info shows (cloudplugin.js showPluginInfo)
+    var PLUGINS_URL = 'https://pedalboards.mod.audio/plugins'     // MOD Desktop's; the adapter will read MOD's own
+    var ranges = function (list) {
+        return (list || []).map(function (q) { var r = q.ranges || {}; return { name: q.shortName || q.name || q.symbol, 'default': r['default'], minimum: r.minimum, maximum: r.maximum } })
+    }
+    var loadInfo = function (plugin, done) {
+        if (plugin.info) { done(); return }
+        if (/^urn:/.test(plugin.uri)) { plugin.info = { comment: 'A made-up pedal for the playground.' }; done(); return }
+        getJSON('/effect/get?uri=' + encodeURIComponent(plugin.uri), function (d) {
+            if (d) {
+                if (!plugin.ports) plugin.ports = portsOf(d)
+                var p = d.ports || {}
+                plugin.info = {
+                    comment: d.comment, author: d.author && d.author.name, homepage: d.author && d.author.homepage,
+                    version: (d.minorVersion || 0) + '.' + (d.microVersion || 0) + '-' + (d.release || 0),
+                    license: d.license,
+                    badge: d.buildEnvironment !== 'prod' ? (d.buildEnvironment || 'local').toUpperCase() : '',
+                    screenshot: '/effect/image/screenshot.png?uri=' + encodeURIComponent(plugin.uri),
+                    onlineHref: PLUGINS_URL + '/' + btoa(plugin.uri),
+                    controls: ranges(p.control && p.control.input),
+                    cvInputs: ranges(p.cv && p.cv.input),
+                    cvOutputs: ranges(p.cv && p.cv.output)
+                }
+            }
+            done()
+        })
+    }
+    var loadPorts = function (plugin, done) {
+        if (plugin.ports) { done(); return }
+        getJSON('/effect/get?uri=' + encodeURIComponent(plugin.uri), function (d) { if (d) plugin.ports = portsOf(d); done() })
+    }
+    // a pedal on the board: its ports named instance/symbol
+    var pedalNode = function (plugin, instance, cell) {
+        var ports = {}
+        ;['audio', 'midi', 'cv'].forEach(function (t) {
+            var p = plugin.ports[t] || {}
+            ports[t] = { in: (p.in || []).map(function (s) { return instance + '/' + s }), out: (p.out || []).map(function (s) { return instance + '/' + s }) }
+        })
+        return { id: instance, name: plugin.name, brand: plugin.brand, thumb: plugin.thumb, colour: plugin.colour, kind: 'pedal', ports: ports, cell: cell }
+    }
+
+    var render = function () {
+        renderGrid()
+        var box = document.getElementById('board')
+        var name = {}
+        board.nodes.forEach(function (n) {
+            ;['audio', 'midi', 'cv'].forEach(function (t) { ['in', 'out'].forEach(function (d) { ((n.ports[t] || {})[d] || []).forEach(function (p) { name[p] = n.name + (n.kind === 'pedal' ? ' (' + p.split('/').pop() + ')' : '') }) }) })
+        })
+        var pedals = board.nodes.filter(function (n) { return n.kind === 'pedal' }).map(function (n) { return n.name }).join(', ')
+        box.innerHTML = '<div><b>Pedals</b> ' + (pedals || 'none') + '</div><div><b>Wires</b></div>' +
+            (board.connections.map(function (c) { return '<div>  ' + (name[c[0]] || c[0]) + '  →  ' + (name[c[1]] || c[1]) + '</div>' }).join('') || '<div>  none</div>')
+    }
+
+    var start = function (done) {
+        var want = [['DS1', 'MOD'], ['Neural Amp Modeler', ''], ['Bollie Delay', ''], ['Dragonfly Hall Reverb', '']]
+        var picks = want.map(function (w) { return plugins.filter(function (p) { return p.name.indexOf(w[0]) === 0 })[0] }).filter(Boolean)
+        var left = picks.length
+        board = { nodes: SYSTEM.slice(), connections: [] }
+        if (!left) { render(); done && done(); return }
+        picks.forEach(function (p) { p.favourite = true; loadPorts(p, function () { if (--left === 0) build(picks, done) }) })
+    }
+    // a chain like the Figma mock-up: In L -> each pedal in turn -> Out L / R
+    var build = function (picks, done) {
+        var prev = [SYSTEM[0]]
+        picks.forEach(function (p, i) {
+            if (!p.ports) return
+            var node = pedalNode(p, '/graph/' + p.name.toLowerCase().replace(/[^a-z0-9]+/g, '_'), { col: i, row: 0 })
+            board.nodes.push(node)
+            var plan = NHE.autowire.plan(node, prev, [], [])
+            board.connections = board.connections.concat(plan.connect)
+            prev = [node]
+        })
+        board.connections = board.connections.concat(NHE.autowire.plan(prev[0], [], [SYSTEM[3], SYSTEM[4]], []).connect.filter(function (c) { return c[0] !== '{new}' }))
+        render()
+        done && done()
+    }
+
+    var fallback = function () {
+        var fake = function (name, brand, cat, a, colour) { return { uri: 'urn:' + name, name: name, brand: brand, categories: [cat], colour: colour, ports: { audio: { in: a[0], out: a[1] }, midi: { in: a[2] || [], out: [] }, cv: { in: [], out: [] } } } }
+        plugins = [
+            fake('DS1', 'MOD', 'Distortion', [['In'], ['Out']], '#e07b22'),
+            fake('Big Muff', 'Fuzz Co', 'Distortion', [['In'], ['Out']], '#888'),
+            fake('Fuzz Face', 'Fuzz Co', 'Distortion', [['In'], ['Out']], '#c33'),
+            fake('Neural Amp Modeler', 'Mike Oliphant', 'Simulator', [['In'], ['Out']], '#444'),
+            fake('Bollie Delay', 'Bollie', 'Delay', [['In L', 'In R'], ['Out L', 'Out R']], '#222'),
+            fake('Dragonfly Hall Reverb', 'Dragonfly', 'Reverb', [['In L', 'In R'], ['Out L', 'Out R']], '#7a5'),
+            fake('Chorus', 'MOD', 'Modulator', [['In'], ['Out L', 'Out R']], '#47c'),
+            fake('Synth', 'MOD', 'Instrument', [[], ['Out'], ['MIDI In']], '#a4c')
+        ]
+    }
+
+    var setup = function (list) {
+        if (list && list.length) {
+            plugins = list.map(function (p) { return { uri: p.uri, name: p.name, brand: p.brand, categories: p.category || [], thumb: thumbUrl(p.uri) } })
+            document.getElementById('source').textContent = 'Pedals: the ' + plugins.length + ' installed in MOD Desktop, with their thumbnails; ports are fetched when a pedal is picked.'
+        } else {
+            fallback()
+            document.getElementById('source').textContent = 'MOD Desktop isn\'t answering, so these are made-up pedals.'
+        }
+        var seen = {}
+        plugins.forEach(function (p) { p.categories.forEach(function (c) { seen[c] = true }) })
+        categories = CAT_ORDER.filter(function (c) { return seen[c] }).map(function (c) { return { id: c, label: LABEL[c] || c } })
+        start()
+    }
+
+    var at = function (col, row) { return board.nodes.filter(function (n) { return n.cell && n.cell.col === col && n.cell.row === row })[0] }
+    var freeCell = function () {
+        for (var r = 0; r < ROWS; r++) for (var c = 0; c < COLS; c++) if (!at(c, r)) return { col: c, row: r }
+        return { col: COLS - 1, row: ROWS - 1 }
+    }
+
+    // the surface: MOD's ports on the edges, pedals in their cells, + on the empty ones
+    var renderGrid = function () {
+        var g = document.getElementById('grid')
+        g.innerHTML = ''
+        g.style.gridTemplateColumns = 'repeat(' + (COLS + 2) + ', minmax(0, 1fr))'
+        for (var r = 0; r < ROWS; r++) for (var c = -1; c <= COLS; c++) (function (c, r) {
+            var n = at(c, r), cell = document.createElement('button')
+            cell.type = 'button'
+            if (n) {
+                cell.className = 'cell ' + (n.kind === 'pedal' ? 'pedal' : 'port')
+                cell.textContent = n.name
+                cell.disabled = true
+            } else if (c >= 0 && c < COLS) {
+                cell.className = 'cell plus'
+                cell.textContent = '+'
+                cell.title = 'Add a pedal here (column ' + (c + 1) + ', row ' + (r + 1) + ')'
+                cell.addEventListener('click', function () { open({ col: c, row: r }) })
+            } else { cell.className = 'cell edge'; cell.disabled = true }
+            g.appendChild(cell)
+        })(c, r)
+    }
+
+    var open = function (near) {
+        NHE.AddPedalDialog({
+            near: near && near.col !== undefined ? near : null,
+            categories: categories, plugins: plugins, nodes: board.nodes, connections: board.connections, loadPorts: loadPorts, loadInfo: loadInfo, onFavourite: function (p, on) { log2('favourite', p.name + (on ? ' on' : ' off')) },
+            onPlace: function (r) {
+                var instance = '/graph/' + r.plugin.name.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + (nextId++)
+                var fix = function (p) { return p.replace(NHE.AddPedalDialog.NEW, instance) }
+                var node = pedalNode(r.plugin, instance, near && near.col !== undefined ? near : freeCell())
+                var gone = JSON.stringify(r.plan.disconnect)
+                board.connections = board.connections.filter(function (c) { return gone.indexOf(JSON.stringify(c)) < 0 })
+                board.connections = board.connections.concat(r.plan.connect.map(function (c) { return [fix(c[0]), fix(c[1])] }))
+                board.nodes.push(node)
+                render()
+                var name = function (id) { var n = board.nodes.filter(function (x) { return x.id === id })[0]; return n ? n.name : id }
+                document.getElementById('log').innerHTML =
+                    '<div><b>Placed</b> ' + r.plugin.name + '</div>' +
+                    '<div><b>Input from</b> ' + (r.inputs.map(name).join(', ') || 'nothing') + '</div>' +
+                    '<div><b>Output to</b> ' + (r.outputs.map(name).join(', ') || 'nothing') + '</div>' +
+                    '<div><b>Connects</b></div>' + r.plan.connect.map(function (c) { return '<div>  ' + fix(c[0]) + '  →  ' + fix(c[1]) + '</div>' }).join('') +
+                    (r.plan.disconnect.length ? '<div><b>Removes</b></div>' + r.plan.disconnect.map(function (c) { return '<div class="gone">  ' + c[0] + '  →  ' + c[1] + '</div>' }).join('') : '')
+            }
+        })
+    }
+
+    var log2 = function (what, text) { document.getElementById('log').innerHTML = '<div><b>' + what + '</b> ' + text + '</div>' }
+    document.getElementById('add').addEventListener('click', open)
+    document.getElementById('reset').addEventListener('click', function () { nextId = 1; start(); document.getElementById('log').innerHTML = '' })
+    getJSON('/effect/list', setup)
+})()
+</script>
+</body>
+</html>

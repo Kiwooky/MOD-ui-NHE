@@ -1,0 +1,279 @@
+/* SPDX-FileCopyrightText: 2026 New Horizon Electronics
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * The touch friendly constructor (docs/constructor-spec.md): the + dialog.
+ * Needs theme/tokens.css and controls.css (the dialog overlay, buttons, inputs).
+ */
+
+/* a large card on desktop / tablet; full screen on a phone (is-full, NHE.zoom) */
+.nhe-add {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--nhe-space-10);
+    width: 1040px;
+    height: 780px;
+    max-width: 100%;
+    max-height: 100%;
+    padding: var(--nhe-space-16);
+    background: var(--nhe-surface-base);
+    border-radius: var(--nhe-radius-lg);
+    outline: none;
+    touch-action: none;          /* NHE.dragScroll scrolls the lists (MOD blocks touch scrolling) */
+}
+
+.nhe-add-overlay.is-full { padding: 0; }
+.nhe-add.is-full {
+    flex: none;
+    width: calc(100% / var(--nhe-zoom, 1));
+    height: calc(100% / var(--nhe-zoom, 1));
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    transform: scale(var(--nhe-zoom, 1));
+}
+
+/* a page with its own phone viewport (no NHE.zoom): full screen too */
+@media (max-width: 600px) {
+    .nhe-add-overlay { padding: 0; }
+    .nhe-add { width: 100%; height: 100%; border-radius: 0; }
+}
+
+/* category tabs: a row that scrolls sideways */
+.nhe-add__tabs { display: flex; gap: var(--nhe-space-8); flex: none; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.nhe-add__tabs::-webkit-scrollbar { display: none; }
+.nhe-add__tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    min-height: 44px;
+    padding: var(--nhe-space-4) var(--nhe-space-16);
+    border: 0;
+    border-radius: var(--nhe-radius-md);
+    background: var(--nhe-color-grey-700);
+    font-size: var(--nhe-font-size-md);
+    font-weight: var(--nhe-font-weight-semibold);
+    text-transform: uppercase;
+    line-height: var(--nhe-font-line-snug);
+    white-space: nowrap;
+    cursor: pointer;
+}
+.nhe-add__tab small { font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-medium); }
+.nhe-add__tab.is-active { background: var(--nhe-accent-default); }
+
+.nhe-add__search { position: relative; flex: none; }
+.nhe-add__search .nhe-dialog__input { padding-right: 48px; text-transform: uppercase; }
+.nhe-add__clear {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: var(--nhe-text-on-field);
+    cursor: pointer;
+}
+.nhe-add__clear svg { display: block; width: 100%; height: 100%; }
+
+/* three columns, each scrolling on its own */
+.nhe-add__columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--nhe-space-10); flex: 1 1 auto; min-height: 0; }
+.nhe-add__col { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.nhe-add__title {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 32px;
+    flex: none;
+    padding-bottom: var(--nhe-space-8);
+    text-align: center;
+    font-size: var(--nhe-font-size-sm);
+    font-weight: var(--nhe-font-weight-semibold);
+    line-height: var(--nhe-font-line-tight);
+    text-transform: uppercase;
+}
+.nhe-add__list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--nhe-space-16);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--nhe-space-16) var(--nhe-space-8);
+    scrollbar-width: none;
+}
+.nhe-add__list::-webkit-scrollbar { display: none; }
+/* the side columns sit on the work surface; the results don't */
+.nhe-add__col--in .nhe-add__list,
+.nhe-add__col--out .nhe-add__list {
+    background: var(--nhe-surface-sunken) url("../../backgrounds/perforated-dark.jpg") 0 0 / auto 160px;
+    border-radius: var(--nhe-radius-lg);
+}
+.nhe-add__col.is-waiting .nhe-add__list { opacity: .5; }
+
+.nhe-add__empty { margin-top: var(--nhe-space-24); padding: var(--nhe-space-8) var(--nhe-space-16); border-radius: var(--nhe-radius-md); background: var(--nhe-surface-base); text-align: center; font-size: var(--nhe-font-size-sm); }
+
+/* a pedal, or one of MOD's ports */
+.nhe-add__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--nhe-space-2);
+    width: 100%;
+    max-width: 180px;
+    flex: none;
+    padding: var(--nhe-space-8);
+    border: 0;
+    border-radius: var(--nhe-radius-md);
+    background: none;
+    text-align: center;
+    cursor: pointer;
+}
+.nhe-add__thumb { position: relative; display: flex; align-items: center; justify-content: center; max-width: 100%; height: 96px; margin-bottom: var(--nhe-space-4); }
+.nhe-add__thumb img { max-width: min(140px, 100%); max-height: 96px; pointer-events: none; }
+.nhe-add__thumb.is-blank {
+    width: 72px;
+    border-radius: var(--nhe-radius-md);
+    background: linear-gradient(160deg, var(--tile), #111);
+    font-size: var(--nhe-font-size-lg);
+    font-weight: var(--nhe-font-weight-semibold);
+}
+.nhe-add__thumb.is-port { width: 72px; height: 72px; border-radius: var(--nhe-radius-lg); background: var(--nhe-surface-sunken); color: var(--nhe-icon-default); }
+.nhe-add__thumb.is-port svg { width: 44px; height: 44px; }
+.nhe-add__name { max-width: 100%; overflow-wrap: anywhere; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); line-height: var(--nhe-font-line-snug); text-transform: uppercase; }
+.nhe-add__brand { font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-medium); opacity: .8; }
+
+/* picked: a ring round the pedal in the middle, a tick on the sides */
+.nhe-add__col--results .nhe-add__card.is-picked { box-shadow: 0 0 0 3px var(--nhe-accent-default); }
+.nhe-add__tick {
+    display: none;
+    position: absolute;
+    top: -6px;
+    right: -18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--nhe-surface-base);
+    color: var(--nhe-text-primary);
+}
+.nhe-add__tick svg { display: block; width: 100%; height: 100%; }
+.nhe-add__card.is-picked .nhe-add__tick { display: block; }
+
+/* the results' scroll arrows */
+.nhe-add__arrow {
+    position: absolute;
+    left: 50%;
+    width: 44px;
+    height: 32px;
+    margin-left: -22px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--nhe-radius-md);
+    background: var(--nhe-surface-base);
+    color: var(--nhe-icon-default);
+    opacity: 0;
+    visibility: hidden;
+    cursor: pointer;
+}
+.nhe-add__arrow svg { width: 28px; height: 28px; }
+.nhe-add__arrow--up { top: 34px; }
+.nhe-add__arrow--down { bottom: 0; }
+.nhe-add__arrow.is-shown { opacity: .9; visibility: visible; }
+
+.nhe-add__foot { flex: none; }
+.nhe-add__summary { min-height: 20px; text-align: center; font-size: var(--nhe-font-size-sm); opacity: .8; }
+.nhe-add__foot .nhe-dialog__buttons { padding-top: var(--nhe-space-8); }
+
+/* the info icon on a pedal in the results: where the side columns' tick sits */
+.nhe-add__info {
+    position: absolute;
+    top: -6px;
+    right: -18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--nhe-surface-base);
+    color: var(--nhe-icon-default);
+    cursor: pointer;
+}
+.nhe-add__info svg { display: block; width: 100%; height: 100%; }
+
+/* the pedal's info page: over the whole dialog, Back at the top */
+.nhe-add__page {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    padding: var(--nhe-space-16);
+    background: var(--nhe-surface-base);
+    border-radius: inherit;
+}
+.nhe-add__page-bar { display: flex; flex: none; padding-bottom: var(--nhe-space-8); }
+.nhe-add__back {
+    display: flex;
+    align-items: center;
+    gap: var(--nhe-space-8);
+    height: 44px;
+    padding: 0 var(--nhe-space-8);
+    border: 0;
+    background: none;
+    font-size: var(--nhe-font-size-sm);
+    font-weight: var(--nhe-font-weight-semibold);
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.nhe-add__back svg { width: 32px; height: 32px; }
+.nhe-add__page-body {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: var(--nhe-space-24);
+    align-items: start;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 var(--nhe-space-8) var(--nhe-space-16);
+}
+.nhe-add__page-col { min-width: 0; }
+/* a phone (or a narrow card): one column */
+.nhe-add.is-full .nhe-add__page-body { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 760px) { .nhe-add__page-body { grid-template-columns: minmax(0, 1fr); } }
+
+.nhe-add__shot { position: relative; display: flex; justify-content: center; }
+.nhe-add__shot img { max-width: 100%; max-height: 360px; pointer-events: none; }
+.nhe-add__badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: var(--nhe-space-4) var(--nhe-space-8);
+    background: var(--nhe-status-error);
+    font-size: var(--nhe-font-size-sm);
+    font-weight: var(--nhe-font-weight-semibold);
+}
+
+.nhe-add__page-head { display: flex; align-items: center; gap: var(--nhe-space-8); }
+.nhe-add__page-name { margin: 0; font-size: var(--nhe-font-size-xl); font-weight: var(--nhe-font-weight-semibold); line-height: 1.1; }
+.nhe-add__star { flex: none; width: 36px; height: 36px; padding: 4px; border: 0; background: none; color: var(--nhe-icon-default); opacity: .7; cursor: pointer; }
+.nhe-add__star svg { display: block; width: 100%; height: 100%; }
+.nhe-add__star.is-on { color: var(--nhe-status-warn); opacity: 1; }
+
+/* the details: label, value */
+.nhe-add__facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--nhe-space-4) var(--nhe-space-10); margin: var(--nhe-space-10) 0; font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-snug); }
+.nhe-add__facts dt { font-weight: var(--nhe-font-weight-semibold); }
+.nhe-add__facts dd { margin: 0; overflow-wrap: anywhere; opacity: .85; -webkit-user-select: text; user-select: text; }
+.nhe-add__facts a { color: inherit; }
+
+a.nhe-add__online { display: inline-flex; align-items: center; justify-content: center; height: 36px; min-width: 0; margin: var(--nhe-space-4) 0 var(--nhe-space-10); padding: 0 var(--nhe-space-16); font-size: var(--nhe-font-size-sm); text-decoration: none; color: var(--nhe-text-on-accent); }
+
+.nhe-add__page-text { margin: 0 0 var(--nhe-space-10); font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-normal); -webkit-user-select: text; user-select: text; }
+
+/* control ports and CV, as MOD lists them */
+.nhe-add__table-title { margin: 0 0 var(--nhe-space-8); font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
+.nhe-add__table { width: 100%; margin-bottom: var(--nhe-space-16); border-collapse: collapse; font-size: var(--nhe-font-size-sm); }
+.nhe-add__table th, .nhe-add__table td { padding: var(--nhe-space-4) var(--nhe-space-8); border: 1px solid var(--nhe-color-grey-800); text-align: right; }
+.nhe-add__table th { background: var(--nhe-color-grey-800); font-weight: var(--nhe-font-weight-semibold); }
+.nhe-add__table th:first-child, .nhe-add__table td:first-child { text-align: left; }
