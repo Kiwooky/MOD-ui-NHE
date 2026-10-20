@@ -24,6 +24,13 @@
  *       onTap: fn(node),                    // a pedal card was tapped (phones: its settings screen)
  *       onRewire: fn(node),                 // a card's plug button (phones: no hand wiring)
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
+ *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
+ *                                           // in `layer` (over its picture, the picture's size),
+ *                                           // return true if it did; called again after a redraw
+ *       onBlur: fn(node),                   // the focused face let go (zoomed out, another one
+ *                                           // focused, lifted): take the working GUI back
+ *       isControl: fn(target),              // a press there belongs to the live GUI (a knob,
+ *                                           // a switch); elsewhere on it, it pans / lifts as usual
  *       wireColours: { 'from>to': colour }, // cables given their own colour (faces)
  *       onWire: fn(old, neu),               // a cable was rewired by hand (faces): old / neu are
  *                                           // [from, to] or null (a new cable / one pulled out)
@@ -36,7 +43,9 @@
  *   s.update({ nodes, connections })
  *
  * A pedal node may carry `face`: its full-size picture (MOD's screenshot),
- * shown instead of `thumb` in faces mode, and `jacks`: { portId: { x, y } },
+ * shown instead of `thumb` in faces mode, `faceSize`: { w, h }, the
+ * size the face is at 100% (a tap zooms to that; else the picture's own
+ * size), and `jacks`: { portId: { x, y } },
  * where each jack sits on that face (fractions of its width and height).
  * In faces mode the wires run from jack to jack; a face without `jacks`
  * gets them spread down its sides (inputs left, outputs right).
@@ -58,7 +67,13 @@
  * Touch: drag to pan (also starting on a pedal, as long as it moves before
  * the long-press), two fingers to pinch-zoom, a long-press (LONG_MS) on a
  * pedal lifts it to move it. Mouse: drag, the wheel pans, ctrl / pinch on a
- * trackpad zooms, the + / - buttons zoom.
+ * trackpad zooms, the + / - buttons zoom. A double click (or tap) on the
+ * surface itself zooms out to show the whole grid.
+ *
+ * Faces: a tap zooms the face to 100% and makes it live (liveFace): its
+ * controls then play, and only a press on an empty part of it pans or
+ * lifts it. It stays live while panning, until the view zooms out, another
+ * face is tapped, or it is lifted.
  */
 (function () {
     var NHE = window.NHE = window.NHE || {}
@@ -295,6 +310,7 @@
             }
             self.els[nd.id] = d
         })
+        this.mountLive()
         this.apply()
     }
 
@@ -832,6 +848,8 @@
 
     Surface.prototype.apply = function () {
         var v = this.view
+        // zoomed well out from a live face: it lets go
+        if (this.focused && v.z < this.focused.z * 0.75) this.blur()
         this.n.plane.style.transform = 'translate(' + v.x + 'px,' + v.y + 'px) scale(' + v.z + ')'
         // the board's surface moves and zooms with it
         this.root.style.backgroundPosition = (v.x + this.bg.x * v.z) + 'px ' + (v.y + this.bg.y * v.z) + 'px'
@@ -899,18 +917,70 @@
         this.apply()
     }
 
-    // zoom so a pedal's face shows at its picture's full size, centred
+    // zoom so a pedal's face shows at its full size (faceSize, else its
+    // picture's), centred; then it goes live (liveFace)
     Surface.prototype.focus = function (nd) {
         var self = this, d = this.els[nd.id], img = d && d.querySelector('img')
         var v = this.view, r = this.root.getBoundingClientRect()
-        var z = 1.5
-        if (img && img.naturalWidth) z = img.naturalWidth / (img.getBoundingClientRect().width / v.z)
+        if (this.focused && this.focused.id !== nd.id) this.blur()
+        var z = 1.5, full = (nd.faceSize && nd.faceSize.w) || (img && img.naturalWidth)
+        if (img && full) z = full / (img.getBoundingClientRect().width / v.z)
         z = Math.max(ZMIN, Math.min(ZMAX, z))
         var b = this.box(nd), cx = b.x + b.w / 2, cy = b.y + b.h / 2
         // centred, as far as the grid's edges allow
         this.animate(this.clamp({ x: r.width / 2 - cx * z, y: r.height / 2 - cy * z, z: z }), function () {
+            self.focused = { id: nd.id, z: self.view.z }
+            self.mountLive()
             if (typeof self.o.onFocus === 'function') self.o.onFocus(nd)
         })
+    }
+
+    // the focused face's working GUI, over its picture (again after a redraw)
+    Surface.prototype.mountLive = function () {
+        var f = this.focused, d = f && this.els[f.id], nd = f && this.node(f.id)
+        if (!f) return
+        if (!d || !nd) { this.focused = null; return }
+        var img = d.querySelector('.nhe-surface__face img'), self = this
+        if (!img || typeof this.o.liveFace !== 'function') return
+        // a redrawn face's picture may not be in yet: it has no size until it is
+        if (!img.complete || !img.offsetWidth) { img.addEventListener('load', function () { if (self.els[f.id] === d) self.mountLive() }); return }
+        var layer = d.querySelector('.nhe-surface__live') || el('div', 'nhe-surface__live', d)
+        layer.style.left = img.offsetLeft + 'px'
+        layer.style.top = img.offsetTop + 'px'
+        layer.style.width = img.offsetWidth + 'px'
+        layer.style.height = img.offsetHeight + 'px'
+        d.classList.toggle('is-live', !!this.o.liveFace(nd, layer))
+    }
+
+    // the focused face lets go of its working GUI
+    Surface.prototype.blur = function () {
+        var f = this.focused
+        if (!f) return
+        this.focused = null
+        var d = this.els[f.id], nd = this.node(f.id)
+        if (typeof this.o.onBlur === 'function' && nd) this.o.onBlur(nd)
+        if (d) {
+            d.classList.remove('is-live')
+            var layer = d.querySelector('.nhe-surface__live')
+            if (layer) layer.parentNode.removeChild(layer)
+        }
+    }
+
+    // a press on the live face's controls is the GUI's, not the surface's
+    Surface.prototype.onLive = function (target) {
+        var f = this.focused
+        if (!f || typeof this.o.isControl !== 'function') return false
+        var layer = target.closest && target.closest('.nhe-surface__live')
+        return !!layer && layer.parentNode === this.els[f.id] && this.o.isControl(target)
+    }
+
+    // zoom out until the whole grid shows (a double click on the surface)
+    Surface.prototype.fit = function () {
+        var W = this.root.clientWidth, Hh = this.root.clientHeight, gap = SIDE + PORT + 8
+        var z = Math.min((W - 2 * gap) / (this.cols * CELL), Hh / (this.rows * CELL + FOOT))
+        z = Math.max(ZMIN, Math.min(1, z))
+        this.blur()
+        this.animate(this.clamp({ x: gap - EDGE * z, y: 0, z: z }))
     }
 
     Surface.prototype.animate = function (to, done) {
@@ -929,6 +999,7 @@
     }
 
     Surface.prototype.wheel = function (e) {
+        if (this.onLive(e.target)) return
         e.preventDefault()
         var r = this.root.getBoundingClientRect()
         if (e.ctrlKey) this.zoomAt(e.clientX - r.left, e.clientY - r.top, this.view.z * Math.exp(-e.deltaY * 0.01))
@@ -945,6 +1016,8 @@
         root.addEventListener('pointerdown', function (e) {
             if (e.pointerType === 'mouse' && e.button !== 0) return
             if (e.target.closest('.nhe-surface__zoom') || e.target.closest('.nhe-surface__colours')) return
+            // the live face's knobs and switches: theirs
+            if (self.onLive(e.target)) return
             self.closeColours()
             // a tap anywhere but on a spread jack's plugs gathers them again
             if (self.spread && !e.target.closest('.nhe-surface__plug')) { self.spread = null; self.renderWires() }
@@ -1040,7 +1113,7 @@
             if (g.cable && !g.moved && e.type === 'pointerup') self.pickColour(+g.cable.getAttribute('data-cable'), local(e))
             if (g.item && !g.moved && e.type === 'pointerup') {
                 var nd = self.node(g.item.getAttribute('data-id'))
-                if (nd && self.faces) self.focus(nd)
+                if (nd && self.faces) { if (!self.focused || self.focused.id !== nd.id) self.focus(nd) }
                 else if (nd && typeof self.o.onTap === 'function') self.o.onTap(nd)
             }
             g = null
@@ -1049,6 +1122,13 @@
         }
         window.addEventListener('pointerup', end)
         window.addEventListener('pointercancel', end)
+
+        // a double click on the surface itself (not a pedal, a +, a cable…): the whole grid
+        root.addEventListener('dblclick', function (e) {
+            if (e.target.closest('.nhe-surface__item, .nhe-surface__plus, .nhe-surface__expand, .nhe-surface__zoom, .nhe-surface__colours, .nhe-surface__plug, .nhe-surface__socket, .nhe-surface__wire-hit, .nhe-surface__insert')) return
+            e.preventDefault()
+            self.fit()
+        })
     }
 
     Surface.prototype.node = function (id) { return this.o.nodes.filter(function (x) { return x.id === id })[0] }
@@ -1057,6 +1137,7 @@
     Surface.prototype.lift = function (g) {
         var nd = this.node(g.item.getAttribute('data-id'))
         if (!nd) return
+        if (this.focused && this.focused.id === nd.id) this.blur()
         g.mode = 'lifted'
         g.node = nd
         // where it is drawn (a face is larger than its box)

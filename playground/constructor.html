@@ -136,13 +136,13 @@
         getJSON('/effect/get?uri=' + encodeURIComponent(plugin.uri), function (d) { if (d) plugin.ports = portsOf(d); done() })
     }
     // a pedal on the board: its ports named instance/symbol
-    // a pedal takes two cells when its picture is 1.8 x wider than tall (or taller than wide)
+    // a pedal takes two cells across when its picture is 1.8 x wider than tall; a tall one stays in one
     var spanOf = function (plugin, done) {
         if (plugin.span || !plugin.thumb) { done(); return }
         var img = new Image()
         img.onload = function () {
             var w = img.naturalWidth, h = img.naturalHeight
-            plugin.span = w >= 1.8 * h ? { w: 2, h: 1 } : h >= 1.8 * w ? { w: 1, h: 2 } : { w: 1, h: 1 }
+            plugin.span = w >= 1.8 * h ? { w: 2, h: 1 } : { w: 1, h: 1 }
             done()
         }
         img.onerror = function () { done() }

@@ -355,6 +355,10 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .is-faces .nhe-surface__face img, .is-faces .nhe-surface__face.is-blank, .is-faces .nhe-surface__name, .is-faces .nhe-surface__brand { pointer-events: auto; }
 .is-faces .nhe-surface__face img { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); }
 .is-faces .nhe-surface__name, .is-faces .nhe-surface__brand { text-shadow: 0 1px 3px #000; }
+/* a focused face, live: the pedal's working GUI over its picture (liveFace) */
+.nhe-surface__live { position: absolute; pointer-events: auto; }
+.nhe-surface__item.is-live { z-index: 3; }
+.nhe-surface__item.is-live .nhe-surface__face img { visibility: hidden; }
 .nhe-surface__item.is-lifted { z-index: 5; box-shadow: 0 12px 32px rgba(0, 0, 0, .7), 0 0 0 3px var(--nhe-accent-default); transform: scale(1.05); }
 
 /* MOD's own ports: a layer over the surface, flush against the screen's

@@ -21,12 +21,13 @@
  * snap to the nearest cell; two that land on one cell are pushed to the
  * nearest free one (shown there only: nothing is written until moved).
  *
- * Faces: MOD's screenshots for now, as in the playground. Later, the real
- * modgui icon (mod.plugins()[instance], as the performance view borrows
- * it) goes in the face's place so its controls play when zoomed in, and
- * each node gets `jacks` ({ portId: { x, y } }, fractions of the face)
- * measured from the icon's [mod-port] jack elements, so the wires start
- * where the face's jacks are.
+ * Faces: MOD's screenshots, as in the playground. A tap zooms one to 100%
+ * (faceSize: MOD's icon's size) and borrows MOD's working icon
+ * (mod.borrowIcon) into its place, so its knobs and switches play; it
+ * goes back to MOD's canvas when the face lets go (zoomed out, another
+ * one tapped, lifted, MOD's builder chosen). Later: each node gets `jacks`
+ * ({ portId: { x, y } }, fractions of the face) measured from the icon's
+ * [mod-port] jack elements, so the wires start where the face's jacks are.
  */
 NHE.register('constructor', function (mod) {
     var KEY = 'nhe-builder'
@@ -52,9 +53,8 @@ NHE.register('constructor', function (mod) {
 
     // ---- MOD's board -> the surface's nodes --------------------------------
 
-    var spanOfSize = function (w, h) {
-        return w >= 1.8 * h ? { w: 2, h: 1 } : h >= 1.8 * w ? { w: 1, h: 2 } : { w: 1, h: 1 }
-    }
+    // a wide pedal takes two cells across; a tall one stays in one
+    var spanOfSize = function (w, h) { return w >= 1.8 * h ? { w: 2, h: 1 } : { w: 1, h: 1 } }
 
     var read = function () {
         var b = mod.board(), out = []
@@ -95,7 +95,7 @@ NHE.register('constructor', function (mod) {
             out.push({
                 id: p.instance, uri: p.uri, name: p.name, brand: p.brand, kind: 'pedal',
                 thumb: mod.pluginImage(p.uri, 'thumbnail'), face: mod.pluginImage(p.uri, 'screenshot'),
-                ports: p.ports, cell: cell, span: s
+                ports: p.ports, cell: cell, span: s, faceSize: { w: p.w, h: p.h }
             })
         })
         // added here, not drawn by MOD yet
@@ -125,7 +125,10 @@ NHE.register('constructor', function (mod) {
         // mid-load the icons arrive one by one, sizes still settling: the
         // board is read once MOD is done
         if (!shown()) return
-        if (mod.boardLoading() || busy()) { clearTimeout(retry); retry = setTimeout(refresh, 250); return }
+        // the surface sizes its grid from its element: wait for this
+        // feature's stylesheet too (stylesheets load alongside, unblocked)
+        var unstyled = !surface && getComputedStyle(view[0]).position !== 'absolute'
+        if (mod.boardLoading() || busy() || unstyled) { clearTimeout(retry); retry = setTimeout(refresh, 250); return }
         read()
         if (!surface) create()
         else surface.update({ nodes: nodes, connections: connections, wireColours: cache.colours, wireRoutes: cache.routes })
@@ -145,8 +148,24 @@ NHE.register('constructor', function (mod) {
             // cards (phones): the pedal's settings screen
             onTap: function (node) { if (node.kind === 'pedal' && !pending[node.id]) mod.openSettings(node.id) },
             onRewire: function (node) { if (!pending[node.id]) rewire(node) },
-            // faces: zoomed to full size (MOD's screenshot for now; later its playable face)
-            onFocus: function () {},
+            // faces: zoomed to 100%, MOD's working icon in the picture's place
+            liveFace: function (node, layer) {
+                if (pending[node.id]) return false
+                var icon = mod.borrowIcon(node.id)
+                if (!icon) return false
+                var scaler = $('<div class="nhe-constructor__live">').appendTo(layer)
+                scaler.css('transform', 'scale(' + (layer.offsetWidth / (icon.outerWidth() || layer.offsetWidth)) + ')')
+                icon.addClass('nhe-constructor__icon').appendTo(scaler)
+                // modgui's click on its background zooms MOD's own canvas: not from here
+                layer.addEventListener('click', function (e) { if (mod.isIconBackground(e.target)) e.stopPropagation() }, true)
+                return true
+            },
+            onBlur: function (node) {
+                var icon = mod.plugins()[node.id]
+                if (icon && icon.removeClass) icon.removeClass('nhe-constructor__icon')
+                mod.returnIcon(node.id)
+            },
+            isControl: function (target) { return mod.isIconControl(target) },
             // a cable moved by hand: MOD's own disconnect, then connect
             onWire: function (old, neu) {
                 if (old) mod.disconnect(old[0], old[1])
@@ -163,6 +182,7 @@ NHE.register('constructor', function (mod) {
 
     // a fresh surface (another board: its own grid size)
     var drop = function () {
+        if (surface) surface.blur()        // MOD's icon back first: remove() would clear its data
         if (host) host.remove()
         host = surface = null
     }
@@ -316,6 +336,7 @@ NHE.register('constructor', function (mod) {
 
     var apply = function () {
         var on = shown()
+        if (!on && surface) surface.blur()  // MOD's builder gets its icon back
         view.toggle(on)
         mod.coverBuilder(on)
         if (switcher) switcher.update({ value: on ? 1 : 0 })
@@ -341,6 +362,9 @@ NHE.register('constructor', function (mod) {
         onChange: function (i) { NHE.builder.set(i ? 'nhe' : 'mod') }
     })
     sw.attr('title', 'Builder: MOD\'s or NHE\'s')
+
+    // the window resized (not an element: jquery.ba-resize's events bubble up)
+    $(window).on('resize', function (e) { if (e.target === window && surface) surface.apply() })
 
     mod.onBoardChange(function (reloaded) {
         if (reloaded) {

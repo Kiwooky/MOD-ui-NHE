@@ -30,10 +30,9 @@ Status: being worked out with Niels; open points are marked **Open**.
   face can be played directly, as in MOD's builder now.
 - **Phone:** a card with the pedal's preview, name and brand (as in the +
   dialog). No playable face: tapping it opens the pedal's settings screen.
-- A pedal takes one cell, or **two cells wide or two tall** when its face
-  needs it. **Open:** the rule. A proposal: scale the face to fit one cell;
-  if its width is at least 1.8 × its height, give it two cells across (two
-  down for 1.8 × taller than wide).
+- A pedal takes one cell, or **two cells across** when its face is at
+  least 1.8 × wider than tall. A tall pedal always stays in one cell
+  (decided with Niels), its face scaled to fit.
 - **Long-press and drag** moves a pedal: it snaps to the nearest free cell
   and keeps its wiring.
 - **Tapping a pedal** opens its settings screen (NHE's). Rewiring, Delete
@@ -135,7 +134,7 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   settings screen, later). Wires: out of a pedal's right side into the
   next one's left, turning in the gap before the target; backwards ones
   cross in the gap between the rows. A pedal whose picture is 1.8 × wider
-  than tall takes two cells (playground rule). A narrow screen starts
+  than tall takes two cells across; a tall one stays in one. A narrow screen starts
   zoomed out to about two columns.
 - **MOD's ports stick to the screen's left and right edges** (they don't pan
   or up and down, and keep their size when zooming): each side's ports
@@ -206,10 +205,20 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   there (else the better fit) keeps it and the other takes the nearest
   free cell, on screen only. A move writes the cell back. A new pedal's
   span comes from its screenshot (the shape of its icon). The board is
-  read once MOD has finished loading (its "Loading pedalboard…" gone). Faces are
-  MOD's screenshots for now. Later: the real modgui icon in the face's
-  place (playable when zoomed) and `jacks` measured from its `[mod-port]`
-  elements. Rewire on a card tries "delete and reconnect". Wire colours
-  and laid routes are kept per board in memory only.
-- To come for the surface: the real modgui faces on desktop (playable),
-  bigger card text on a phone.
+  read once MOD has finished loading (its "Loading pedalboard…" gone).
+  Rewire on a card tries "delete and reconnect". Wire colours and laid
+  routes are kept per board in memory only.
+- **Playing a face (desktop / large tablet):** faces are MOD's screenshots;
+  a tap zooms one to 100% (the size of MOD's icon) and puts MOD's working
+  icon (its modgui, borrowed off MOD's canvas: `mod.borrowIcon`) in the
+  picture's place, so its knobs, switches and lists play as in MOD's
+  builder. A press on one of its controls is the control's; a press on an
+  empty part of the face pans, and held, lifts the pedal to move it (the
+  icon goes back first). It stays live while panning; zooming out,
+  tapping another face, lifting it or choosing MOD's builder gives the
+  icon back to MOD's canvas.
+- **Double click (or double tap) on the surface itself:** zooms out to
+  show the whole grid.
+- To come for the surface: `jacks` measured from the icon's `[mod-port]`
+  elements (wires from where the face's jacks really are), bigger card
+  text on a phone.

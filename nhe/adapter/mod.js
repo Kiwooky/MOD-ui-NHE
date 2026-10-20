@@ -76,7 +76,8 @@
     // Pedalboard guard (the fragile part)
     //
     // While a feature has borrowed plugin icons off the canvas (performance
-    // view), set  mod.pedalboard().data('performanceMode', true)  and:
+    // view), set  mod.pedalboard().data('performanceMode', true)  (or borrow
+    // one with mod.borrowIcon, below) and:
     //  - canvas layout pauses (fitToWindow is deferred until it's cleared)
     //  - value/enable/parameter updates from the host go straight to the
     //    plugin's GUI, because pedalboard.js only looks for icons on the canvas
@@ -90,7 +91,7 @@
         var original = $.fn.pedalboard
         $.fn.pedalboard = function (method) {
             var self = this
-            if (self.data && self.data('performanceMode')) {
+            if (self.data && (self.data('performanceMode') || lent())) {
                 if (method === 'fitToWindow') {
                     self.data('performancePendingFit', true)
                     return self
@@ -119,6 +120,68 @@
             }
             return original.apply(this, arguments)
         }
+    }
+
+    // One plugin's working icon (its modgui), borrowed off MOD's canvas to
+    // show and play somewhere else (the constructor's focused face). It keeps
+    // working: modgui's widgets talk to the host through the icon's own
+    // callbacks, and host updates reach it through the guard above. While it
+    // is away MOD's canvas layout pauses (guard), its jQuery UI draggable /
+    // droppable are off (else it could be dragged around in its new home),
+    // and its canvas position is kept here: the icon's CSS left / top are
+    // overridden where it's shown. Gone back to the canvas some other way
+    // (the performance view returns every icon it took to the canvas), it
+    // counts as returned.
+    var borrowed = {}       // instance -> { x, y }: its place on MOD's canvas
+    var onCanvas = function (icon) { return $.contains(mod.pedalboard()[0], icon[0]) }
+    var lent = function () {
+        var plugins = mod.plugins(), any = false
+        Object.keys(borrowed).forEach(function (i) {
+            var icon = plugins[i]
+            if (icon && icon[0] && !onCanvas(icon)) any = true
+            else delete borrowed[i]
+        })
+        return any
+    }
+    var dnd = function (icon, how) {
+        if (icon.data('ui-draggable') || icon.data('draggable')) icon.draggable(how)
+        if (icon.data('ui-droppable') || icon.data('droppable')) icon.droppable(how)
+    }
+    // the icon (jQuery), to be appended elsewhere, or null
+    mod.borrowIcon = function (instance) {
+        var icon = mod.plugins()[instance]
+        if (!icon || !icon.data || !icon.data('gui')) return null
+        mod.guardPedalboard()
+        if (!borrowed[instance] && onCanvas(icon)) {
+            borrowed[instance] = { x: parseFloat(icon.css('left')) || 0, y: parseFloat(icon.css('top')) || 0 }
+            dnd(icon, 'disable')
+        }
+        return icon
+    }
+    mod.returnIcon = function (instance) {
+        var icon = mod.plugins()[instance], pos = borrowed[instance], pb = mod.pedalboard()
+        delete borrowed[instance]
+        if (!icon || !icon.data || !pos || onCanvas(icon)) return
+        dnd(icon, 'enable')
+        icon.css({ left: pos.x, top: pos.y }).appendTo(pb)
+        pb.pedalboard('drawPluginJacks', icon)
+        if (!lent() && !pb.data('performanceMode') && pb.data('performancePendingFit')) {
+            pb.data('performancePendingFit', false)
+            pb.pedalboard('fitToWindow')
+        }
+    }
+    // modgui's controls in an icon (anything with a mod-role but its
+    // background, the drag handle): a press there plays it
+    mod.isIconControl = function (target) {
+        var r = $(target).closest('[mod-role], select, input, textarea')
+        if (!r.length) return false
+        var role = r.attr('mod-role')
+        return role !== 'drag-handle' && role !== 'bypass-light'
+    }
+    // modgui's own click on a drag handle zooms MOD's canvas to it (pedalboard.js
+    // addPlugin's click option, .mod-drag-handle): not wanted from elsewhere
+    mod.isIconBackground = function (target) {
+        return $(target).closest('[mod-role]').attr('mod-role') === 'drag-handle' || $(target).hasClass('mod-drag-handle')
     }
 
     // ------------------------------------------------------------------
@@ -691,7 +754,9 @@
             out.pedals.push({
                 instance: instance, uri: e.uri,
                 name: icon.data('label') || e.label || e.name || instance, brand: e.brand || '',
-                x: parseFloat(icon.css('left')) || 0, y: parseFloat(icon.css('top')) || 0,
+                // borrowed: where it is on MOD's canvas, not where it's shown
+                x: borrowed[instance] && !onCanvas(icon) ? borrowed[instance].x : parseFloat(icon.css('left')) || 0,
+                y: borrowed[instance] && !onCanvas(icon) ? borrowed[instance].y : parseFloat(icon.css('top')) || 0,
                 w: icon.outerWidth() || 0, h: icon.outerHeight() || 0,
                 ports: ports
             })
@@ -783,6 +848,7 @@
         if (!icon || !icon.css) return
         x = Math.round(x)
         y = Math.round(y)
+        if (borrowed[instance]) borrowed[instance] = { x: x, y: y }
         icon.css({ left: x, top: y })
         pb.pedalboard('drawPluginJacks', icon)
         var move = pb.data('pluginMove')
