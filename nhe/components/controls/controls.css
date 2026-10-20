@@ -381,7 +381,7 @@
     background: var(--nhe-surface-base);
 }
 
-.nhe-presets .nhe-cell__title { height: 33px; flex: none; }
+.nhe-presets .nhe-cell__title { height: 20px; flex: none; }   /* close to the list it heads */
 .nhe-presets .nhe-segmented { flex: none; }      /* the list gives way, not the Factory / User switch */
 .nhe-presets .nhe-list { flex: 1 1 auto; min-height: 88px; }
 .nhe-presets.is-no-factory .nhe-segmented { display: none; }
@@ -525,8 +525,10 @@
 
 .nhe-panel { display: flex; align-items: flex-start; background: var(--nhe-surface-base); }
 .nhe-panel__plugin { display: flex; flex-direction: column; gap: var(--nhe-space-8); width: 240px; flex: none; }
-.nhe-panel__picture { display: flex; justify-content: center; align-items: center; flex: none; height: 200px; padding: 0 var(--nhe-space-8); }
-.nhe-panel__picture img { display: block; height: auto; width: auto; max-width: 100%; max-height: 100%; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); pointer-events: none; }
+/* the plugin's GUI: at most 200 px tall and the column's width; the box
+   takes the picture's own height, so a wide one leaves the room to the presets */
+.nhe-panel__picture { display: flex; justify-content: center; flex: none; padding: 0 var(--nhe-space-8); }
+.nhe-panel__picture img { display: block; width: auto; height: auto; max-width: 100%; max-height: 200px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); pointer-events: none; }
 
 .nhe-stack {
     position: relative;
@@ -831,7 +833,9 @@
 .nhe-plugin-header__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* the row under the name: colour, info, delete */
 .nhe-plugin-header__tools { display: flex; justify-content: center; gap: var(--nhe-space-8); padding: var(--nhe-space-4) var(--nhe-space-8) 0; }
-.nhe-plugin-header__tool { width: 40px; height: 40px; padding: 6px; }
+.nhe-plugin-header__tool { width: 40px; height: 36px; padding: 4px 6px; }
+/* the on/off switch right under the icons */
+.nhe-plugin-header__tools + .nhe-plugin-header__row { padding-top: var(--nhe-space-2, 2px); }
 .nhe-plugin-header__tool svg { display: block; width: 100%; height: 100%; }
 .nhe-plugin-header__tool:hover { color: var(--nhe-accent-default); }
 .nhe-plugin-header__tool--remove:hover { color: var(--nhe-status-warn, #e5484d); }
