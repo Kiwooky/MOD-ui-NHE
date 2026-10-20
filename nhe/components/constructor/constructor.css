@@ -295,7 +295,9 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 /* the pedals' layer lies over the +s: only the pedals themselves take taps */
 .nhe-surface__items { pointer-events: none; }
 .nhe-surface__item { pointer-events: auto; }
-.nhe-surface__wires { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+/* svg.: MOD's page (normalize.css) clips svg:not(:root); the wires to MOD's
+   ports reach past the grid when the screen is wider than it */
+.nhe-surface svg.nhe-surface__wires { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 
 /* a + on a free cell */
 .nhe-surface__plus {
@@ -407,16 +409,16 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 
 /* faces: sockets on every jack, a plug on each cable end (drag to rewire,
    tap for the colour) */
-.nhe-surface__plugs { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.nhe-surface svg.nhe-surface__plugs { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .nhe-surface__plug, .nhe-surface__socket { pointer-events: all; cursor: grab; }
 .is-wiring, .is-wiring .nhe-surface__plug, .is-wiring .nhe-surface__socket { cursor: grabbing; }
 .nhe-surface__plug-hit, .nhe-surface__socket-hit { fill: transparent; }
-.nhe-surface__plug-body { stroke: rgba(0, 0, 0, .7); stroke-width: 1.5; }
-.nhe-surface__plug.is-audio .nhe-surface__plug-body { fill: #6152f0; }
-.nhe-surface__plug.is-midi .nhe-surface__plug-body { fill: #d08a2e; }
-.nhe-surface__plug.is-cv .nhe-surface__plug-body { fill: #2ea7a0; }
-.nhe-surface__plug-tip { fill: #c8c8c8; }
-.nhe-surface__plug:hover .nhe-surface__plug-body { stroke: #fff; }
+/* the connector (surface.js plugDefs): metal, with a band in the cable's colour */
+.nhe-surface__plug-body { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .6)); }
+.nhe-surface__plug.is-audio .nhe-surface__plug-band { fill: #6152f0; }
+.nhe-surface__plug.is-midi .nhe-surface__plug-band { fill: #d08a2e; }
+.nhe-surface__plug.is-cv .nhe-surface__plug-band { fill: #2ea7a0; }
+.nhe-surface__plug:hover .nhe-surface__plug-body { filter: drop-shadow(0 0 2px #fff); }
 .nhe-surface__socket-hole { fill: #0b0b0b; stroke: #9a9a9a; stroke-width: 2; }
 .nhe-surface__socket:hover .nhe-surface__socket-hole { stroke: #fff; }
 .nhe-surface__socket-stem { stroke: #fff; stroke-width: 2; }

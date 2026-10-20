@@ -44,8 +44,9 @@
  *
  * A pedal node may carry `face`: its full-size picture (MOD's screenshot),
  * shown instead of `thumb` in faces mode, `faceSize`: { w, h }, the
- * size the face is at 100% (a tap zooms to that; else the picture's own
- * size), and `jacks`: { portId: { x, y } },
+ * pedal's own size within that picture (MOD's screenshot has a margin
+ * round the pedal; the pedal sits in its middle at 1:1), and `jacks`:
+ * { portId: { x, y } },
  * where each jack sits on that face (fractions of its width and height).
  * In faces mode the wires run from jack to jack; a face without `jacks`
  * gets them spread down its sides (inputs left, outputs right).
@@ -155,6 +156,30 @@
 
         this.pointers()
         root.addEventListener('wheel', function (e) { self.wheel(e) }, { passive: false })
+        this.render()
+
+        // the surface's own size changed (a window resize, a rotated tablet):
+        // MOD's ports move to the new edges, so the wires to them are drawn
+        // again; the grid keeps at least the screen's size
+        this.seen = { w: r.width, h: r.height }
+        if (window.ResizeObserver) {
+            var queued = false
+            new ResizeObserver(function () {
+                if (queued) return
+                queued = true
+                requestAnimationFrame(function () { queued = false; self.resized() })
+            }).observe(root)
+        }
+    }
+
+    Surface.prototype.resized = function () {
+        var W = this.root.clientWidth, Hh = this.root.clientHeight, gap = SIDE + PORT + 8
+        if (!W || !Hh || (W === this.seen.w && Hh === this.seen.h)) return
+        this.seen = { w: W, h: Hh }
+        var z = Math.min(1, this.view.z)
+        this.minCols = Math.max(MIN_COLS, Math.floor((W / z - 2 * gap) / CELL))
+        this.minRows = Math.max(MIN_ROWS, Math.floor((Hh / z - FOOT) / CELL))
+        this.clamp()
         this.render()
     }
 
@@ -344,12 +369,26 @@
         var v = this.view, k = (R.width / this.root.clientWidth) || 1   // the page may be scaled (NHE.zoom)
         var x = ((r.left - R.left) / k - v.x) / v.z, y = ((r.top - R.top) / k - v.y) / v.z
         var w = r.width / k / v.z, h = r.height / k / v.z
+        var a = this.inner(nd, pic, w, h)
+        x += a.x
+        y += a.y
+        w = a.w
+        h = a.h
         var j = nd.jacks && nd.jacks[portId]
         if (j) return { x: x + j.x * w, y: y + j.y * h }
         var list = []
         ;['audio', 'midi', 'cv'].forEach(function (t) { list = list.concat(((nd.ports && nd.ports[t]) || {})[dir] || []) })
         var i = Math.max(0, list.indexOf(portId)), n = list.length || 1, step = Math.min(h / (n + 1), 44)
         return { x: dir === 'in' ? x : x + w, y: y + h / 2 + (i - (n - 1) / 2) * step }
+    }
+
+    // the pedal within its picture (w x h as drawn): faceSize at the
+    // picture's scale, centred; the whole picture without a faceSize
+    Surface.prototype.inner = function (nd, pic, w, h) {
+        var f = nd.faceSize, nw = pic && pic.naturalWidth
+        if (!f || !f.w || !f.h || !nw) return { x: 0, y: 0, w: w, h: h }
+        var k = w / nw, iw = Math.min(w, f.w * k), ih = Math.min(h, f.h * k)
+        return { x: (w - iw) / 2, y: (h - ih) / 2, w: iw, h: ih }
     }
 
     // a polyline with rounded corners
@@ -564,13 +603,48 @@
 
     // a plug on a cable's end: dir 1 leaves rightwards (out of an output),
     // -1 arrives from the left (into an input)
+    // The cable connectors (NHE-MOD-UI/SVG "coming out" and "going-in"):
+    // a ribbed metal barrel, flat against the jack, rounded where the cable
+    // leaves it. Defined once per page, drawn with <use>.
+    var PLUG_W = 103.62, PLUG_H = 68.71
+    var plugDefs = function () {
+        if (document.getElementById('nhe-plug-in')) return
+        var grad = function (id) {
+            return '<linearGradient id="' + id + '" x1="51.81" y1=".5" x2="51.81" y2="68.21" gradientUnits="userSpaceOnUse">' +
+                '<stop offset="0" stop-color="#656668"/><stop offset=".19" stop-color="#fff"/><stop offset=".56" stop-color="#656668"/>' +
+                '<stop offset=".86" stop-color="#b1b3b6"/><stop offset="1" stop-color="#656668"/></linearGradient>'
+        }
+        var body = 'M12.5.5h90.62v67.71H12.5c-6.62,0-12-5.38-12-12V12.5C.5,5.88,5.88.5,12.5.5Z'
+        var line = function (x) { return '<line x1="' + x + '" y1=".5" x2="' + x + '" y2="68.21"/>' }
+        var stroke = ' stroke="#000" stroke-miterlimit="10"'
+        var holder = document.createElementNS(SVG, 'svg')
+        holder.setAttribute('width', 0)
+        holder.setAttribute('height', 0)
+        holder.setAttribute('aria-hidden', 'true')
+        holder.style.position = 'absolute'
+        holder.innerHTML = '<defs>' + grad('nhe-plug-grad') +
+            // going in: the cable from the left, the flat end against an input jack on the right
+            '<symbol id="nhe-plug-in" viewBox="0 0 ' + PLUG_W + ' ' + PLUG_H + '"><path d="' + body + '" fill="url(#nhe-plug-grad)"' + stroke + '/>' +
+                '<g fill="none"' + stroke + '>' + [29.04, 40.04, 51.04, 62.04, 73.04, 84.04].map(line).join('') + '</g></symbol>' +
+            // coming out: the flat end against an output jack on the left, the cable leaving to the right
+            '<symbol id="nhe-plug-out" viewBox="0 0 ' + PLUG_W + ' ' + PLUG_H + '"><path d="' + body + '" transform="translate(103.62 68.71) rotate(-180)" fill="url(#nhe-plug-grad)"' + stroke + '/>' +
+                '<g fill="none"' + stroke + '>' + [74.58, 63.58, 52.58, 41.58, 30.58, 19.58].map(line).join('') + '</g></symbol>' +
+            '</defs>'
+        document.body.appendChild(holder)
+    }
+
     Surface.prototype.plug = function (pt, dir, w, end, colour) {
+        plugDefs()
         var g = svgEl('g', 'nhe-surface__plug is-' + w.kind, this.n.plugs, { 'data-ci': w.ci, 'data-end': end })
-        var x = dir > 0 ? pt[0] - 2 : pt[0] - 14
-        svgEl('rect', 'nhe-surface__plug-hit', g, { x: x - 8, y: pt[1] - 12, width: 32, height: 24 })
-        var body = svgEl('rect', 'nhe-surface__plug-body', g, { x: x, y: pt[1] - 6, width: 16, height: 12, rx: 3 })
-        if (colour) body.style.fill = colour
-        svgEl('rect', 'nhe-surface__plug-tip', g, { x: dir > 0 ? x - 3 : x + 16, y: pt[1] - 3, width: 3, height: 6, rx: 1 })
+        var pw = 24, ph = pw * PLUG_H / PLUG_W
+        // out of an output (dir > 0): right of the jack; into an input: left of it
+        var x = dir > 0 ? pt[0] : pt[0] - pw
+        svgEl('rect', 'nhe-surface__plug-hit', g, { x: x - 6, y: pt[1] - 12, width: pw + 12, height: 24 })
+        var use = svgEl('use', 'nhe-surface__plug-body', g, { x: x, y: pt[1] - ph / 2, width: pw, height: ph })
+        use.setAttribute('href', dir > 0 ? '#nhe-plug-out' : '#nhe-plug-in')
+        // the cable's own colour (or its type's), as a band where the cable leaves
+        var band = svgEl('rect', 'nhe-surface__plug-band', g, { x: dir > 0 ? x + pw - 4 : x, y: pt[1] - ph / 2 + 2, width: 4, height: ph - 4, rx: 1.5 })
+        if (colour) band.style.fill = colour
         g.appendChild(document.createElementNS(SVG, 'title')).textContent = 'Drag to move this end' + (this.shared(w.c, end) ? '; tap to spread the cables on this jack' : '')
     }
 
@@ -923,8 +997,9 @@
         var self = this, d = this.els[nd.id], img = d && d.querySelector('img')
         var v = this.view, r = this.root.getBoundingClientRect()
         if (this.focused && this.focused.id !== nd.id) this.blur()
-        var z = 1.5, full = (nd.faceSize && nd.faceSize.w) || (img && img.naturalWidth)
-        if (img && full) z = full / (img.getBoundingClientRect().width / v.z)
+        // the picture at its own size: the pedal in it at 100%
+        var z = 1.5
+        if (img && img.naturalWidth) z = img.naturalWidth / (img.getBoundingClientRect().width / v.z)
         z = Math.max(ZMIN, Math.min(ZMAX, z))
         var b = this.box(nd), cx = b.x + b.w / 2, cy = b.y + b.h / 2
         // centred, as far as the grid's edges allow
@@ -944,11 +1019,13 @@
         if (!img || typeof this.o.liveFace !== 'function') return
         // a redrawn face's picture may not be in yet: it has no size until it is
         if (!img.complete || !img.offsetWidth) { img.addEventListener('load', function () { if (self.els[f.id] === d) self.mountLive() }); return }
+        // over the pedal within the picture
         var layer = d.querySelector('.nhe-surface__live') || el('div', 'nhe-surface__live', d)
-        layer.style.left = img.offsetLeft + 'px'
-        layer.style.top = img.offsetTop + 'px'
-        layer.style.width = img.offsetWidth + 'px'
-        layer.style.height = img.offsetHeight + 'px'
+        var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
+        layer.style.left = (img.offsetLeft + a.x) + 'px'
+        layer.style.top = (img.offsetTop + a.y) + 'px'
+        layer.style.width = a.w + 'px'
+        layer.style.height = a.h + 'px'
         d.classList.toggle('is-live', !!this.o.liveFace(nd, layer))
     }
 

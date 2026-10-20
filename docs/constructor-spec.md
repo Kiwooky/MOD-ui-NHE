@@ -219,6 +219,17 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   icon back to MOD's canvas.
 - **Double click (or double tap) on the surface itself:** zooms out to
   show the whole grid.
-- To come for the surface: `jacks` measured from the icon's `[mod-port]`
-  elements (wires from where the face's jacks really are), bigger card
-  text on a phone.
+- **Real jack positions:** on MOD the wires and sockets sit where the
+  pedal's own jacks are: the adapter measures modgui's jack elements
+  (`[mod-port]`, the ones MOD draws its cables to) against the icon, as
+  fractions of its box (`jacks`), and the surface maps them onto the pedal
+  within its screenshot (`faceSize`: MOD's screenshot has a margin round
+  the pedal). Zoomed in, the live icon and the sockets line up exactly.
+  Pedals without jack elements still get them spread down their sides.
+- **The cable connectors** are NHE's drawings (NHE-MOD-UI/SVG "coming
+  out" and "going-in"): a ribbed metal barrel, flat against the jack and
+  rounded where the cable leaves, with a band in the cable's colour.
+- **Resizing** the window (or turning a tablet) moves MOD's port tiles to
+  the new edges and draws the wires to them again; the grid keeps at least
+  the screen's size.
+- To come for the surface: bigger card text on a phone.

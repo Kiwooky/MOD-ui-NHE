@@ -733,7 +733,29 @@
         return { name: String(title || port.split('/').pop()).replace(/^Hardware /, '') }
     }
 
-    // { pedals: [{ instance, uri, name, brand, x, y, w, h, ports }],
+    // Where a plugin's jacks are on its face: { portId: { x, y } }, fractions
+    // of the icon's box, measured from modgui's jack elements ([mod-port]
+    // with mod-role input-/output-audio|midi|cv-port; MOD draws its cables
+    // to them). x is the jack's edge against the pedal (inputs: its right
+    // edge, outputs: its left), y its middle. Measured while the icon is
+    // drawn (on MOD's canvas, at any zoom); kept per GUI, so a borrowed icon
+    // (its jacks hidden) keeps them.
+    var jacksOf = function (icon, gui) {
+        if (gui.__nheJacks) return gui.__nheJacks
+        var R = icon[0].getBoundingClientRect(), out = {}, n = 0
+        if (!R.width || !R.height) return null
+        icon.find('[mod-role$="-audio-port"], [mod-role$="-midi-port"], [mod-role$="-cv-port"]').each(function () {
+            var port = this.getAttribute('mod-port'), role = this.getAttribute('mod-role') || '', r = this.getBoundingClientRect()
+            if (!port || !r.width || !r.height) return
+            var x = role.indexOf('input') === 0 ? r.right : r.left
+            out[port] = { x: (x - R.left) / R.width, y: (r.top + r.height / 2 - R.top) / R.height }
+            n++
+        })
+        if (!n) return null
+        return (gui.__nheJacks = out)
+    }
+
+    // { pedals: [{ instance, uri, name, brand, x, y, w, h, ports, jacks }],
     //   system: [{ port, name, short, channel, type, source }],
     //   connections: [[fromPort, toPort]] }
     // ports: { audio: { in: [portId], out: [portId] }, midi, cv }; a pedal
@@ -758,7 +780,8 @@
                 x: borrowed[instance] && !onCanvas(icon) ? borrowed[instance].x : parseFloat(icon.css('left')) || 0,
                 y: borrowed[instance] && !onCanvas(icon) ? borrowed[instance].y : parseFloat(icon.css('top')) || 0,
                 w: icon.outerWidth() || 0, h: icon.outerHeight() || 0,
-                ports: ports
+                ports: ports,
+                jacks: jacksOf(icon, gui)
             })
         })
         var hw = function (list, source) {

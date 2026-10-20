@@ -25,9 +25,9 @@
  * (faceSize: MOD's icon's size) and borrows MOD's working icon
  * (mod.borrowIcon) into its place, so its knobs and switches play; it
  * goes back to MOD's canvas when the face lets go (zoomed out, another
- * one tapped, lifted, MOD's builder chosen). Later: each node gets `jacks`
- * ({ portId: { x, y } }, fractions of the face) measured from the icon's
- * [mod-port] jack elements, so the wires start where the face's jacks are.
+ * one tapped, lifted, MOD's builder chosen). Each node's `jacks` (from
+ * mod.board(), measured on MOD's icon) put the wires' ends where the face's
+ * jacks really are.
  */
 NHE.register('constructor', function (mod) {
     var KEY = 'nhe-builder'
@@ -95,7 +95,8 @@ NHE.register('constructor', function (mod) {
             out.push({
                 id: p.instance, uri: p.uri, name: p.name, brand: p.brand, kind: 'pedal',
                 thumb: mod.pluginImage(p.uri, 'thumbnail'), face: mod.pluginImage(p.uri, 'screenshot'),
-                ports: p.ports, cell: cell, span: s, faceSize: { w: p.w, h: p.h }
+                ports: p.ports, cell: cell, span: s, faceSize: { w: p.w, h: p.h },
+                jacks: p.jacks || undefined         // where MOD's face has them; else spread down its sides
             })
         })
         // added here, not drawn by MOD yet
@@ -362,9 +363,6 @@ NHE.register('constructor', function (mod) {
         onChange: function (i) { NHE.builder.set(i ? 'nhe' : 'mod') }
     })
     sw.attr('title', 'Builder: MOD\'s or NHE\'s')
-
-    // the window resized (not an element: jquery.ba-resize's events bubble up)
-    $(window).on('resize', function (e) { if (e.target === window && surface) surface.apply() })
 
     mod.onBoardChange(function (reloaded) {
         if (reloaded) {
