@@ -250,7 +250,8 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
 - **Zooming in:** the pedals' names and makers, the connectors and the
   jacks' nuts don't grow past their own size: zoomed out they shrink with
   the pedals; zoomed in they stay put (a connector at most 44 px tall on
-  screen, about MOD's port tiles). A cable into one of MOD's port tiles has
+  screen, about MOD's port tiles); the name and maker hang right under the
+  pedal itself, a few px below it. A cable into one of MOD's port tiles has
   its connector right against the tile.
 - **Resizing** the window (or turning a tablet) moves MOD's port tiles to
   the new edges and draws the wires to them again; the grid keeps at least

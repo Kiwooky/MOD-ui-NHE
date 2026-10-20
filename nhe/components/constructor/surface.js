@@ -328,7 +328,9 @@
                     face.style.setProperty('--tile', nd.colour || '#555')
                     face.textContent = (nd.name || '?').split(/\s+/).map(function (w) { return w[0] }).join('').slice(0, 3).toUpperCase()
                 }
-                el('span', 'nhe-surface__name', d).textContent = nd.name
+                // faces: name and maker in a label hung right under the pedal itself (placeGear)
+                var lab = self.faces ? el('div', 'nhe-surface__caption', d) : d
+                el('span', 'nhe-surface__name', lab).textContent = nd.name
                 // cards (phones): a plug button, top right, for the wiring dialog
                 if (!self.faces) {
                     var rw = el('button', 'nhe-surface__rewire', d, icon('plug'))
@@ -336,7 +338,7 @@
                     rw.setAttribute('aria-label', 'Wiring of ' + nd.name)
                     rw.addEventListener('click', function () { if (!self.moved && typeof self.o.onRewire === 'function') self.o.onRewire(nd) })
                 }
-                if (nd.brand) el('span', 'nhe-surface__brand', d).textContent = nd.brand
+                if (nd.brand) el('span', 'nhe-surface__brand', lab).textContent = nd.brand
                 // faces: a gear just outside the pedal's top right corner, for its settings
                 if (self.faces && typeof self.o.onSettings === 'function') {
                     var gear = el('button', 'nhe-surface__gear', d, icon('gear'))
@@ -1086,15 +1088,23 @@
         })
     }
 
-    // the gear sits at the pedal's own top right corner (within its picture)
+    // the gear sits at the pedal's own top right corner (within its picture),
+    // the name and maker right under its bottom edge
     Surface.prototype.placeGear = function (nd) {
-        var d = this.els && this.els[nd.id], gear = d && d.querySelector('.nhe-surface__gear')
+        var d = this.els && this.els[nd.id]
+        var gear = d && d.querySelector('.nhe-surface__gear'), lab = d && d.querySelector('.nhe-surface__caption')
         var img = d && d.querySelector('.nhe-surface__face img')
-        if (!gear) return
-        if (!img || !img.complete || !img.offsetWidth) { gear.style.left = '100%'; gear.style.top = '0'; return }
+        if (!gear && !lab) return
+        if (!img || !img.complete || !img.offsetWidth) {
+            if (gear) { gear.style.left = '100%'; gear.style.top = '0' }
+            return
+        }
         var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
-        gear.style.left = (img.offsetLeft + a.x + a.w) + 'px'
-        gear.style.top = (img.offsetTop + a.y) + 'px'
+        if (gear) {
+            gear.style.left = (img.offsetLeft + a.x + a.w) + 'px'
+            gear.style.top = (img.offsetTop + a.y) + 'px'
+        }
+        if (lab) lab.style.top = (img.offsetTop + a.y + a.h) + 'px'
     }
 
     // the focused face's working GUI, over its picture (again after a redraw)

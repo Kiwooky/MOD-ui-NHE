@@ -350,6 +350,22 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
    (which takes the rest) doesn't change size as the text does */
 .nhe-surface__name { height: 16px; line-height: 16px; }
 .nhe-surface__brand { height: 14px; line-height: 14px; }
+/* faces: the label hangs right under the pedal itself (surface.js placeGear),
+   its gap and lines in screen px when zoomed in; the 30 px it had in the
+   item's flow stay reserved, so the face keeps its size */
+.is-faces .nhe-surface__caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% - 30px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: calc(4px / max(1, var(--nhe-surface-z, 1)));
+    pointer-events: none;
+}
+.is-faces .nhe-surface__caption .nhe-surface__name { height: auto; line-height: calc(16px / max(1, var(--nhe-surface-z, 1))); }
+.is-faces .nhe-surface__caption .nhe-surface__brand { height: auto; line-height: calc(14px / max(1, var(--nhe-surface-z, 1))); }
 /* a card's plug button (phones): the wiring dialog */
 /* screen-sized whatever the zoom (surface.js sets --nhe-surface-z): a 24 px icon, 4 px in */
 .nhe-surface__rewire { position: absolute; top: calc(4px / var(--nhe-surface-z, 1)); right: calc(4px / var(--nhe-surface-z, 1)); display: flex; width: calc(24px / var(--nhe-surface-z, 1)); height: calc(24px / var(--nhe-surface-z, 1)); padding: 0; border: 0; background: none; color: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; }
@@ -362,7 +378,7 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__gear:hover { color: var(--nhe-accent-default); }
 /* desktop / large tablets: the faces themselves, as in MOD's builder: no
    card behind them, 20% larger (surface.js sizes them) */
-.is-faces .nhe-surface__item.is-pedal { background: none; padding: 0; }
+.is-faces .nhe-surface__item.is-pedal { background: none; padding: 0 0 30px; }   /* 30: the label's room (below) */
 /* only the picture and the name take taps: the box around them is larger
    and would cover the cables beside them */
 .is-faces .nhe-surface__item.is-pedal, .is-faces .nhe-surface__face { pointer-events: none; }
