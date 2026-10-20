@@ -129,7 +129,7 @@
             var pc = el('div', 'nhe-panel__plugin', root)
             pc.style.height = o.height + 'px'
             this.header = new NHE.PluginHeader(el('div', null, pc), mix({ name: o.plugin.name, on: o.plugin.on !== false, binding: o.plugin.binding || null, onColour: o.plugin.onColour, onInfo: o.plugin.onInfo, onDelete: o.plugin.onDelete }, mix(cb(':bypass'), {})))
-            // the plugin's GUI, 200 px tall at most, under the name and its icons;
+            // the plugin's GUI, 180 px tall at most, under the name and its icons;
             // the presets take what is left
             if (o.plugin.picture) {
                 var pic = el('div', 'nhe-panel__picture', pc)

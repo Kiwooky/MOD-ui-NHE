@@ -387,6 +387,7 @@
 .nhe-presets.is-no-factory .nhe-segmented { display: none; }
 .nhe-presets.is-empty .nhe-list { display: none; }
 .nhe-presets__actions { display: flex; justify-content: space-between; flex: none; }
+.nhe-presets__actions .nhe-footer { width: auto; height: auto; }
 
 /* ---- system bar ------------------------------------------------------- */
 
@@ -525,10 +526,10 @@
 
 .nhe-panel { display: flex; align-items: flex-start; background: var(--nhe-surface-base); }
 .nhe-panel__plugin { display: flex; flex-direction: column; gap: var(--nhe-space-8); width: 240px; flex: none; }
-/* the plugin's GUI: at most 200 px tall and the column's width; the box
+/* the plugin's GUI: at most 180 px tall and the column's width; the box
    takes the picture's own height, so a wide one leaves the room to the presets */
 .nhe-panel__picture { display: flex; justify-content: center; flex: none; padding: 0 var(--nhe-space-8); }
-.nhe-panel__picture img { display: block; width: auto; height: auto; max-width: 100%; max-height: 200px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); pointer-events: none; }
+.nhe-panel__picture img { display: block; width: auto; height: auto; max-width: 100%; max-height: 180px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); pointer-events: none; }
 
 .nhe-stack {
     position: relative;

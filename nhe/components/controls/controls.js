@@ -409,7 +409,8 @@
         n.save = act('save', 'Save', 'onSave')
         n.rename = act('rename', 'Rename', 'onRename')
         n.remove = act('remove', 'Delete', 'onDelete')
-        this.footer(root)
+        // the presets' settings (addressing) at the end of the action row
+        this.footer(acts)
         this.overlay()
         this.render()
     })
