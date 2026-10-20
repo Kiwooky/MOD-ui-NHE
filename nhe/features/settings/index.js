@@ -270,6 +270,16 @@ NHE.register('settings', function (mod) {
         } })
         $('<div class="nhe-dialog__note">').text("What a plugin's gear opens: NHE's screen, or MOD's own settings panel. Remembered in this browser.").appendTo(d)
 
+        // the builder: MOD's or NHE's (features/constructor)
+        if (NHE.builder) {
+            $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.chainView + '<span>Builder</span>').appendTo(d)
+            var bseg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
+            new NHE.Segmented(bseg[0], { options: ['MOD', 'NHE'], value: NHE.builder.current() === 'nhe' ? 1 : 0, onChange: function (i) {
+                NHE.builder.set(i ? 'nhe' : 'mod')
+            } })
+            $('<div class="nhe-dialog__note">').text("The pedalboard builder: MOD's, or NHE's grid with automatic wiring. Remembered in this browser.").appendTo(d)
+        }
+
         // the work surface: the builder's background (features/background)
         if (NHE.backgroundList) {
             $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.palette + '<span>Work surface</span>').appendTo(d)

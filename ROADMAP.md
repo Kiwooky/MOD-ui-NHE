@@ -13,7 +13,11 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 - **Phones**: held upright, NHE's screens and dialogs are scaled up so the system bar, the presets and one slider fill the width (MOD lays its page out 980 px wide); held sideways, NHE's screens use the full width, past the notch areas, while they show.
 - **Performance view**: the pedal carousel; Flip and Hide on the centred pedal; the back of a flipped pedal is its settings screen; the chain jumps between backs; hidden pedals in a grid tile.
 
+- **NHE's builder (first step)**: SET → Builder: NHE shows the constructor surface over MOD's builder on the real pedalboard. Checked in MOD Desktop: wiring by hand, moving a pedal, adding one with the + dialog and inserting one with a cable's + all change MOD's board, and survive a reload.
+
 ## Not tested yet
+
+- NHE's builder: Rewire on a phone; loading another pedalboard while it shows; touch on a tablet; the Duo.
 
 - On a MOD device (Duo, Duo X, Dwarf): footswitch and knob assignment and their settings (sensitivity, latching / momentary, LED colour), tempo sync, the File Manager and Banks, which MOD Desktop hides.
 - On a tablet with touch.

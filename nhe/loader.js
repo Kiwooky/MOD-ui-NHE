@@ -56,6 +56,21 @@
                 'features/settings/settings.css',
                 'features/settings/index.js'
             ]
+        },
+        {
+            // NHE's builder over MOD's (SET → Builder); MOD's stays the default
+            id: 'constructor',
+            files: [
+                'components/icons.js',
+                'components/controls/controls.css',
+                'components/controls/controls.js',
+                'components/constructor/constructor.css',
+                'components/constructor/autowire.js',
+                'components/constructor/add.js',
+                'components/constructor/surface.js',
+                'features/constructor/constructor.css',
+                'features/constructor/index.js'
+            ]
         }
     ]
 
@@ -107,7 +122,8 @@
                 NHE.log(f.id, 'is switched off (preference nhe-' + f.id + ')')
                 return
             }
-            f.files.forEach(function (file) { queue.push(file) })
+            // features may share components: each file loads once
+            f.files.forEach(function (file) { if (queue.indexOf(file) < 0) queue.push(file) })
         })
         // design tokens and the adapter first, then features in order
         queue.unshift('theme/tokens.css', 'adapter/mod.js')

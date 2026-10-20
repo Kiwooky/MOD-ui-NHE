@@ -193,6 +193,23 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   would come closer to another cable's run moves aside, clear of the runs
   out of and into the jacks too. Several cables from one jack part right
   after it; several into one jack join just before it.
-- To come for the surface: the Builder choice in SET (MOD's or NHE's),
-  the real modgui faces on desktop (playable), bigger card text
-  on a phone, and running it on MOD's real pedalboard.
+- **On MOD's real pedalboard** (`nhe/features/constructor/`, preference
+  `nhe-constructor`): SET → Builder (MOD / NHE, remembered per browser,
+  MOD's by default; also the switch at the surface's top right, or
+  `NHE.builder.set('nhe')`) shows the surface over MOD's builder, between
+  its header and footer. The adapter reads the board (`mod.board()`:
+  plugins, their ports, MOD's own ports, connections), follows it over
+  the websocket (`mod.onBoardChange`), and writes through MOD's own calls
+  (`mod.connect`, `mod.disconnect`, `mod.addPlugin`, `mod.movePlugin`).
+  Cells are 600 × 520 canvas px from the top left pedal; MOD's positions
+  snap to the nearest cell; where two land on one, the one already shown
+  there (else the better fit) keeps it and the other takes the nearest
+  free cell, on screen only. A move writes the cell back. A new pedal's
+  span comes from its screenshot (the shape of its icon). The board is
+  read once MOD has finished loading (its "Loading pedalboard…" gone). Faces are
+  MOD's screenshots for now. Later: the real modgui icon in the face's
+  place (playable when zoomed) and `jacks` measured from its `[mod-port]`
+  elements. Rewire on a card tries "delete and reconnect". Wire colours
+  and laid routes are kept per board in memory only.
+- To come for the surface: the real modgui faces on desktop (playable),
+  bigger card text on a phone.

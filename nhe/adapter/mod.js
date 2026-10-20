@@ -616,4 +616,235 @@
             new MutationObserver(function () { cb() }).observe(this, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] })
         })
     }
+
+    // ------------------------------------------------------------------
+    // The board, for NHE's constructor (features/constructor)
+    //
+    // Reading: the plugin icons in pedalboard.data('plugins') (instance ->
+    // icon; position in the icon's CSS left / top, in canvas px; its GUI's
+    // effect.ports for the ports, named instance + '/' + symbol as in
+    // mod-port), MOD's own ports in pedalboard.data('hwOutputs') (sources:
+    // capture, MIDI in) and data('hwInputs') (destinations: playback, MIDI
+    // out), each a jQuery element with mod-port, title and data('portType'),
+    // and the connections in the connectionManager's origIndex
+    // (origIndex[from][to] = jack).
+    //
+    // Following: the websocket (the global `ws`, host.js) carries "add",
+    // "remove", "connect", "disconnect", "plugin_pos", "add_hw_port",
+    // "remove_hw_port", "loading_start" / "loading_end" to every browser,
+    // this one included; a listener is added beside MOD's ws.onmessage.
+    // An added plugin's icon only appears after MOD fetches its data, so
+    // the pedalboard element's children are watched too.
+    //
+    // Writing goes through the functions MOD's builder itself calls, kept
+    // on the pedalboard element by desktop.js makePedalboard: data('portConnect')
+    // (GET /effect/connect/<from>,<to>), data('portDisconnect')
+    // (/effect/disconnect/), data('pluginLoad') (/effect/add/<instance>?x&y&uri)
+    // with pedalboard('generateInstance') and data('wait') (the loading
+    // placeholder), and data('pluginMove') (ws "plugin_pos", marks the board
+    // modified). The host answers connect / disconnect / add over the
+    // websocket, which is what draws them on MOD's canvas, so MOD stays the
+    // source of truth and NHE follows it like any other browser.
+
+    var BOARD_CMDS = { add: 1, remove: 1, connect: 1, disconnect: 1, plugin_pos: 1, add_hw_port: 1, remove_hw_port: 1, loading_start: 1, loading_end: 1 }
+
+    // true while MOD loads a pedalboard: host.js's pb_loading, or MOD's
+    // "Loading pedalboard…" blocker (.screen-loading, desktop.js), which
+    // stays up after loading_end until the icons are drawn. Plugins and
+    // connections arrive one by one then, in no particular order, and the
+    // icons' sizes settle late
+    mod.boardLoading = function () { return window.pb_loading === true || $('.screen-loading').is(':visible') }
+
+    // which board: its bundle path ('' for an unsaved one) and title
+    mod.boardId = function () { return (window.desktop && desktop.pedalboardBundle) || '' }
+    mod.boardTitle = function () { return (window.desktop && desktop.title) || '' }
+
+    // MOD's own ports, as NHE names them: Audio In / Out (L) / (R) for the
+    // first two capture / playback ports, else MOD's title without "Hardware"
+    var systemName = function (port, title, source) {
+        var m = /\/(capture|playback)_([12])$/.exec(port)
+        if (m) {
+            var side = m[2] === '1' ? 'L' : 'R'
+            return { name: 'Audio ' + (source ? 'In' : 'Out') + ' (' + side + ')', short: (source ? 'In' : 'Out') + ' (' + side + ')', channel: side }
+        }
+        return { name: String(title || port.split('/').pop()).replace(/^Hardware /, '') }
+    }
+
+    // { pedals: [{ instance, uri, name, brand, x, y, w, h, ports }],
+    //   system: [{ port, name, short, channel, type, source }],
+    //   connections: [[fromPort, toPort]] }
+    // ports: { audio: { in: [portId], out: [portId] }, midi, cv }; a pedal
+    // whose icon isn't drawn yet (just added) is left out until it is
+    mod.board = function () {
+        var pb = mod.pedalboard(), plugins = mod.plugins(), out = { pedals: [], system: [], connections: [] }
+        Object.keys(plugins).forEach(function (instance) {
+            var icon = plugins[instance], gui = icon && icon.data && icon.data('gui')
+            if (!gui || !icon.position) return
+            var e = gui.effect || {}, ports = {}
+            ;['audio', 'midi', 'cv'].forEach(function (t) {
+                var p = (e.ports && e.ports[t]) || {}
+                ports[t] = {
+                    in: (p.input || []).map(function (q) { return instance + '/' + q.symbol }),
+                    out: (p.output || []).map(function (q) { return instance + '/' + q.symbol })
+                }
+            })
+            out.pedals.push({
+                instance: instance, uri: e.uri,
+                name: icon.data('label') || e.label || e.name || instance, brand: e.brand || '',
+                x: parseFloat(icon.css('left')) || 0, y: parseFloat(icon.css('top')) || 0,
+                w: icon.outerWidth() || 0, h: icon.outerHeight() || 0,
+                ports: ports
+            })
+        })
+        var hw = function (list, source) {
+            ;(list || []).forEach(function (el) {
+                var port = el.attr('mod-port')
+                if (!port) return
+                var n = systemName(port, el.attr('title'), source)
+                out.system.push({ port: port, name: n.name, short: n.short, channel: n.channel, type: el.data('portType') || 'audio', source: source, index: parseInt(el.attr('mod-port-index'), 10) || 0 })
+            })
+        }
+        hw(pb.data('hwOutputs'), true)
+        hw(pb.data('hwInputs'), false)
+        var cm = pb.data('connectionManager')
+        if (cm) Object.keys(cm.origIndex).forEach(function (from) {
+            Object.keys(cm.origIndex[from] || {}).forEach(function (to) { out.connections.push([from, to]) })
+        })
+        return out
+    }
+
+    // cb(reloaded) whenever the board may have changed (debounced); not
+    // while MOD is loading a pedalboard, but once when it's done. reloaded:
+    // another board was loaded (or a new one started) since the last call
+    mod.onBoardChange = function (cb) {
+        var timer = null, reloaded = false
+        var later = function () {
+            clearTimeout(timer)
+            timer = setTimeout(function () {
+                if (mod.boardLoading()) { later(); return }   // again once MOD is done
+                var r = reloaded
+                reloaded = false
+                cb(r)
+            }, 80)
+        }
+        var socket = window.ws
+        if (socket && socket.addEventListener) {
+            socket.addEventListener('message', function (evt) {
+                var data = String(evt.data), cmd = data.split(' ', 1)[0]
+                if (!BOARD_CMDS[cmd]) return
+                if (cmd === 'loading_start' || data === 'remove :all') reloaded = true
+                later()
+            })
+        }
+        if (window.MutationObserver) new MutationObserver(later).observe(mod.pedalboard()[0], { childList: true })
+    }
+
+    var plugsUrl = function (path, a, b) { return '/effect/' + path + '/' + a + ',' + b }
+
+    // connect / disconnect two ports (instance/symbol or MOD's /graph/... port);
+    // cb(ok) when the host has answered
+    mod.connect = function (from, to, cb) {
+        var fn = mod.pedalboard().data('portConnect')
+        if (fn) fn(from, to, function (ok) { if (cb) cb(!!ok) })
+        else $.ajax({ url: plugsUrl('connect', from, to), cache: false, dataType: 'json', success: function (ok) { if (cb) cb(!!ok) } })
+    }
+    mod.disconnect = function (from, to, cb) {
+        var pb = mod.pedalboard(), fn = pb.data('portDisconnect')
+        var done = function () { pb.trigger('modified'); if (cb) cb(true) }   // MOD's own disconnect marks the board modified
+        if (fn) fn(from, to, done)
+        else $.ajax({ url: plugsUrl('disconnect', from, to), cache: false, dataType: 'json', success: done })
+    }
+
+    // add a plugin at x / y (canvas px); cb(instance) once the host has it
+    // (its icon follows over the websocket), cb(null) if it failed (MOD
+    // shows its own message)
+    mod.addPlugin = function (uri, x, y, cb) {
+        var pb = mod.pedalboard()
+        var instance = pb.pedalboard('generateInstance', uri)
+        var waiter = pb.data('wait'), load = pb.data('pluginLoad')
+        if (!load) { if (cb) cb(null); return }
+        x = Math.round(x)
+        y = Math.round(y)
+        if (waiter) waiter.startPlugin(instance, { x: x, y: y })
+        load(uri, instance, x, y, function () {
+            if (waiter) waiter.stopPlugin(instance, false)
+            if (cb) cb(instance)
+        }, function () {
+            if (waiter) waiter.stopPlugin(instance, false)
+            if (cb) cb(null)
+        })
+        return instance
+    }
+
+    // move a plugin to x / y (canvas px): its icon on MOD's canvas, and the
+    // host (the ws doesn't send our own move back to us)
+    mod.movePlugin = function (instance, x, y) {
+        var pb = mod.pedalboard(), icon = mod.plugins()[instance]
+        if (!icon || !icon.css) return
+        x = Math.round(x)
+        y = Math.round(y)
+        icon.css({ left: x, top: y })
+        pb.pedalboard('drawPluginJacks', icon)
+        var move = pb.data('pluginMove')
+        if (move) move(instance, x, y)
+    }
+
+    // MOD's installed plugins (GET /effect/list), as its plugin bar has them:
+    // [{ uri, name, brand, label, category: [..], iotype, ... }]
+    var pluginList = null, listWaiting = []
+    mod.pluginList = function (cb) {
+        if (pluginList) { cb(pluginList); return }
+        listWaiting.push(cb)
+        if (listWaiting.length > 1) return
+        $.ajax({
+            url: '/effect/list', cache: false, dataType: 'json',
+            success: function (list) { pluginList = list || []; listWaiting.splice(0).forEach(function (fn) { fn(pluginList) }) },
+            error: function () { listWaiting.splice(0).forEach(function (fn) { fn([]) }) }
+        })
+    }
+
+    // one plugin's full data (GET /effect/get): ports, author, licence…
+    mod.pluginData = function (uri, cb) {
+        $.ajax({ url: '/effect/get', data: { uri: uri, version: window.VERSION }, dataType: 'json', success: function (d) { cb(d || null) }, error: function () { cb(null) } })
+    }
+
+    // MOD's pictures of a plugin: 'thumbnail' or 'screenshot'
+    mod.pluginImage = function (uri, kind) { return '/effect/image/' + (kind || 'thumbnail') + '.png?uri=' + encodeURIComponent(uri) }
+
+    // MOD's plugin page online (cloudplugin.js: PLUGINS_URL + '/' + btoa(uri))
+    mod.pluginOnline = function (uri) {
+        var base = window.PLUGINS_URL || 'https://pedalboards.mod.audio/plugins'
+        try { return base + '/' + btoa(uri) } catch (e) { return base }
+    }
+
+    // MOD's favourites (the global FAVORITES, kept by effects.js) and the
+    // same POST /favorites/add|remove its info window's star sends
+    mod.isFavourite = function (uri) { return (window.FAVORITES || []).indexOf(uri) >= 0 }
+    mod.setFavourite = function (uri, on, cb) {
+        $.ajax({
+            url: '/favorites/' + (on ? 'add' : 'remove'), type: 'POST', data: { uri: uri }, dataType: 'json', cache: false,
+            success: function (ok) {
+                var list = window.FAVORITES
+                if (ok && list) {
+                    var i = list.indexOf(uri)
+                    if (on && i < 0) list.push(uri)
+                    if (!on && i >= 0) list.splice(i, 1)
+                }
+                if (cb) cb(!!ok)
+            }
+        })
+    }
+
+    // While NHE's builder covers MOD's: MOD's zoom buttons and CV toggle
+    // (#zoom-controllers, #js-cv-addressing-toggle, over the canvas) hide,
+    // as the performance view does
+    mod.coverBuilder = function (on) {
+        var style = document.getElementById('nhe-cover-builder')
+        if (on && !style) {
+            style = document.createElement('style')
+            style.id = 'nhe-cover-builder'
+            style.textContent = '#zoom-controllers, #js-cv-addressing-toggle { visibility: hidden !important; }'
+            document.head.appendChild(style)
+        } else if (!on && style) style.parentNode.removeChild(style)
+    }
 })();
