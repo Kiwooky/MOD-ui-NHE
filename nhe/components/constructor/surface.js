@@ -90,6 +90,7 @@
     var SLOP = 8            // px a pointer can move and still count as a tap / press
     var ZMIN = 0.35, ZMAX = 4.8  // room to show a large face at FOCUS x its full size
     var FOCUS = 1.2         // a tapped face zooms to 120% of its own size (easier to play)
+    var FIT_ABOVE = 44, FIT_BELOW = 44   // screen px a focused pedal keeps free above (its gear) and below (its name)
     var MIN_COLS = 3, MIN_ROWS = 3
     var FOOT = 96           // a strip under the grid for the Expand buttons
     var HEAD = 30           // screen px above the top row: room for the faces' gears
@@ -186,6 +187,9 @@
         this.minRows = Math.max(MIN_ROWS, Math.floor((Hh / z - FOOT) / CELL))
         this.clamp()
         this.render()
+        // a focused pedal fits the new size too
+        var f = this.focused && this.node(this.focused.id)
+        if (f) this.focus(f)
     }
 
     // ---- geometry -----------------------------------------------------------
@@ -1078,10 +1082,23 @@
         // the picture at FOCUS x its own size: the pedal in it at 120%
         var z = 1.5
         if (img && img.naturalWidth) z = FOCUS * img.naturalWidth / (img.getBoundingClientRect().width / v.z)
-        z = Math.max(ZMIN, Math.min(ZMAX, z))
+        var W = this.root.clientWidth, Hh = this.root.clientHeight
         var b = this.box(nd), cx = b.x + b.w / 2, cy = b.y + b.h / 2
+        // the pedal itself (within its picture), with its gear above and its
+        // name below, always fits the view: a small screen zooms in less
+        if (img && img.offsetWidth && d) {
+            var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
+            var top = parseFloat(d.style.top) + img.offsetTop + a.y, left = parseFloat(d.style.left) + img.offsetLeft + a.x
+            var side = 2 * (SIDE + PORT + 8)                          // MOD's port tiles, each side
+            var fit = Math.min((W - side) / a.w, (Hh - FIT_ABOVE - FIT_BELOW) / a.h)
+            if (fit > 0) z = Math.min(z, fit)
+            cx = left + a.w / 2
+            // centred between the gear's room above and the name's below
+            cy = top + a.h / 2 + (FIT_BELOW - FIT_ABOVE) / 2 / z
+        }
+        z = Math.max(ZMIN, Math.min(ZMAX, z))
         // centred, as far as the grid's edges allow
-        this.animate(this.clamp({ x: r.width / 2 - cx * z, y: r.height / 2 - cy * z, z: z }), function () {
+        this.animate(this.clamp({ x: W / 2 - cx * z, y: Hh / 2 - cy * z, z: z }), function () {
             self.focused = { id: nd.id, z: self.view.z }
             self.mountLive()
             if (typeof self.o.onFocus === 'function') self.o.onFocus(nd)

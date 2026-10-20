@@ -215,7 +215,9 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   Rewire on a card tries "delete and reconnect". Wire colours and laid
   routes are kept per board in memory only.
 - **Playing a face (desktop / large tablet):** faces are MOD's screenshots;
-  a tap zooms one to 120% of MOD's icon size and puts MOD's working
+  a tap zooms one to 120% of MOD's icon size (less on a small screen: the
+  pedal, its gear and its name always fit the view, also after a resize)
+  and puts MOD's working
   icon (its modgui, borrowed off MOD's canvas: `mod.borrowIcon`) in the
   picture's place, so its knobs, switches and lists play as in MOD's
   builder. A press on one of its controls is the control's; a press on an
