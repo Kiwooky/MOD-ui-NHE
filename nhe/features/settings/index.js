@@ -185,7 +185,9 @@ NHE.register('settings', function (mod) {
                       presets: presetOptions(instance),
                       onColour: info.uri ? function () {
                           NHE.ColourDialog({ plugin: info.label, value: colourOf(instance), onPick: function (hex) { setColour(info.uri, hex) } })
-                      } : null },
+                      } : null,
+                      onInfo: info.uri && NHE.PluginInfoDialog ? function () { showInfo(instance, info) } : null,
+                      onDelete: NHE.ConfirmDialog ? function () { askDelete(st, info) } : null },
             controls: info.ports.filter(function (p) { return (p.properties || []).indexOf('notOnGUI') < 0 }).map(function (p) { return describe(instance, p) }),
             onInput: function (id, v) { send(instance, id, v) },
             onChange: function (id, v) { send(instance, id, v) },
@@ -208,6 +210,41 @@ NHE.register('settings', function (mod) {
         // the sizer takes the scaled stage's size, so the scroller can reach all of it
         st.sizer.css({ width: Math.ceil(st.stage[0].offsetWidth * z) + 'px', height: Math.ceil(st.stage[0].offsetHeight * z) + 'px' })
         st.hint.update()
+    }
+
+    // the plugin's info page, as the + dialog shows it (components/constructor/add.js)
+    var CATEGORIES = [{ id: 'ControlVoltage', label: 'Control Voltage' }]
+    var showInfo = function (instance, info) {
+        mod.pluginList(function (list) {
+            var entry = list.filter(function (p) { return p.uri === info.uri })[0] || {}
+            NHE.PluginInfoDialog({
+                plugin: { uri: info.uri, name: info.name || info.label, brand: info.brand, categories: entry.category || [],
+                          thumb: mod.pluginImage(info.uri, 'thumbnail'), favourite: mod.isFavourite(info.uri) },
+                categories: CATEGORIES,
+                loadInfo: function (p, done) { mod.pluginDetails(p.uri, function (d) { if (d) { p.ports = d.ports; p.info = d.info } else p.info = {}; done() }) },
+                onFavourite: function (p, on) { mod.setFavourite(p.uri, on) }
+            })
+        })
+    }
+
+    // Delete, after a yes: what fed the plugin is connected straight to what
+    // it fed (as if it were bypassed: NHE.autowire.heal), then MOD removes it
+    var askDelete = function (st, info) {
+        var instance = st.instance
+        NHE.ConfirmDialog({
+            plugin: info.label, pill: 'Delete', icon: 'remove',
+            title: 'Delete this plugin?',
+            text: 'What feeds it will be connected straight to what it feeds, as if it were bypassed.',
+            yes: 'Yes, delete', no: 'No', accent: colourOf(instance),
+            onYes: function () {
+                var b = mod.board(), pedal = b.pedals.filter(function (p) { return p.instance === instance })[0]
+                var heal = pedal && NHE.autowire ? NHE.autowire.heal({ ports: pedal.ports }, b.connections) : []
+                heal.forEach(function (c) { mod.connect(c[0], c[1]) })
+                // the screen goes with it: a window closes, a pedal's back flips over
+                if (st.kind === 'back') st.actions.exit()
+                mod.removePlugin(instance)
+            }
+        })
     }
 
     var presetOptions = function (instance) {

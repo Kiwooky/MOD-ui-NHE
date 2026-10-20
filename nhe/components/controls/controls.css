@@ -818,24 +818,16 @@
 /* the colour button in the plugin name bar */
 .nhe-plugin-header__name { position: relative; }
 .nhe-plugin-header__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nhe-plugin-header__colour {
-    position: absolute;
-    top: 50%;
-    right: var(--nhe-space-4);
-    width: 32px;
-    height: 32px;
-    margin-top: -16px;
-    padding: 4px;
-    background: none;
-    border: 0;
-    color: var(--nhe-text-on-accent);
-    cursor: pointer;
-}
-.nhe-plugin-header__colour svg { display: block; width: 100%; height: 100%; }
-.nhe-plugin-header.has-colour .nhe-plugin-header__name { padding-right: 40px; padding-left: 40px; }
+/* the row under the name: colour, info, delete */
+.nhe-plugin-header__tools { display: flex; justify-content: center; gap: var(--nhe-space-8); padding: var(--nhe-space-4) var(--nhe-space-8) 0; }
+.nhe-plugin-header__tool { width: 40px; height: 40px; padding: 6px; }
+.nhe-plugin-header__tool svg { display: block; width: 100%; height: 100%; }
+.nhe-plugin-header__tool:hover { color: var(--nhe-accent-default); }
+.nhe-plugin-header__tool--remove:hover { color: var(--nhe-status-warn, #e5484d); }
 
-/* the name dialog (preset Save as / Rename) is short: no stretch above the buttons */
-.nhe-name-dialog .nhe-dialog__field { flex: none; }
+/* the name dialog (preset Save as / Rename) and the confirm dialog are
+   short: no stretch above the buttons */
+.nhe-name-dialog .nhe-dialog__field, .nhe-confirm-dialog .nhe-dialog__field { flex: none; }
 
 /* a field being typed into starts empty: the old value shows faintly */
 .nhe-ctl input::placeholder { color: inherit; opacity: .45; }

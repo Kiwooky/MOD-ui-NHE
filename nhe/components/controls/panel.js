@@ -17,7 +17,8 @@
  *
  *   var panel = new NHE.Panel(el, {
  *       height: 646,                                // the slider height
- *       plugin: { name, on, binding, presets: { factory, user, selected }, onColour },   // optional left column
+ *       plugin: { name, on, binding, presets: { factory, user, selected },
+ *                 onColour, onInfo, onDelete },          // optional left column
  *       controls: [{ id, type: 'slider'|'toggle'|'trigger'|'list',
  *                    group: null | { id, name, color },
  *                    options: { ...the component's options } }],
@@ -125,7 +126,7 @@
         if (o.plugin) {
             var pc = el('div', 'nhe-panel__plugin', root)
             pc.style.height = o.height + 'px'
-            this.header = new NHE.PluginHeader(el('div', null, pc), mix({ name: o.plugin.name, on: o.plugin.on !== false, binding: o.plugin.binding || null, onColour: o.plugin.onColour }, mix(cb(':bypass'), {})))
+            this.header = new NHE.PluginHeader(el('div', null, pc), mix({ name: o.plugin.name, on: o.plugin.on !== false, binding: o.plugin.binding || null, onColour: o.plugin.onColour, onInfo: o.plugin.onInfo, onDelete: o.plugin.onDelete }, mix(cb(':bypass'), {})))
             var pd = el('div', null, pc)
             pd.style.flex = '1 1 auto'
             pd.style.minHeight = '0'

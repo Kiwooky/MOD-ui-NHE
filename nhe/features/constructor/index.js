@@ -192,39 +192,15 @@ NHE.register('constructor', function (mod) {
 
     // ---- the + dialog -------------------------------------------------------
 
-    var portsOf = function (d) {
-        var out = {}
-        ;['audio', 'midi', 'cv'].forEach(function (t) {
-            var x = (d.ports && d.ports[t]) || {}
-            out[t] = { in: (x.input || []).map(function (q) { return q.symbol }), out: (x.output || []).map(function (q) { return q.symbol }) }
-        })
-        return out
-    }
-    var ranges = function (list) {
-        return (list || []).map(function (q) { var r = q.ranges || {}; return { name: q.shortName || q.name || q.symbol, 'default': r['default'], minimum: r.minimum, maximum: r.maximum } })
-    }
+    // a plugin's ports (symbols) and info page, from MOD (mod.pluginDetails)
     var loadPorts = function (plugin, done) {
         if (plugin.ports) { done(); return }
-        mod.pluginData(plugin.uri, function (d) { if (d) plugin.ports = portsOf(d); done() })
+        mod.pluginDetails(plugin.uri, function (d) { if (d) plugin.ports = d.ports; done() })
     }
     var loadInfo = function (plugin, done) {
         if (plugin.info) { done(); return }
-        mod.pluginData(plugin.uri, function (d) {
-            if (d) {
-                if (!plugin.ports) plugin.ports = portsOf(d)
-                var p = d.ports || {}
-                plugin.info = {
-                    comment: d.comment, author: d.author && d.author.name, homepage: d.author && d.author.homepage,
-                    version: (d.minorVersion || 0) + '.' + (d.microVersion || 0) + '-' + (d.release || 0),
-                    license: d.license,
-                    badge: d.buildEnvironment !== 'prod' ? (d.buildEnvironment || 'local').toUpperCase() : '',
-                    screenshot: mod.pluginImage(plugin.uri, 'screenshot'),
-                    onlineHref: mod.pluginOnline(plugin.uri),
-                    controls: ranges(p.control && p.control.input),
-                    cvInputs: ranges(p.cv && p.cv.input),
-                    cvOutputs: ranges(p.cv && p.cv.output)
-                }
-            }
+        mod.pluginDetails(plugin.uri, function (d) {
+            if (d) { if (!plugin.ports) plugin.ports = d.ports; plugin.info = d.info }
             done()
         })
     }

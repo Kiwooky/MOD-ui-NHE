@@ -897,6 +897,61 @@
         $.ajax({ url: '/effect/get', data: { uri: uri, version: window.VERSION }, dataType: 'json', success: function (d) { cb(d || null) }, error: function () { cb(null) } })
     }
 
+    // A plugin's ports and info page in NHE's shape (the + dialog's info,
+    // a settings screen's info icon), from /effect/get:
+    // cb({ ports: { audio: { in: [symbol], out }, midi, cv }, info: { comment,
+    //      author, homepage, version, license, badge, screenshot, onlineHref,
+    //      controls / cvInputs / cvOutputs: [{ name, default, minimum, maximum }] } })
+    // or cb(null)
+    mod.pluginDetails = function (uri, cb) {
+        mod.pluginData(uri, function (d) {
+            if (!d) { cb(null); return }
+            var p = d.ports || {}, ports = {}
+            ;['audio', 'midi', 'cv'].forEach(function (t) {
+                var x = p[t] || {}
+                ports[t] = { in: (x.input || []).map(function (q) { return q.symbol }), out: (x.output || []).map(function (q) { return q.symbol }) }
+            })
+            var ranges = function (list) {
+                return (list || []).map(function (q) { var r = q.ranges || {}; return { name: q.shortName || q.name || q.symbol, 'default': r['default'], minimum: r.minimum, maximum: r.maximum } })
+            }
+            cb({
+                ports: ports,
+                info: {
+                    comment: d.comment, author: d.author && d.author.name, homepage: d.author && d.author.homepage,
+                    version: (d.minorVersion || 0) + '.' + (d.microVersion || 0) + '-' + (d.release || 0),
+                    license: d.license,
+                    badge: d.buildEnvironment !== 'prod' ? (d.buildEnvironment || 'local').toUpperCase() : '',
+                    screenshot: mod.pluginImage(uri, 'screenshot'),
+                    onlineHref: mod.pluginOnline(uri),
+                    controls: ranges(p.control && p.control.input),
+                    cvInputs: ranges(p.cv && p.cv.input),
+                    cvOutputs: ranges(p.cv && p.cv.output)
+                }
+            })
+        })
+    }
+
+    // remove a plugin, as MOD's own delete does: pedalboard('removePlugin',
+    // instance, its ports) (GET /effect/remove/<instance>, and its CV outputs
+    // off the hardware manager); its settings window closes first. The host
+    // answers "disconnect" for each cable and "remove" over the websocket,
+    // which takes it off MOD's canvas. cb() once the host has removed it
+    mod.removePlugin = function (instance, cb) {
+        var gui = mod.gui(instance), pb = mod.pedalboard()
+        if (!gui) return
+        mod.closeSettings(instance)
+        if (borrowed[instance]) mod.returnIcon(instance)
+        var ports = (gui.effect && gui.effect.ports) || {}
+        var remove = pb.data('pluginRemove')
+        if (!remove) { pb.pedalboard('removePlugin', instance, ports); return }
+        // as pedalboard.js removePlugin, with our callback after MOD's own
+        remove(instance, function () {
+            var hw = pb.data('hardwareManager')
+            ;((ports.cv && ports.cv.output) || []).forEach(function (o) { if (hw) hw.removeCvOutputPort('/cv' + instance + '/' + o.symbol) })
+            if (cb) cb()
+        })
+    }
+
     // MOD's pictures of a plugin: 'thumbnail' or 'screenshot'
     mod.pluginImage = function (uri, kind) { return '/effect/image/' + (kind || 'thumbnail') + '.png?uri=' + encodeURIComponent(uri) }
 

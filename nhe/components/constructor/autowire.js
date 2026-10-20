@@ -18,6 +18,11 @@
  *   NHE.autowire.canTake(target, pedal)    // target has an input pedal can feed
  *   NHE.autowire.plan(pedal, inputs, outputs, connections)
  *       -> { connect: [[from, to]], disconnect: [[from, to]] }
+ *   NHE.autowire.heal(pedal, connections) -> [[from, to]]
+ *       // the pedal is about to go: what feeds it is joined straight to
+ *       // what it feeds, as if it were bypassed (each output takes the
+ *       // input of its own index, or the last one: in L -> out L, in R ->
+ *       // out R, mono in -> both outs), per type; none already there
  *
  * The rules (to be tried, then refined):
  *   - audio: L to L and R to R; a mono output into a stereo pedal feeds
@@ -80,6 +85,28 @@
                 if (between) disconnect.push(c)
             })
             return { connect: connect, disconnect: disconnect }
+        },
+        heal: function (pedal, connections) {
+            var out = [], have = {}
+            connections = connections || []
+            connections.forEach(function (c) { have[c[0] + '>' + c[1]] = true })
+            TYPES.forEach(function (t) {
+                var ins = ports(pedal, t, 'in'), outs = ports(pedal, t, 'out')
+                if (!ins.length || !outs.length) return
+                outs.forEach(function (o, j) {
+                    var i = ins[Math.min(j, ins.length - 1)]
+                    var from = connections.filter(function (c) { return c[1] === i && !owns(pedal, c[0]) }).map(function (c) { return c[0] })
+                    var to = connections.filter(function (c) { return c[0] === o && !owns(pedal, c[1]) }).map(function (c) { return c[1] })
+                    from.forEach(function (a) {
+                        to.forEach(function (b) {
+                            if (have[a + '>' + b]) return
+                            have[a + '>' + b] = true
+                            out.push([a, b])
+                        })
+                    })
+                })
+            })
+            return out
         }
     }
 })();

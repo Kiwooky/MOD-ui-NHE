@@ -8,7 +8,9 @@
  *
  *   new NHE.Toggle(el, { title, value: true|false, binding, onChange, onSettings, onBlocked })
  *   new NHE.Trigger(el, { title, binding, onTrigger, onSettings, onBlocked })
- *   new NHE.PluginHeader(el, { name, on: true|false, binding, onChange, onSettings, onBlocked })
+ *   new NHE.PluginHeader(el, { name, on: true|false, binding, onChange, onSettings, onBlocked,
+ *                              onColour, onInfo, onDelete })   // the last three: a row of icons
+ *                                                              // under the name, each when given
  *   new NHE.OptionList(el, { title, options: [{ label, value }], value, binding, onChange, onSettings, onBlocked })
  *   new NHE.Segmented(el, { options: ['Factory', 'User'], value: 0, onChange })
  *   new NHE.PresetList(el, { factory: [{ id, name }], user: [{ id, name }], selected: id, binding,
@@ -237,12 +239,18 @@
         var n = this.n = {}
         n.name = el('div', 'nhe-plugin-header__name', root)
         n.nameText = el('span', 'nhe-plugin-header__text', n.name)
-        // the plugin's colour (colour.js), when the host offers it
-        if (typeof this.o.onColour === 'function') {
-            n.colour = NHE.iconButton('palette', { label: 'Plugin colour', onClick: function () { self.emit('onColour') } })
-            n.colour.className = 'nhe-plugin-header__colour'
-            n.name.appendChild(n.colour)
-            root.classList.add('has-colour')
+        // a row of icons under the name: the plugin's colour (colour.js), its
+        // info, delete it; each when the host offers it
+        var tools = [['onColour', 'palette', 'Plugin colour'], ['onInfo', 'info', 'Plugin info'], ['onDelete', 'remove', 'Delete plugin']]
+            .filter(function (t) { return typeof self.o[t[0]] === 'function' })
+        if (tools.length) {
+            n.tools = el('div', 'nhe-plugin-header__tools', root)
+            tools.forEach(function (t) {
+                var b = NHE.iconButton(t[1], { label: t[2], onClick: function () { self.emit(t[0]) } })
+                b.title = t[2]
+                b.classList.add('nhe-plugin-header__tool', 'nhe-plugin-header__tool--' + t[1])
+                n.tools.appendChild(b)
+            })
         }
         var row = el('div', 'nhe-plugin-header__row', root)
         n.sw = el('button', 'nhe-plugin-header__switch', row)

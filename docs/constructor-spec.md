@@ -36,7 +36,13 @@ Status: being worked out with Niels; open points are marked **Open**.
 - **Long-press and drag** moves a pedal: it snaps to the nearest free cell
   and keeps its wiring.
 - **Tapping a pedal** opens its settings screen (NHE's). Rewiring, Delete
-  and Info move there too.
+  and Info move there too. Built: under the plugin's name on the settings
+  screen, a row with its colour (palette), its **info** (the + dialog's
+  info page, on its own; Back closes it) and **delete** (trash can, then
+  "Delete this plugin?" No / Yes). Deleting **heals the signal path**:
+  what fed the plugin is connected straight to what it fed, as if it were
+  bypassed (in L → out L, in R → out R, a mono input to every output; per
+  type: audio, MIDI, CV; `NHE.autowire.heal`), then MOD removes it.
 
 ### Wires
 

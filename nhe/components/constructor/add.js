@@ -375,22 +375,17 @@
         return parts.join('.')
     }
 
-    // The pedal's info takes over the dialog (MOD's plugin info: the same
-    // fields), Back returns to it as it was. Three columns: the screenshot;
-    // the details and description; the control ports. One column on a phone.
-    Dialog.prototype.showInfo = function (plugin) {
-        var self = this
-        if (!plugin.info && typeof this.o.loadInfo === 'function') {
-            this.o.loadInfo(plugin, function () { if (self.overlay && plugin.info) self.showInfo(plugin) })
-            return
-        }
+    // The pedal's info page (MOD's plugin info: the same fields), in `parent`
+    // (positioned): Back at the top. Three columns: the screenshot; the
+    // details and description; the control ports. One column on a phone.
+    //   o: { categories, onFavourite(plugin, on), onBack() }; plugin.info filled
+    var infoPage = function (parent, plugin, o) {
         var info = plugin.info || {}
-        this.hideInfo()
-        var page = this.n.info = el('div', 'nhe-add__page', this.root)
+        var page = el('div', 'nhe-add__page', parent)
         var bar = el('div', 'nhe-add__page-bar', page)
         var back = el('button', 'nhe-add__back', bar, icon('back') + '<span>Back</span>')
         back.type = 'button'
-        back.addEventListener('click', function () { self.hideInfo() })
+        back.addEventListener('click', function () { if (o.onBack) o.onBack() })
         var body = el('div', 'nhe-add__page-body', page)
 
         // 1: the screenshot, with the build badge (LOCAL, BETA, ...) as MOD shows it
@@ -407,7 +402,7 @@
         var c2 = el('div', 'nhe-add__page-col', body)
         var head = el('div', 'nhe-add__page-head', c2)
         el('h2', 'nhe-add__page-name', head).textContent = plugin.name
-        if (typeof this.o.onFavourite === 'function') {
+        if (typeof o.onFavourite === 'function') {
             var star = el('button', 'nhe-add__star' + (plugin.favourite ? ' is-on' : ''), head, icon('star'))
             star.type = 'button'
             star.setAttribute('aria-label', 'Favourite')
@@ -416,8 +411,7 @@
                 plugin.favourite = !plugin.favourite
                 star.classList.toggle('is-on', plugin.favourite)
                 star.setAttribute('aria-pressed', plugin.favourite ? 'true' : 'false')
-                self.o.onFavourite(plugin, plugin.favourite)
-                self.renderTabs()
+                o.onFavourite(plugin, plugin.favourite)
             })
         }
         var dl = el('dl', 'nhe-add__facts', c2)
@@ -433,7 +427,7 @@
                 a.textContent = value
             } else dd.textContent = value
         }
-        var catLabel = function (c) { return (self.o.categories.filter(function (x) { return x.id === c })[0] || {}).label || c }
+        var catLabel = function (c) { return ((o.categories || []).filter(function (x) { return x.id === c })[0] || {}).label || c }
         fact('Brand', plugin.brand)
         fact('URI', plugin.uri)
         fact('Category', (plugin.categories || []).map(catLabel).join(', ') || 'None')
@@ -479,6 +473,22 @@
         table('CV outputs', 'Port', info.cvOutputs)
         if (!c3.children.length) c3.parentNode.removeChild(c3)
         setTimeout(function () { back.focus() }, 0)
+        return page
+    }
+
+    // The pedal's info takes over the dialog; Back returns to it as it was
+    Dialog.prototype.showInfo = function (plugin) {
+        var self = this
+        if (!plugin.info && typeof this.o.loadInfo === 'function') {
+            this.o.loadInfo(plugin, function () { if (self.overlay && plugin.info) self.showInfo(plugin) })
+            return
+        }
+        this.hideInfo()
+        this.n.info = infoPage(this.root, plugin, {
+            categories: this.o.categories,
+            onFavourite: typeof this.o.onFavourite === 'function' ? function (p, on) { self.o.onFavourite(p, on); self.renderTabs() } : null,
+            onBack: function () { self.hideInfo() }
+        })
     }
 
     Dialog.prototype.hideInfo = function () {
@@ -503,6 +513,35 @@
         if (!this.overlay) return
         this.overlay.parentNode.removeChild(this.overlay)
         this.overlay = null
+    }
+
+    // The same info page on its own (a plugin's settings screen: its info icon).
+    //   NHE.PluginInfoDialog({ plugin: { uri, name, brand, categories, thumb, ports,
+    //                          favourite }, categories, loadInfo, onFavourite, onClose })
+    // Back (or Escape) closes it.
+    NHE.PluginInfoDialog = function (options) {
+        var o = options || {}, plugin = o.plugin
+        var go = function () {
+            var full = NHE.zoom && NHE.zoom() > 1
+            var overlay = el('div', 'nhe-ctl nhe-dialog-overlay nhe-add-overlay' + (full ? ' is-full' : ''), document.body)
+            var d = el('div', 'nhe-add' + (full ? ' is-full' : ''), overlay)
+            d.setAttribute('role', 'dialog')
+            d.setAttribute('aria-modal', 'true')
+            d.setAttribute('aria-label', plugin.name + ': info')
+            d.setAttribute('tabindex', '-1')
+            var close = function () {
+                if (!overlay.parentNode) return
+                overlay.parentNode.removeChild(overlay)
+                if (typeof o.onClose === 'function') o.onClose()
+            }
+            infoPage(d, plugin, { categories: o.categories, onFavourite: o.onFavourite, onBack: close })
+            d.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close() } })
+            d.addEventListener('keyup', function (e) { e.stopPropagation() })
+            overlay.addEventListener('click', function (e) { if (e.target === overlay) close() })
+            if (NHE.dragScroll) NHE.dragScroll(d)
+        }
+        if (!plugin.info && typeof o.loadInfo === 'function') o.loadInfo(plugin, go)
+        else go()
     }
 
     NHE.AddPedalDialog = function (options) { return new Dialog(options) }
