@@ -73,7 +73,7 @@
  * trackpad zooms, the + / - buttons zoom. A double click (or tap) on the
  * surface itself zooms out to show the whole grid.
  *
- * Faces: a tap zooms the face to 100% and makes it live (liveFace): its
+ * Faces: a tap zooms the face to 120% (FOCUS) and makes it live (liveFace): its
  * controls then play, and only a press on an empty part of it pans or
  * lifts it. It stays live while panning, until the view zooms out, another
  * face is tapped, or it is lifted.
@@ -88,7 +88,8 @@
     var PAD = 18            // a pedal's margin inside its cell (the wires run there)
     var LONG_MS = 450       // a press this long on a pedal lifts it
     var SLOP = 8            // px a pointer can move and still count as a tap / press
-    var ZMIN = 0.35, ZMAX = 4  // 4: room to show a large face at its full size
+    var ZMIN = 0.35, ZMAX = 4.8  // room to show a large face at FOCUS x its full size
+    var FOCUS = 1.2         // a tapped face zooms to 120% of its own size (easier to play)
     var MIN_COLS = 3, MIN_ROWS = 3
     var FOOT = 96           // a strip under the grid for the Expand buttons
     var HEAD = 30           // screen px above the top row: room for the faces' gears
@@ -131,7 +132,8 @@
         n.edge = el('div', 'nhe-surface__edge', root)
         // zoom buttons (desktop); pinch does the same
         var zoom = el('div', 'nhe-surface__zoom', root)
-        ;[['+', 1.25, 'Zoom in'], ['−', 0.8, 'Zoom out']].forEach(function (z) {
+        // − then +: zooming in at the right
+        ;[['−', 0.8, 'Zoom out'], ['+', 1.25, 'Zoom in']].forEach(function (z) {
             var b = el('button', null, zoom)
             b.type = 'button'
             b.textContent = z[0]
@@ -427,12 +429,23 @@
     // p1 / p2: the jacks, when known (faces); else the sides' middles
     // early: one of several cables from the same jack; they part right
     // after it rather than just before their targets
+    // lead: how far a cable runs straight out of / into a jack before it
+    // bends (faces: past the nut and the connector, then LEAD; as far as the
+    // gap allows)
+    Surface.prototype.lead = function () { return this.faces ? this.nutW() + this.plugLen() + LEAD : 6 }
+    // the nut zooms with its connector: zoomed in, both keep their screen size
+    Surface.prototype.nutW = function () { return NUT * this.plugLen() / PLUG_LEN }
+    // a connector's length on the plane: PLUG_LEN, or less when zoomed in so
+    // it stays PLUG_MAX_H tall on screen
+    Surface.prototype.plugLen = function () { return Math.min(PLUG_LEN, PLUG_MAX_H * PLUG_W / PLUG_H / this.view.z) }
     Surface.prototype.route = function (a, b, off, p1, p2, early) {
-        var x1 = a.x + a.w, y1 = a.y + a.h / 2 + off, x2 = b.x, y2 = b.y + b.h / 2 + off
+        var x1 = a.x + a.w, y1 = a.y + a.h / 2 + off, x2 = b.x, y2 = b.y + b.h / 2 + off, L = this.lead()
         if (p1) { x1 = p1.x; y1 = p1.y }
         if (p2) { x2 = p2.x; y2 = p2.y }
         if (x2 > x1 + 4) {
             var xm = early ? Math.min(x1 + PAD + off, x2 - 6) : Math.max(x1 + 6, x2 - PAD + off)
+            // a straight lead-in at both ends; a gap too narrow for both: its middle
+            xm = x2 - x1 >= 2 * L ? Math.max(x1 + L, Math.min(x2 - L, xm)) : (x1 + x2) / 2
             return [[x1, y1], [xm, y1], [xm, y2], [x2, y2]]
         }
         // backwards: cross in the gap between the two rows (the target's side
@@ -441,10 +454,15 @@
         if (yb < ya - CELL / 2) cross = Math.floor(a.y / CELL) * CELL + off                       // target above: the gap over the source
         else if (yb > ya + CELL / 2) cross = Math.ceil((a.y + a.h) / CELL) * CELL + off            // target below: the gap under it
         else cross = Math.ceil((a.y + a.h) / CELL) * CELL - PAD / 2 + off                          // same row: under
-        return [[x1, y1], [x1 + PAD / 2 + off, y1], [x1 + PAD / 2 + off, cross], [x2 - PAD / 2 + off, cross], [x2 - PAD / 2 + off, y2], [x2, y2]]
+        var la = Math.max(PAD / 2, L) + off, lb = Math.max(PAD / 2, L) - off
+        return [[x1, y1], [x1 + la, y1], [x1 + la, cross], [x2 - lb, cross], [x2 - lb, y2], [x2, y2]]
     }
 
     var LANE = 14           // cables keep this far apart (centre to centre; they're 6 wide)
+    var NUT = 6             // faces: a jack's metal nut stands this far out of the pedal's side
+    var PLUG_LEN = 20       // a cable's connector, plane px (plugDefs) ...
+    var PLUG_MAX_H = 44     // ... but never taller on screen than this (about MOD's port tiles)
+    var LEAD = 12           // straight cable out of a connector before the first bend
     var COLOURS = ['#6152f0', '#3e8ef7', '#2ea7a0', '#46a758', '#f5d90a', '#f08c2e', '#e5484d', '#e93d82', '#f0f0f0', '#8b8d98']
 
     var svgEl = function (name, cls, parent, attrs) {
@@ -462,7 +480,7 @@
     // trying 0, +1, -1, +2, ... lanes. The runs out of and into the jacks
     // can't move: the others keep clear of them. Cables from the same jack
     // (or into the same one) may share runs: that's where they part (join).
-    var lanes = function (wires) {
+    var lanes = function (wires, L) {
         var placed = []
         var seg = function (w, i) {
             var a = w.pts[i], b = w.pts[i + 1], vert = Math.abs(a[0] - b[0]) < 0.5
@@ -490,10 +508,13 @@
             for (var i = 1; i < w.pts.length - 2; i++) {
                 var sg = seg(w, i)
                 if (!sg) continue
+                // a run across may not move into the straight lead-ins at the ends
+                var n = w.pts.length, lo = w.pts[0][0] + L, hi = w.pts[n - 1][0] - L
+                var inside = function (pos) { return !sg.vert || lo >= hi || (pos >= lo && pos <= hi) || pos === sg.pos }
                 var shift = 0
                 for (var k = 0; k < 12; k++) {
                     shift = Math.ceil(k / 2) * (k % 2 ? 1 : -1) * LANE
-                    if (!clash(sg, sg.pos + shift)) break
+                    if (inside(sg.pos + shift) && !clash(sg, sg.pos + shift)) break
                 }
                 var ax = sg.vert ? 0 : 1
                 w.pts[i][ax] += shift
@@ -532,7 +553,7 @@
             var laid = self.faces && self.laid(c, pts, from, to)
             wires.push({ c: c, ci: ci, kind: kindOf(from, c[0]), pts: laid || pts, laid: !!laid })
         })
-        lanes(wires)
+        lanes(wires, this.lead())
         // a jack's cables spread out (its plug was tapped): each plug apart, to pick one
         var sp = this.spread
         if (sp) {
@@ -556,9 +577,10 @@
             this.renderSockets()
             wires.forEach(function (w) {
                 var a = w.pts[0], b = w.pts[w.pts.length - 1], colour = self.colourOf(w.c)
-                self.plug(a, 1, w, 'from', colour)
-                self.plug(b, -1, w, 'to', colour)
+                self.plug(a, 1, w, 'from', colour, self.ownerOf(w.c[0]).kind !== 'pedal')
+                self.plug(b, -1, w, 'to', colour, self.ownerOf(w.c[1]).kind !== 'pedal')
             })
+            ;(this.hints || []).forEach(function (h) { top.appendChild(h) })
         }
         // the triangles: which side a connected pedal out of view lies
         ;(this.portEls || []).forEach(function (p) {
@@ -635,6 +657,9 @@
         holder.setAttribute('aria-hidden', 'true')
         holder.style.position = 'absolute'
         holder.innerHTML = '<defs>' + grad('nhe-plug-grad') +
+            '<linearGradient id="nhe-nut-grad" x1="0" y1="0" x2="0" y2="1">' +
+                '<stop offset="0" stop-color="#656668"/><stop offset=".19" stop-color="#fff"/><stop offset=".56" stop-color="#656668"/>' +
+                '<stop offset=".86" stop-color="#b1b3b6"/><stop offset="1" stop-color="#656668"/></linearGradient>' +
             // going in: the cable from the left, the flat end against an input jack on the right
             '<symbol id="nhe-plug-in" viewBox="0 0 ' + PLUG_W + ' ' + PLUG_H + '"><path d="' + body + '" fill="url(#nhe-plug-grad)"' + stroke + '/>' +
                 '<g fill="none"' + stroke + '>' + [29.04, 40.04, 51.04, 62.04, 73.04, 84.04].map(line).join('') + '</g></symbol>' +
@@ -645,17 +670,19 @@
         document.body.appendChild(holder)
     }
 
-    Surface.prototype.plug = function (pt, dir, w, end, colour) {
+    // tile: the end is at one of MOD's port tiles (no nut: the connector touches it)
+    Surface.prototype.plug = function (pt, dir, w, end, colour, tile) {
         plugDefs()
         var g = svgEl('g', 'nhe-surface__plug is-' + w.kind, this.n.plugs, { 'data-ci': w.ci, 'data-end': end })
-        var pw = 24, ph = pw * PLUG_H / PLUG_W
+        var pw = this.plugLen(), ph = pw * PLUG_H / PLUG_W, nut = tile ? 0 : this.nutW()
         // out of an output (dir > 0): right of the jack; into an input: left of it
-        var x = dir > 0 ? pt[0] : pt[0] - pw
-        svgEl('rect', 'nhe-surface__plug-hit', g, { x: x - 6, y: pt[1] - 12, width: pw + 12, height: 24 })
+        var x = dir > 0 ? pt[0] + nut : pt[0] - nut - pw
+        var hh = Math.max(ph, 24 / this.view.z)       // a finger-sized hit area
+        svgEl('rect', 'nhe-surface__plug-hit', g, { x: x - 6, y: pt[1] - hh / 2, width: pw + 12, height: hh })
         var use = svgEl('use', 'nhe-surface__plug-body', g, { x: x, y: pt[1] - ph / 2, width: pw, height: ph })
         use.setAttribute('href', dir > 0 ? '#nhe-plug-out' : '#nhe-plug-in')
         // the cable's own colour (or its type's), as a band where the cable leaves
-        var band = svgEl('rect', 'nhe-surface__plug-band', g, { x: dir > 0 ? x + pw - 4 : x, y: pt[1] - ph / 2 + 2, width: 4, height: ph - 4, rx: 1.5 })
+        var bw = pw / 6, band = svgEl('rect', 'nhe-surface__plug-band', g, { x: dir > 0 ? x + pw - bw : x, y: pt[1] - ph / 2 + ph / 8, width: bw, height: ph * 3 / 4, rx: bw / 3 })
         if (colour) band.style.fill = colour
         g.appendChild(document.createElementNS(SVG, 'title')).textContent = 'Drag to move this end' + (this.shared(w.c, end) ? '; tap to spread the cables on this jack' : '')
     }
@@ -667,24 +694,59 @@
     }
 
     // a socket on every jack of every face (the plugs cover the used ones)
+    // Jacks, as on MOD's builder: a metal nut on the pedal's side (inputs
+    // left, outputs right). While a cable is in the hand, every jack that
+    // takes it shows an arrow pointing in, and the one it would go into
+    // (the nearest, within reach) chevrons in the accent colour. An output
+    // in use has a stub: a small connector under its plug, half see-through,
+    // to pull another cable from (MOD's spare jack).
     Surface.prototype.renderSockets = function () {
-        var self = this, drag = this.dragging, used = {}
-        this.o.connections.forEach(function (c) { used[c[0]] = true })
+        var self = this, drag = this.dragging, used = {}, usedIn = {}
+        plugDefs()
+        this.o.connections.forEach(function (c) { used[c[0]] = true; usedIn[c[1]] = true })
+        this.hints = []
         this.o.nodes.forEach(function (nd) {
             if (nd.kind !== 'pedal' || !nd.cell || !self.els[nd.id]) return
             ;['audio', 'midi', 'cv'].forEach(function (t) {
                 ;['in', 'out'].forEach(function (dir) {
-                    ;(((nd.ports && nd.ports[t]) || {})[dir] || []).forEach(function (port) {
+                    var list = ((nd.ports && nd.ports[t]) || {})[dir] || []
+                    list.forEach(function (port, pi) {
                         var j = self.jack(nd, port, dir)
                         if (!j) return
+                        var side = dir === 'in' ? -1 : 1, NW = self.nutW(), k = NW / NUT
                         var ok = drag && drag.want.dir === dir && drag.want.kind === t && drag.fixedNode !== nd
-                        // an output in use: a small stub under its plug starts another cable (as on MOD)
-                        var stub = dir === 'out' && used[port], sy = stub ? j.y + 14 : j.y
-                        var g = svgEl('g', 'nhe-surface__socket is-' + t + (stub ? ' is-stub' : '') + (ok ? ' is-target' : '') + (drag && drag.target && drag.target.port === port ? ' is-hot' : ''), self.n.plugs,
+                        var hot = ok && drag.target && drag.target.port === port
+                        var stub = dir === 'out' && used[port]
+                        // the nut: a flange against the pedal, a barrel standing out
+                        var nut = svgEl('g', 'nhe-surface__nut is-' + t, self.n.plugs)
+                        svgEl('rect', 'nhe-surface__nut-flange', nut, { x: side < 0 ? j.x - 2 * k : j.x, y: j.y - 10 * k, width: 2 * k, height: 20 * k, rx: 0.5 * k })
+                        svgEl('rect', 'nhe-surface__nut-barrel', nut, { x: side < 0 ? j.x - NW : j.x + 2 * k, y: j.y - 6 * k, width: NW - 2 * k, height: 12 * k, rx: 1.5 * k })
+                        if (!used[port] || dir === 'in') svgEl('rect', 'nhe-surface__nut-hole', nut, { x: side < 0 ? j.x - NW : j.x + NW - 1.5 * k, y: j.y - 3 * k, width: 1.5 * k, height: 6 * k })
+
+                        var g = svgEl('g', 'nhe-surface__socket is-' + t + (stub ? ' is-stub' : '') + (ok ? ' is-target' : '') + (hot ? ' is-hot' : ''), self.n.plugs,
                             { 'data-port': port, 'data-dir': dir, 'data-node': nd.id, 'data-x': j.x, 'data-y': j.y })
-                        if (stub) svgEl('line', 'nhe-surface__socket-stem', g, { x1: j.x, y1: j.y + 6, x2: j.x, y2: sy - 3 })
-                        svgEl('circle', 'nhe-surface__socket-hit', g, { cx: j.x, cy: sy, r: stub ? 7 : 14 })
-                        svgEl('circle', 'nhe-surface__socket-hole', g, { cx: j.x, cy: sy, r: stub ? 3.5 : 5 })
+                        if (stub) {
+                            // MOD's spare jack: a smaller connector under the plug
+                            // under the plug; the first of a pair (stereo: L) above it, so the two keep clear
+                            var sw = self.plugLen() * 0.62, sh = sw * PLUG_H / PLUG_W, sx = j.x + NW, half = self.plugLen() * PLUG_H / PLUG_W / 2
+                            var sy = pi === 0 && list.length > 1 ? j.y - half - 1 - sh : j.y + half + 1
+                            svgEl('rect', 'nhe-surface__socket-hit', g, { x: sx - 4, y: sy - 3, width: sw + 8, height: sh + 6 })
+                            var u = svgEl('use', 'nhe-surface__stub', g, { x: sx, y: sy, width: sw, height: sh })
+                            u.setAttribute('href', '#nhe-plug-out')
+                            g.appendChild(document.createElementNS(SVG, 'title')).textContent = 'Drag to plug in another cable'
+                        } else {
+                            svgEl('circle', 'nhe-surface__socket-hit', g, { cx: j.x + side * NW / 2, cy: j.y, r: 14 })
+                        }
+                        // the hint while wiring: an arrow into the jack; chevrons on the one it would take
+                        // (over the plugs, past one already in the jack: drawn last, in renderWires)
+                        if (ok) {
+                            var past = (dir === 'in' ? usedIn[port] : used[port]) ? self.plugLen() : 0
+                            var tip = j.x + side * (NW + 3 * k + past), flip = side < 0 ? 1 : -1
+                            var hint = svgEl('g', 'nhe-surface__hint' + (hot ? ' is-hot' : ''), null, { transform: 'translate(' + tip + ' ' + j.y + ') scale(' + (flip * k) + ' ' + k + ')' })
+                            self.hints.push(hint)
+                            if (hot) svgEl('path', 'nhe-surface__hint-chevrons', hint, { d: 'M-34 -12 l11 12 l-11 12 M-20 -12 l11 12 l-11 12' })
+                            else svgEl('path', 'nhe-surface__hint-arrow', hint, { d: 'M-22 -4 h12 v-5 l10 9 l-10 9 v-5 h-12 z' })
+                        }
                     })
                 })
             })
@@ -731,10 +793,12 @@
     }
 
     Surface.prototype.dragWire = function (q) {
-        var self = this, d = this.dragging, p = this.toPlane(q), best = null, bestD = 28 / this.view.z
+        var self = this, d = this.dragging, p = this.toPlane(q), best = null, bestD = 40 / this.view.z
         // the nearest jack (or MOD port tile) that takes it
         Array.prototype.forEach.call(this.n.plugs.querySelectorAll('.nhe-surface__socket.is-target'), function (s) {
-            var x = +s.getAttribute('data-x'), y = +s.getAttribute('data-y'), dist = Math.hypot(x - p.x, y - p.y)
+            // near the jack, or where its plug would sit (past the nut)
+            var x = +s.getAttribute('data-x'), y = +s.getAttribute('data-y'), side = s.getAttribute('data-dir') === 'in' ? -1 : 1
+            var dist = Math.min(Math.hypot(x - p.x, y - p.y), Math.hypot(x + side * (self.nutW() + self.plugLen() / 2) - p.x, y - p.y))
             if (dist < bestD) { bestD = dist; best = { port: s.getAttribute('data-port'), x: x, y: y } }
         })
         ;(this.portEls || []).forEach(function (pe) {
@@ -1009,9 +1073,9 @@
         var self = this, d = this.els[nd.id], img = d && d.querySelector('img')
         var v = this.view, r = this.root.getBoundingClientRect()
         if (this.focused && this.focused.id !== nd.id) this.blur()
-        // the picture at its own size: the pedal in it at 100%
+        // the picture at FOCUS x its own size: the pedal in it at 120%
         var z = 1.5
-        if (img && img.naturalWidth) z = img.naturalWidth / (img.getBoundingClientRect().width / v.z)
+        if (img && img.naturalWidth) z = FOCUS * img.naturalWidth / (img.getBoundingClientRect().width / v.z)
         z = Math.max(ZMIN, Math.min(ZMAX, z))
         var b = this.box(nd), cx = b.x + b.w / 2, cy = b.y + b.h / 2
         // centred, as far as the grid's edges allow

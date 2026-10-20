@@ -310,10 +310,11 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
     border-radius: 50%;
     background: #222;            /* solid, darker than the surface */
     color: #ddd;
+    opacity: .5;                 /* quiet until wanted */
     cursor: pointer;
 }
 .nhe-surface__plus svg { display: block; width: 100%; height: 100%; }
-.nhe-surface__plus:hover { background: #111; color: #fff; }
+.nhe-surface__plus:hover { background: #111; color: #fff; opacity: 1; }
 
 /* Expand surface: at the right edge (a column) and the bottom (a row) */
 .nhe-surface__expand {
@@ -341,8 +342,14 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__face { display: flex; align-items: center; justify-content: center; flex: 1 1 auto; min-height: 0; width: 100%; }
 .nhe-surface__face img { max-width: 100%; max-height: 100%; pointer-events: none; }
 .nhe-surface__face.is-blank { max-width: 90px; border-radius: var(--nhe-radius-md); background: linear-gradient(160deg, var(--tile), #111); font-size: var(--nhe-font-size-lg); font-weight: var(--nhe-font-weight-semibold); }
-.nhe-surface__name { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); }
-.nhe-surface__brand { flex: none; font-size: var(--nhe-font-size-xs); opacity: .8; }
+/* a pedal's name and maker: smaller with the pedal when zoomed out, but
+   no larger than their own size when zoomed in */
+.nhe-surface__name { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: min(var(--nhe-font-size-sm), calc(var(--nhe-font-size-sm) / var(--nhe-surface-z, 1))); font-weight: var(--nhe-font-weight-semibold); }
+.nhe-surface__brand { flex: none; font-size: min(var(--nhe-font-size-xs), calc(var(--nhe-font-size-xs) / var(--nhe-surface-z, 1))); opacity: .8; }
+/* their lines keep one height whatever the zoom, so the face above them
+   (which takes the rest) doesn't change size as the text does */
+.nhe-surface__name { height: 16px; line-height: 16px; }
+.nhe-surface__brand { height: 14px; line-height: 14px; }
 /* a card's plug button (phones): the wiring dialog */
 /* screen-sized whatever the zoom (surface.js sets --nhe-surface-z): a 24 px icon, 4 px in */
 .nhe-surface__rewire { position: absolute; top: calc(4px / var(--nhe-surface-z, 1)); right: calc(4px / var(--nhe-surface-z, 1)); display: flex; width: calc(24px / var(--nhe-surface-z, 1)); height: calc(24px / var(--nhe-surface-z, 1)); padding: 0; border: 0; background: none; color: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; }
@@ -424,14 +431,19 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__plug.is-midi .nhe-surface__plug-band { fill: #d08a2e; }
 .nhe-surface__plug.is-cv .nhe-surface__plug-band { fill: #2ea7a0; }
 .nhe-surface__plug:hover .nhe-surface__plug-body { filter: drop-shadow(0 0 2px #fff); }
-.nhe-surface__socket-hole { fill: #0b0b0b; stroke: #9a9a9a; stroke-width: 2; }
-.nhe-surface__socket:hover .nhe-surface__socket-hole { stroke: #fff; }
-.nhe-surface__socket-stem { stroke: #fff; stroke-width: 2; }
-.nhe-surface__socket.is-stub .nhe-surface__socket-hole { fill: #fff; stroke: #fff; }
-.nhe-surface__socket.is-stub:hover .nhe-surface__socket-stem { stroke: #fff; }
-/* while a cable is in hand: where it can go */
-.nhe-surface__socket.is-target .nhe-surface__socket-hole { stroke: #fff; stroke-width: 3; }
-.nhe-surface__socket.is-hot .nhe-surface__socket-hole { fill: #fff; }
+/* a jack's metal nut on the pedal's side, as on MOD's builder */
+.nhe-surface__nut { pointer-events: none; }
+.nhe-surface__nut-flange, .nhe-surface__nut-barrel { fill: url(#nhe-nut-grad); stroke: #000; stroke-width: .6; }
+.nhe-surface__nut-hole { fill: #111; }
+.nhe-surface__socket:hover + .nhe-surface__nut .nhe-surface__nut-barrel, .nhe-surface__socket:hover .nhe-surface__nut-barrel { filter: brightness(1.2); }
+/* an output in use: a smaller spare connector under its plug, half see-through */
+.nhe-surface__stub { opacity: .5; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .6)); }
+.nhe-surface__socket.is-stub:hover .nhe-surface__stub { opacity: 1; }
+/* while a cable is in hand: an arrow into every jack that takes it, chevrons
+   on the one it would go into */
+.nhe-surface__hint { pointer-events: none; }
+.nhe-surface__hint-arrow { fill: rgba(255, 255, 255, .45); }
+.nhe-surface__hint-chevrons { fill: none; stroke: var(--nhe-accent-default, #8b5cf6); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .7)); }
 .nhe-surface__item.is-port.is-target .nhe-surface__port { box-shadow: inset 0 0 0 2px #fff; }
 
 /* a cable's colour */

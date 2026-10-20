@@ -64,3 +64,6 @@
 #nhe-constructor .nhe-constructor__icon [mod-role="drag-handle"] {
     cursor: grab;
 }
+
+/* the surface's zoom buttons: top right, under the MOD / NHE switch */
+#nhe-constructor .nhe-surface__zoom { left: auto; bottom: auto; top: 52px; right: 12px; z-index: 7; }

@@ -153,7 +153,7 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   that pedal lies.
 - The surface: `calm-dark.jpg` (a grey sheet), tiled so its holes come
   three to a cell with one under every +, also in SET → Work surface for MOD's builder. The + circles are
-  solid and dark. Zoom buttons sit bottom left.
+  solid and dark. Zoom buttons sit bottom left (on MOD: top right, under the MOD / NHE switch).
 - **Desktop and large tablets** (the screen's short side 600 px or more):
   the pedals' faces with no card behind them, 20% larger than the phone's
   cards' pictures, and a tap zooms in until the face shows at its full
@@ -215,7 +215,7 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   Rewire on a card tries "delete and reconnect". Wire colours and laid
   routes are kept per board in memory only.
 - **Playing a face (desktop / large tablet):** faces are MOD's screenshots;
-  a tap zooms one to 100% (the size of MOD's icon) and puts MOD's working
+  a tap zooms one to 120% of MOD's icon size and puts MOD's working
   icon (its modgui, borrowed off MOD's canvas: `mod.borrowIcon`) in the
   picture's place, so its knobs, switches and lists play as in MOD's
   builder. A press on one of its controls is the control's; a press on an
@@ -235,6 +235,23 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
 - **The cable connectors** are NHE's drawings (NHE-MOD-UI/SVG "coming
   out" and "going-in"): a ribbed metal barrel, flat against the jack and
   rounded where the cable leaves, with a band in the cable's colour.
+- **Jacks as on MOD's builder:** every jack is a metal nut on the pedal's
+  side (inputs left, outputs right); a cable's connector sits past it, and
+  the cable runs straight out of the connector (`LEAD`) before it bends,
+  as far as the gap between pedals allows. While a cable is in the hand,
+  every jack that takes it shows an arrow pointing in (past a connector
+  already there), and the one it would go into, the nearest within reach
+  of the jack or of where its connector would sit, shows chevrons in the
+  accent colour. An output in use has MOD's spare jack: a smaller
+  connector under its plug, half see-through, to pull another cable from;
+  on a pair (stereo) the first one's sits above its plug, so the two keep
+  clear of each other.
+- The free cells' + circles are at 50% until hovered.
+- **Zooming in:** the pedals' names and makers, the connectors and the
+  jacks' nuts don't grow past their own size: zoomed out they shrink with
+  the pedals; zoomed in they stay put (a connector at most 44 px tall on
+  screen, about MOD's port tiles). A cable into one of MOD's port tiles has
+  its connector right against the tile.
 - **Resizing** the window (or turning a tablet) moves MOD's port tiles to
   the new edges and draws the wires to them again; the grid keeps at least
   the screen's size.
