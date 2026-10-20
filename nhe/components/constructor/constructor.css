@@ -110,7 +110,7 @@
 /* the side columns sit on the work surface; the results don't */
 .nhe-add__col--in .nhe-add__list,
 .nhe-add__col--out .nhe-add__list {
-    background: var(--nhe-surface-sunken) url("../../backgrounds/perforated-dark.jpg") 0 0 / auto 160px;
+    background: var(--nhe-surface-sunken) var(--nhe-texture) 0 0 / auto 133.333px;   /* tokens.css */
     border-radius: var(--nhe-radius-lg);
 }
 .nhe-add__col.is-waiting .nhe-add__list { opacity: .5; }
@@ -143,7 +143,7 @@
     font-weight: var(--nhe-font-weight-semibold);
 }
 .nhe-add__thumb.is-port { width: 72px; height: 72px; border-radius: var(--nhe-radius-lg); background: var(--nhe-surface-sunken); color: var(--nhe-icon-default); }
-.nhe-add__thumb.is-port svg { width: 44px; height: 44px; }
+.nhe-add__thumb.is-port > svg { width: 44px; height: 44px; }   /* its icon, not the tick */
 .nhe-add__name { max-width: 100%; overflow-wrap: anywhere; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); line-height: var(--nhe-font-line-snug); text-transform: uppercase; }
 .nhe-add__brand { font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-medium); opacity: .8; }
 
@@ -286,7 +286,7 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
     touch-action: none;          /* pan, pinch and long-press are surface.js's */
     -webkit-user-select: none;
     user-select: none;
-    background: #333 var(--nhe-surface-image, url("../../backgrounds/calm-dark.jpg")) 0 0 / auto 133.333px;
+    background: #333 var(--nhe-texture) 0 0 / auto 133.333px;   /* tokens.css; surface.js sizes and places it */
     cursor: grab;
 }
 .nhe-surface.is-moving { cursor: grabbing; }
@@ -341,6 +341,11 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__face.is-blank { max-width: 90px; border-radius: var(--nhe-radius-md); background: linear-gradient(160deg, var(--tile), #111); font-size: var(--nhe-font-size-lg); font-weight: var(--nhe-font-weight-semibold); }
 .nhe-surface__name { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); }
 .nhe-surface__brand { flex: none; font-size: var(--nhe-font-size-xs); opacity: .8; }
+/* a card's plug button (phones): the wiring dialog */
+/* screen-sized whatever the zoom (surface.js sets --nhe-surface-z): a 24 px icon, 4 px in */
+.nhe-surface__rewire { position: absolute; top: calc(4px / var(--nhe-surface-z, 1)); right: calc(4px / var(--nhe-surface-z, 1)); display: flex; width: calc(24px / var(--nhe-surface-z, 1)); height: calc(24px / var(--nhe-surface-z, 1)); padding: 0; border: 0; background: none; color: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; }
+.nhe-surface__rewire svg { width: 100%; height: 100%; }
+.nhe-surface__rewire:hover { color: var(--nhe-accent-default); }
 /* desktop / large tablets: the faces themselves, as in MOD's builder: no
    card behind them, 20% larger (surface.js sizes them) */
 .is-faces .nhe-surface__item.is-pedal { background: none; padding: 0; }

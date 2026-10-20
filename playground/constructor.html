@@ -155,7 +155,7 @@
             ports[t] = { in: (p.in || []).map(function (s) { return instance + '/' + s }), out: (p.out || []).map(function (s) { return instance + '/' + s }) }
         })
         var face = /^urn:/.test(plugin.uri) ? null : '/effect/image/screenshot.png?uri=' + encodeURIComponent(plugin.uri)
-        return { id: instance, name: plugin.name, brand: plugin.brand, thumb: plugin.thumb, face: face, colour: plugin.colour, kind: 'pedal', ports: ports, cell: cell, span: plugin.span }
+        return { id: instance, uri: plugin.uri, name: plugin.name, brand: plugin.brand, thumb: plugin.thumb, face: face, colour: plugin.colour, kind: 'pedal', ports: ports, cell: cell, span: plugin.span }
     }
 
     var render = function () {
@@ -242,6 +242,22 @@
                 // a cable's +: its two ends ticked, only pedals that fit in it
                 onInsert: function (r) { open(r.cell, { inputs: [r.from.id], outputs: [r.to.id], only: r.kind }) },
                 onTap: function (node) { log2('tap', node.name + ': would open its settings screen') },
+                // a card's plug button: the + dialog with the pedal picked and its wiring ticked
+                onRewire: function (node) {
+                    var owner = function (port) { return board.nodes.filter(function (n) { return ['audio', 'midi', 'cv'].some(function (t) { var p = n.ports[t] || {}; return (p.in || []).concat(p.out || []).indexOf(port) >= 0 }) })[0] }
+                    var ins = {}, outs = {}
+                    board.connections.forEach(function (c) {
+                        var a = owner(c[0]), b = owner(c[1])
+                        if (b === node && a) ins[a.id] = true
+                        if (a === node && b) outs[b.id] = true
+                    })
+                    open(node.cell, {
+                        plugin: plugins.filter(function (p) { return p.uri === node.uri })[0],
+                        exclude: [node.id], inputs: Object.keys(ins), outputs: Object.keys(outs), placeLabel: 'Rewire',
+                        // what to do with the old wiring is still open: the plan is shown, nothing changes
+                        onPlace: function (r) { log2('rewire', node.name + ': from ' + (r.inputs.join(', ') || 'nothing') + ', to ' + (r.outputs.join(', ') || 'nothing') + ' (not applied yet: deleting and reconnecting is still to be worked out)') }
+                    })
+                },
                 wireColours: {},
                 wireRoutes: {},
                 onRoute: function (c, pts) { log2('route', c.join(' → ') + (pts ? ': laid by hand, ' + (pts.length - 2) + ' corners' : ': automatic again')) },

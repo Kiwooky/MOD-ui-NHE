@@ -30,6 +30,9 @@
  *       inputs: [nodeId], outputs: [nodeId],  // ticked to start with (a cable's +)
  *       only: 'audio' | 'midi' | 'cv',        // only pedals with an input and an output
  *                                             // of that kind (a cable's +: they fit in it)
+ *       plugin: plugin,                       // picked to start with (a card's plug button:
+ *       exclude: [nodeId],                    // the pedal itself, left out of the sides)
+ *       placeLabel: 'Rewire',                 // the Place button's label
  *       onPlace: fn({ plugin, inputs: [nodeId], outputs: [nodeId], plan }),
  *       onCancel: fn()
  *   })
@@ -68,6 +71,10 @@
         ;(this.o.outputs || []).forEach(function (id) { self.outputs[id] = true })
         // inserting into a cable: all pedals that fit, unless favourites have some
         if (this.o.only && !this.o.plugins.some(function (p) { return p.favourite && self.fits(p) })) this.tab = 'all'
+        // a pedal picked to start with: shown among all of them
+        if (this.o.plugin && !this.o.plugin.favourite) this.tab = 'all'
+        this.exclude = {}
+        ;(this.o.exclude || []).forEach(function (id) { self.exclude[id] = true })
 
         var full = NHE.zoom && NHE.zoom() > 1
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay nhe-add-overlay' + (full ? ' is-full' : ''), document.body)
@@ -118,7 +125,7 @@
         n.summary = el('div', 'nhe-add__summary', foot)
         var buttons = el('div', 'nhe-dialog__buttons', foot)
         buttons.appendChild(NHE.textButton('Cancel', 'secondary', function () { self.cancel() }))
-        n.place = NHE.textButton('Place', 'primary', function () { self.place() })
+        n.place = NHE.textButton(this.o.placeLabel || 'Place', 'primary', function () { self.place() })
         buttons.appendChild(n.place)
 
         d.addEventListener('keydown', function (e) {
@@ -135,6 +142,7 @@
         this.renderResults()
         this.renderSides()
         this.learn()
+        if (this.o.plugin) this.pick(this.o.plugin, true)
         setTimeout(function () { d.focus() }, 0)
     }
 
@@ -263,11 +271,11 @@
     }
 
     // the pedal first: the side columns then show what can connect to it
-    Dialog.prototype.pick = function (plugin) {
+    Dialog.prototype.pick = function (plugin, reveal) {
         var self = this
         // ports can come later (MOD gives them per plugin): fetch, then pick
         if (plugin && !plugin.ports && typeof this.o.loadPorts === 'function') {
-            this.o.loadPorts(plugin, function () { if (self.overlay) self.pick(plugin.ports ? plugin : null) })
+            this.o.loadPorts(plugin, function () { if (self.overlay) self.pick(plugin.ports ? plugin : null, reveal) })
             return
         }
         this.plugin = plugin
@@ -283,6 +291,8 @@
             var on = found[i] === plugin
             cards[i].classList.toggle('is-picked', on)
             cards[i].setAttribute('aria-pressed', on ? 'true' : 'false')
+            // picked to start with: scrolled into view
+            if (on && reveal) this.n.res.list.scrollTop = cards[i].offsetTop - this.n.res.list.offsetTop - 8
         }
         this.renderSides()
     }
@@ -308,7 +318,7 @@
             var any = false
             // the Input from column lists sources (their outs), Output to targets (their ins)
             self.sorted(kind === 'output' ? 'out' : 'in').forEach(function (x) {
-                if (x.kind === kind || !test(x, node)) return
+                if (x.kind === kind || self.exclude[x.id] || !test(x, node)) return
                 any = true
                 card(c.list, x, !!picked[x.id], function () {
                     if (picked[x.id]) delete picked[x.id]

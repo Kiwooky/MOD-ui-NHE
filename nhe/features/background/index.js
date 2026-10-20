@@ -16,14 +16,23 @@
  * ({ file, height }: the tile's height in px); SET's Work surface dropdown
  * shows them (NHE.backgroundList).
  *
- * Until something is chosen, DEFAULT shows. The choice is remembered in this
- * browser. The image tiles like MOD's (1200 px tall), on the builder and in
+ * Until something is chosen, NHE's texture shows (tokens.css: --nhe-texture,
+ * tiled --nhe-texture-height tall), the same image as the constructor's.
+ * The choice is remembered in this browser. It shows on the builder and in
  * the performance view.
  */
 NHE.register('background', function (mod) {
     var KEY = 'nhe-background'
-    var DEFAULT = 'perforated.jpg'     // perforated metal, 2000 x 1420 like MOD's wood
-    var DEFAULT_HEIGHT = 300           // a quarter of MOD's tiling: holes about 37 px apart
+    // the default: NHE's texture, read from tokens.css (the one place it's named)
+    var token = function (name) { return getComputedStyle(document.documentElement).getPropertyValue(name).replace(/^\s+|\s+$/g, '') }
+    var DEFAULT = null, DEFAULT_HEIGHT = null
+    var readDefault = function () {
+        var m = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(token('--nhe-texture'))
+        if (!m) return false
+        DEFAULT = m[1].split('/').pop()              // a file in nhe/backgrounds/
+        DEFAULT_HEIGHT = parseFloat(token('--nhe-texture-height')) || null
+        return true
+    }
     var HEIGHT_KEY = 'nhe-background-height'
     var MOD = 'mod'                    // saved when MOD's own wood is chosen
 
@@ -71,5 +80,11 @@ NHE.register('background', function (mod) {
     NHE.backgroundCurrent = function () { return saved() }
     NHE.backgroundMod = MOD
 
-    mod.setBackground(resolve(saved()), savedHeight())
+    // tokens.css loads alongside (stylesheets don't block): wait for it
+    var tries = 0
+    var go = function () {
+        if (!readDefault() && ++tries < 100) { setTimeout(go, 50); return }
+        mod.setBackground(resolve(saved()), savedHeight())
+    }
+    go()
 })

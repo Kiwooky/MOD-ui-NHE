@@ -112,6 +112,16 @@
     --nhe-surface-knob-top: var(--nhe-color-black);         /* knob / thumb gradient, dark end */
     --nhe-surface-knob-bottom: var(--nhe-color-grey-700);   /* knob / thumb gradient, light end */
 
+    /* The NHE texture: the one image for MOD's builder (until SET → Work
+       surface picks another), the constructor's surface and the + dialog's
+       side columns. Change it here and they all follow.
+         -hole:   its first hole's centre, as a fraction of the tile (holes
+                  every half tile; the constructor lines one up under each +)
+         -height: its tile's height on MOD's builder */
+    --nhe-texture: url("/nhe/backgrounds/calm-dark.jpg");
+    --nhe-texture-hole: 0.1224;
+    --nhe-texture-height: 125px;
+
     /* Theme: text, icons, borders */
     --nhe-text-primary: var(--nhe-color-white);
     --nhe-text-on-accent: var(--nhe-color-white);

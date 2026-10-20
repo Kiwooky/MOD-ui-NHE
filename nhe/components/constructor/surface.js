@@ -22,6 +22,7 @@
  *       faces: true | false,                // pedals as their faces, a tap zooms in (default:
  *                                           // a desktop or large tablet); else cards, a tap is onTap
  *       onTap: fn(node),                    // a pedal card was tapped (phones: its settings screen)
+ *       onRewire: fn(node),                 // a card's plug button (phones: no hand wiring)
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
  *       wireColours: { 'from>to': colour }, // cables given their own colour (faces)
  *       onWire: fn(old, neu),               // a cable was rewired by hand (faces): old / neu are
@@ -77,13 +78,11 @@
     var PORT_STEP = 84      // one port to the next, down the edge (tile, label, gap)
     var PORT_LABEL = 20     // the label under a tile
     var NAME_H = 30         // a pedal's name and brand under its face
-    // the work surface image (calm-dark.jpg: 250 px, holes 125 apart, the
-    // first at 30.6): tiled so its holes come three to a cell and one sits
-    // under every + (a cell's centre)
+    // the work surface image (tokens.css: --nhe-texture, holes every half
+    // tile, the first at --nhe-texture-hole): tiled so its holes come three
+    // to a cell and one sits under every + (a cell's centre)
     var TILE = CELL * 2 / 3
-    var HOLE = 30.6 / 250 * TILE
     var mod = function (a, m) { return ((a % m) + m) % m }
-    var BG_X = mod(EDGE + CELL / 2 - HOLE, TILE / 2), BG_Y = mod(CELL / 2 - HOLE, TILE / 2)
 
     var Surface = function (root, options) {
         var self = this
@@ -96,6 +95,8 @@
         // zooms in to play them); a phone: cards, a tap opens the settings
         this.faces = this.o.faces != null ? !!this.o.faces : Math.min(screen.width, screen.height) >= 600
         root.classList.toggle('is-faces', this.faces)
+        var hole = (parseFloat(getComputedStyle(root).getPropertyValue('--nhe-texture-hole')) || 0) * TILE
+        this.bg = { x: mod(EDGE + CELL / 2 - hole, TILE / 2), y: mod(CELL / 2 - hole, TILE / 2) }
         var n = this.n = {}
         n.plane = el('div', 'nhe-surface__plane', root)
         n.cells = el('div', 'nhe-surface__cells', n.plane)
@@ -283,6 +284,13 @@
                     face.textContent = (nd.name || '?').split(/\s+/).map(function (w) { return w[0] }).join('').slice(0, 3).toUpperCase()
                 }
                 el('span', 'nhe-surface__name', d).textContent = nd.name
+                // cards (phones): a plug button, top right, for the wiring dialog
+                if (!self.faces) {
+                    var rw = el('button', 'nhe-surface__rewire', d, icon('plug'))
+                    rw.type = 'button'
+                    rw.setAttribute('aria-label', 'Wiring of ' + nd.name)
+                    rw.addEventListener('click', function () { if (!self.moved && typeof self.o.onRewire === 'function') self.o.onRewire(nd) })
+                }
                 if (nd.brand) el('span', 'nhe-surface__brand', d).textContent = nd.brand
             }
             self.els[nd.id] = d
@@ -826,8 +834,10 @@
         var v = this.view
         this.n.plane.style.transform = 'translate(' + v.x + 'px,' + v.y + 'px) scale(' + v.z + ')'
         // the board's surface moves and zooms with it
-        this.root.style.backgroundPosition = (v.x + BG_X * v.z) + 'px ' + (v.y + BG_Y * v.z) + 'px'
+        this.root.style.backgroundPosition = (v.x + this.bg.x * v.z) + 'px ' + (v.y + this.bg.y * v.z) + 'px'
         this.root.style.backgroundSize = 'auto ' + (TILE * v.z) + 'px'
+        // for what stays screen-sized on the plane (a card's plug button)
+        this.root.style.setProperty('--nhe-surface-z', v.z)
         this.placePorts()
         this.renderWires()
     }
@@ -957,7 +967,8 @@
                 self.moved = false
                 return
             }
-            var item = e.target.closest('.nhe-surface__item.is-pedal')
+            // a card's plug button is a button, not the card (no tap, no long-press)
+            var item = !e.target.closest('.nhe-surface__rewire') && e.target.closest('.nhe-surface__item.is-pedal')
             var cable = self.faces && e.target.closest('.nhe-surface__wire-hit')
             g = { mode: 'press', start: local(e), view: { x: self.view.x, y: self.view.y }, item: item, cable: cable, moved: false }
             self.moved = false

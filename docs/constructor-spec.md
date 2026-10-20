@@ -176,6 +176,11 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
 - **Another cable from a used output:** a small stub under its plug (as on
   MOD); dragging the stub plugs in a new cable, dragging the plug moves
   the existing one.
+- **Rewiring on a phone:** a plug button at the top right of each card
+  opens the + dialog with that pedal picked (scrolled into view, left out
+  of the sides) and what feeds it and what it feeds ticked; the button
+  reads **Rewire**. **Open:** what Rewire then does with the old wiring
+  (delete and reconnect); the playground only reports the choice.
 - **A small + on each cable** (one per pair of pedals, halfway along its
   longest run, in the cable's colour; phone and desktop; hidden while that
   run is too short, until the pedals move apart): a pedal goes in between. The + dialog
