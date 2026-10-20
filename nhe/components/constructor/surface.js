@@ -23,6 +23,8 @@
  *                                           // a desktop or large tablet); else cards, a tap is onTap
  *       onTap: fn(node),                    // a pedal card was tapped (phones: its settings screen)
  *       onRewire: fn(node),                 // a card's plug button (phones: no hand wiring)
+ *       onSettings: fn(node),               // a face's gear, just outside its top right
+ *                                           // corner (as on MOD's builder): its settings
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
  *                                           // in `layer` (over its picture, the picture's size),
@@ -89,6 +91,7 @@
     var ZMIN = 0.35, ZMAX = 4  // 4: room to show a large face at its full size
     var MIN_COLS = 3, MIN_ROWS = 3
     var FOOT = 96           // a strip under the grid for the Expand buttons
+    var HEAD = 30           // screen px above the top row: room for the faces' gears
     var PORT = 48           // MOD's port tiles: screen px, flush against the screen's left and right edges
     var SIDE = 0            // (Figma: 48 x 48, rounded on the inner side only)
     var PORT_STEP = 84      // one port to the next, down the edge (tile, label, gap)
@@ -104,7 +107,7 @@
         var self = this
         this.root = root
         this.o = mix({ nodes: [], connections: [] }, options || {})
-        this.view = { x: 0, y: 0, z: 1 }
+        this.view = { x: 0, y: HEAD, z: 1 }
         root.innerHTML = ''
         root.className = 'nhe-ctl nhe-surface'
         // a desktop or large tablet: the faces, as in MOD's builder (a tap
@@ -316,7 +319,7 @@
                     img.alt = ''
                     img.draggable = false
                     // the jacks are measured on the picture: draw the wires again once it's in
-                    if (self.faces) img.onload = function () { self.renderWires() }
+                    if (self.faces) img.onload = function () { self.renderWires(); self.placeGear(nd) }
                     img.src = (self.faces && nd.face) || nd.thumb
                 } else {
                     face.classList.add('is-blank')
@@ -332,8 +335,17 @@
                     rw.addEventListener('click', function () { if (!self.moved && typeof self.o.onRewire === 'function') self.o.onRewire(nd) })
                 }
                 if (nd.brand) el('span', 'nhe-surface__brand', d).textContent = nd.brand
+                // faces: a gear just outside the pedal's top right corner, for its settings
+                if (self.faces && typeof self.o.onSettings === 'function') {
+                    var gear = el('button', 'nhe-surface__gear', d, icon('gear'))
+                    gear.type = 'button'
+                    gear.setAttribute('aria-label', 'Settings of ' + nd.name)
+                    gear.title = 'Settings'
+                    gear.addEventListener('click', function () { if (!self.moved) self.o.onSettings(nd) })
+                }
             }
             self.els[nd.id] = d
+            self.placeGear(nd)
         })
         this.mountLive()
         this.apply()
@@ -975,7 +987,7 @@
         v = v || this.view
         var W = this.root.clientWidth, Hh = this.root.clientHeight, gap = SIDE + PORT + 8
         var maxX = gap - EDGE * v.z, minX = W - gap - (EDGE + this.cols * CELL) * v.z
-        var maxY = 0, minY = Hh - (this.rows * CELL + FOOT) * v.z
+        var maxY = HEAD, minY = Hh - (this.rows * CELL + FOOT) * v.z
         v.x = Math.max(Math.min(maxX, minX), Math.min(maxX, v.x))
         v.y = Math.max(Math.min(maxY, minY), Math.min(maxY, v.y))
         return v
@@ -1008,6 +1020,17 @@
             self.mountLive()
             if (typeof self.o.onFocus === 'function') self.o.onFocus(nd)
         })
+    }
+
+    // the gear sits at the pedal's own top right corner (within its picture)
+    Surface.prototype.placeGear = function (nd) {
+        var d = this.els && this.els[nd.id], gear = d && d.querySelector('.nhe-surface__gear')
+        var img = d && d.querySelector('.nhe-surface__face img')
+        if (!gear) return
+        if (!img || !img.complete || !img.offsetWidth) { gear.style.left = '100%'; gear.style.top = '0'; return }
+        var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
+        gear.style.left = (img.offsetLeft + a.x + a.w) + 'px'
+        gear.style.top = (img.offsetTop + a.y) + 'px'
     }
 
     // the focused face's working GUI, over its picture (again after a redraw)
@@ -1054,10 +1077,10 @@
     // zoom out until the whole grid shows (a double click on the surface)
     Surface.prototype.fit = function () {
         var W = this.root.clientWidth, Hh = this.root.clientHeight, gap = SIDE + PORT + 8
-        var z = Math.min((W - 2 * gap) / (this.cols * CELL), Hh / (this.rows * CELL + FOOT))
+        var z = Math.min((W - 2 * gap) / (this.cols * CELL), (Hh - HEAD) / (this.rows * CELL + FOOT))
         z = Math.max(ZMIN, Math.min(1, z))
         this.blur()
-        this.animate(this.clamp({ x: gap - EDGE * z, y: 0, z: z }))
+        this.animate(this.clamp({ x: gap - EDGE * z, y: HEAD, z: z }))
     }
 
     Surface.prototype.animate = function (to, done) {
@@ -1118,7 +1141,7 @@
                 return
             }
             // a card's plug button is a button, not the card (no tap, no long-press)
-            var item = !e.target.closest('.nhe-surface__rewire') && e.target.closest('.nhe-surface__item.is-pedal')
+            var item = !e.target.closest('.nhe-surface__rewire, .nhe-surface__gear') && e.target.closest('.nhe-surface__item.is-pedal')
             var cable = self.faces && e.target.closest('.nhe-surface__wire-hit')
             g = { mode: 'press', start: local(e), view: { x: self.view.x, y: self.view.y }, item: item, cable: cable, moved: false }
             self.moved = false

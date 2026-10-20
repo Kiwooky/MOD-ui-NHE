@@ -348,6 +348,11 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__rewire { position: absolute; top: calc(4px / var(--nhe-surface-z, 1)); right: calc(4px / var(--nhe-surface-z, 1)); display: flex; width: calc(24px / var(--nhe-surface-z, 1)); height: calc(24px / var(--nhe-surface-z, 1)); padding: 0; border: 0; background: none; color: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; }
 .nhe-surface__rewire svg { width: 100%; height: 100%; }
 .nhe-surface__rewire:hover { color: var(--nhe-accent-default); }
+/* faces: the gear just outside the pedal's top right corner (as on MOD's
+   builder), screen-sized but never larger than a small part of the pedal */
+.nhe-surface__gear { position: absolute; z-index: 2; display: flex; width: min(calc(26px / var(--nhe-surface-z, 1)), 44px); height: min(calc(26px / var(--nhe-surface-z, 1)), 44px); padding: 0; border: 0; background: none; color: #fff; transform: translate(-100%, calc(-100% - 4px / var(--nhe-surface-z, 1))); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; pointer-events: auto; }
+.nhe-surface__gear svg { width: 100%; height: 100%; }
+.nhe-surface__gear:hover { color: var(--nhe-accent-default); }
 /* desktop / large tablets: the faces themselves, as in MOD's builder: no
    card behind them, 20% larger (surface.js sizes them) */
 .is-faces .nhe-surface__item.is-pedal { background: none; padding: 0; }
