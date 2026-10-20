@@ -124,3 +124,70 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   thumbnails (ports fetched when a pedal is picked, as on MOD), a pretend
   board (DS1 → Neural Amp Modeler → Bollie Delay → Dragonfly), and Place
   applying the plan to it. Not wired into MOD yet.
+- Built next: the **work surface** (`nhe/components/constructor/surface.js`),
+  also in the playground. Cells of 200 px at zoom 1; MOD's ports in edge
+  columns; a + on every free cell; one empty column and row kept, with
+  Expand buttons in a strip under the grid when none is left; drag (or the
+  wheel) to pan, pinch / ctrl-scroll / the + − buttons (top right) to zoom,
+  the surface's image moving with it; a long-press (450 ms) lifts a pedal,
+  a dashed outline shows where it lands (red where it can't), dropping on a
+  free cell moves it with its wires; a tap on a pedal reports it (its
+  settings screen, later). Wires: out of a pedal's right side into the
+  next one's left, turning in the gap before the target; backwards ones
+  cross in the gap between the rows. A pedal whose picture is 1.8 × wider
+  than tall takes two cells (playground rule). A narrow screen starts
+  zoomed out to about two columns.
+- **MOD's ports stick to the screen's left and right edges** (they don't pan
+  or up and down, and keep their size when zooming): each side's ports
+  stacked in the middle of the view. As in Figma: 48 × 48 black tiles flush against the edge,
+  rounded on the inner side, the label under them. An unconnected port
+  shows the plug (Phosphor Plug), a connected one the plugged-in icon. A
+  wire between a port and a pedal that is out of view, or runs into
+  that port's tile or label, isn't drawn: the
+  tile shows a small white triangle pointing left or right, the side
+  that pedal lies.
+- The surface: `calm-dark.jpg` (a grey sheet), tiled so its holes come
+  three to a cell with one under every +, also in SET → Work surface for MOD's builder. The + circles are
+  solid and dark. Zoom buttons sit bottom left.
+- **Desktop and large tablets** (the screen's short side 600 px or more):
+  the pedals' faces with no card behind them, 20% larger than the phone's
+  cards' pictures, and a tap zooms in until the face shows at its full
+  size, centred, as in MOD's builder (on MOD its controls play there; the
+  playground shows MOD's screenshot). **Phones:** the cards, and a tap
+  opens the settings screen.
+  On faces the wires run **jack to jack**, each port its own: on MOD from
+  where the face's jacks really are (`jacks`, read by the adapter); in the
+  playground spread down the face's sides (inputs left, outputs right) as
+  an approximation. Cards wire to the middle of their sides.
+- **Hand wiring on faces:** every jack shows a socket, every cable a plug
+  at both ends. Drag a plug to another jack (or a MOD port tile) to move
+  that end, or into nothing to pull the cable out, as on MOD; drag from a
+  free socket to plug in a new cable; the jacks that take it light up.
+  Several cables on one jack: tap its plug and they spread apart, to
+  grab the right one (as on MOD); tap again or elsewhere to gather them.
+  **Press and hold a cable**, then drag, to move that stretch of it
+  sideways: you decide where its corners go, to keep cables apart where
+  the automatic way crowds them (as in whiteboard apps). A run out of or
+  into a jack gets a short jog by the jack. The cable keeps its new way
+  (`wireRoutes`) until a pedal at either end moves, it's rewired, or
+  **Automatic route** in its tap popover puts it back. Other cables'
+  lanes keep clear of it.
+  **Tap a cable** to pick its colour (ten swatches, or by its type).
+- **Another cable from a used output:** a small stub under its plug (as on
+  MOD); dragging the stub plugs in a new cable, dragging the plug moves
+  the existing one.
+- **A small + on each cable** (one per pair of pedals, halfway along its
+  longest run, in the cable's colour; phone and desktop; hidden while that
+  run is too short, until the pedals move apart): a pedal goes in between. The + dialog
+  opens with both ends ticked, and lists only pedals with an input and an
+  output of the cable's kind (from their ports, else MOD's `iotype`: 1 / 2
+  audio, 4 MIDI; the rest have their ports fetched as the dialog opens).
+  Placing it replaces the cables between those two ends; the pedal takes
+  the free cell nearest the +.
+- **Lanes:** cables keep 14 px apart (centre to centre): a middle run that
+  would come closer to another cable's run moves aside, clear of the runs
+  out of and into the jacks too. Several cables from one jack part right
+  after it; several into one jack join just before it.
+- To come for the surface: the Builder choice in SET (MOD's or NHE's),
+  the real modgui faces on desktop (playable), bigger card text
+  on a phone, and running it on MOD's real pedalboard.

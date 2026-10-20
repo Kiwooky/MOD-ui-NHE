@@ -277,3 +277,155 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-add__table th, .nhe-add__table td { padding: var(--nhe-space-4) var(--nhe-space-8); border: 1px solid var(--nhe-color-grey-800); text-align: right; }
 .nhe-add__table th { background: var(--nhe-color-grey-800); font-weight: var(--nhe-font-weight-semibold); }
 .nhe-add__table th:first-child, .nhe-add__table td:first-child { text-align: left; }
+
+/* ---- the work surface (surface.js) -------------------------------------- */
+
+.nhe-surface {
+    position: relative;
+    overflow: hidden;
+    touch-action: none;          /* pan, pinch and long-press are surface.js's */
+    -webkit-user-select: none;
+    user-select: none;
+    background: #333 var(--nhe-surface-image, url("../../backgrounds/calm-dark.jpg")) 0 0 / auto 133.333px;
+    cursor: grab;
+}
+.nhe-surface.is-moving { cursor: grabbing; }
+.nhe-surface__plane { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.nhe-surface__cells, .nhe-surface__items { position: absolute; inset: 0; }
+/* the pedals' layer lies over the +s: only the pedals themselves take taps */
+.nhe-surface__items { pointer-events: none; }
+.nhe-surface__item { pointer-events: auto; }
+.nhe-surface__wires { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+
+/* a + on a free cell */
+.nhe-surface__plus {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    margin: -24px 0 0 -24px;
+    padding: 8px;
+    border: 0;
+    border-radius: 50%;
+    background: #222;            /* solid, darker than the surface */
+    color: #ddd;
+    cursor: pointer;
+}
+.nhe-surface__plus svg { display: block; width: 100%; height: 100%; }
+.nhe-surface__plus:hover { background: #111; color: #fff; }
+
+/* Expand surface: at the right edge (a column) and the bottom (a row) */
+.nhe-surface__expand {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 76px;
+    margin: -24px 0 0 -38px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: var(--nhe-font-size-xs);
+    font-weight: var(--nhe-font-weight-semibold);
+    text-transform: uppercase;
+    line-height: 1.1;
+    cursor: pointer;
+}
+.nhe-surface__expand svg { width: 40px; height: 40px; padding: 4px; border-radius: var(--nhe-radius-md); background: var(--nhe-surface-sunken); }
+
+/* pedals: their picture with the name under it */
+.nhe-surface__item { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+.nhe-surface__item.is-pedal { border-radius: var(--nhe-radius-md); background: rgba(0, 0, 0, .55); padding: 8px; cursor: pointer; }
+.nhe-surface__face { display: flex; align-items: center; justify-content: center; flex: 1 1 auto; min-height: 0; width: 100%; }
+.nhe-surface__face img { max-width: 100%; max-height: 100%; pointer-events: none; }
+.nhe-surface__face.is-blank { max-width: 90px; border-radius: var(--nhe-radius-md); background: linear-gradient(160deg, var(--tile), #111); font-size: var(--nhe-font-size-lg); font-weight: var(--nhe-font-weight-semibold); }
+.nhe-surface__name { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); }
+.nhe-surface__brand { flex: none; font-size: var(--nhe-font-size-xs); opacity: .8; }
+/* desktop / large tablets: the faces themselves, as in MOD's builder: no
+   card behind them, 20% larger (surface.js sizes them) */
+.is-faces .nhe-surface__item.is-pedal { background: none; padding: 0; }
+/* only the picture and the name take taps: the box around them is larger
+   and would cover the cables beside them */
+.is-faces .nhe-surface__item.is-pedal, .is-faces .nhe-surface__face { pointer-events: none; }
+.is-faces .nhe-surface__face img, .is-faces .nhe-surface__face.is-blank, .is-faces .nhe-surface__name, .is-faces .nhe-surface__brand { pointer-events: auto; }
+.is-faces .nhe-surface__face img { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); }
+.is-faces .nhe-surface__name, .is-faces .nhe-surface__brand { text-shadow: 0 1px 3px #000; }
+.nhe-surface__item.is-lifted { z-index: 5; box-shadow: 0 12px 32px rgba(0, 0, 0, .7), 0 0 0 3px var(--nhe-accent-default); transform: scale(1.05); }
+
+/* MOD's own ports: a layer over the surface, flush against the screen's
+   edges (they don't pan sideways), screen-sized so they stay easy to hit.
+   Figma: a 48 x 48 black tile rounded on its inner side, the label under it */
+.nhe-surface__edge { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.nhe-surface__item.is-port { position: absolute; width: 48px; pointer-events: auto; }
+.nhe-surface__item.is-input { left: 0; align-items: flex-start; }
+.nhe-surface__item.is-output { right: 0; align-items: flex-end; }
+.nhe-surface__port { position: relative; display: flex; width: 48px; height: 48px; padding: 8px; background: #000; color: var(--nhe-icon-default); }
+.is-input .nhe-surface__port { border-radius: 0 16px 16px 0; }
+.is-output .nhe-surface__port { border-radius: 16px 0 0 16px; }
+.nhe-surface__port > svg { width: 32px; height: 32px; }
+.nhe-surface__label { width: 72px; margin-top: 4px; font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); line-height: 1.1; text-transform: uppercase; text-shadow: 0 1px 2px #000; }
+.is-input .nhe-surface__label { margin-left: -12px; }
+.is-output .nhe-surface__label { margin-right: -12px; }
+/* a connected pedal is out of view (its wire isn't drawn): a small white
+   triangle on the side it lies (Figma 208:5831, 13 x 14) */
+.nhe-surface__tri { position: absolute; top: 50%; display: none; width: 0; height: 0; margin-top: -7px; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+.nhe-surface__tri.is-left { left: 0; border-right: 12px solid #fff; }
+.nhe-surface__tri.is-right { right: 0; border-left: 12px solid #fff; }
+.has-arrow .nhe-surface__tri { display: block; }
+/* the icon makes room for the triangle */
+.has-arrow.tri-left .nhe-surface__port > svg { margin-left: 4px; }
+.has-arrow.tri-right .nhe-surface__port > svg { margin-left: -4px; }
+
+/* where a lifted pedal would land */
+.nhe-surface__target { position: absolute; display: none; border: 3px dashed var(--nhe-accent-default); border-radius: var(--nhe-radius-md); pointer-events: none; }
+.nhe-surface__target.is-blocked { border-color: var(--nhe-status-error); }
+
+/* wires: audio, MIDI, CV */
+.nhe-surface__wire { fill: none; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.nhe-surface__wire.is-audio { stroke: #6152f0; }
+.nhe-surface__wire.is-midi { stroke: #d08a2e; }
+.nhe-surface__wire.is-cv { stroke: #2ea7a0; }
+.nhe-surface__wire.is-loose { stroke-dasharray: 2 10; }
+/* a cable's small +: a pedal goes in between */
+.nhe-surface__insert { pointer-events: all; cursor: pointer; }
+.nhe-surface__insert-hit { fill: transparent; }
+.nhe-surface__insert.is-audio .nhe-surface__insert-ring { fill: #6152f0; }
+.nhe-surface__insert.is-midi .nhe-surface__insert-ring { fill: #d08a2e; }
+.nhe-surface__insert.is-cv .nhe-surface__insert-ring { fill: #2ea7a0; }
+.nhe-surface__insert-plus { stroke: #fff; stroke-width: 2.25; stroke-linecap: round; }
+.nhe-surface__insert:hover .nhe-surface__insert-ring { filter: brightness(1.25); }
+.nhe-surface__wire-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; cursor: pointer; }
+
+/* faces: sockets on every jack, a plug on each cable end (drag to rewire,
+   tap for the colour) */
+.nhe-surface__plugs { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.nhe-surface__plug, .nhe-surface__socket { pointer-events: all; cursor: grab; }
+.is-wiring, .is-wiring .nhe-surface__plug, .is-wiring .nhe-surface__socket { cursor: grabbing; }
+.nhe-surface__plug-hit, .nhe-surface__socket-hit { fill: transparent; }
+.nhe-surface__plug-body { stroke: rgba(0, 0, 0, .7); stroke-width: 1.5; }
+.nhe-surface__plug.is-audio .nhe-surface__plug-body { fill: #6152f0; }
+.nhe-surface__plug.is-midi .nhe-surface__plug-body { fill: #d08a2e; }
+.nhe-surface__plug.is-cv .nhe-surface__plug-body { fill: #2ea7a0; }
+.nhe-surface__plug-tip { fill: #c8c8c8; }
+.nhe-surface__plug:hover .nhe-surface__plug-body { stroke: #fff; }
+.nhe-surface__socket-hole { fill: #0b0b0b; stroke: #9a9a9a; stroke-width: 2; }
+.nhe-surface__socket:hover .nhe-surface__socket-hole { stroke: #fff; }
+.nhe-surface__socket-stem { stroke: #fff; stroke-width: 2; }
+.nhe-surface__socket.is-stub .nhe-surface__socket-hole { fill: #fff; stroke: #fff; }
+.nhe-surface__socket.is-stub:hover .nhe-surface__socket-stem { stroke: #fff; }
+/* while a cable is in hand: where it can go */
+.nhe-surface__socket.is-target .nhe-surface__socket-hole { stroke: #fff; stroke-width: 3; }
+.nhe-surface__socket.is-hot .nhe-surface__socket-hole { fill: #fff; }
+.nhe-surface__item.is-port.is-target .nhe-surface__port { box-shadow: inset 0 0 0 2px #fff; }
+
+/* a cable's colour */
+.nhe-surface__colours { position: absolute; z-index: 8; display: grid; grid-template-columns: repeat(6, 32px); gap: 8px; padding: 10px; border-radius: var(--nhe-radius-md); background: #1b1b1b; box-shadow: 0 6px 20px rgba(0, 0, 0, .6); }
+.nhe-surface__swatch { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; }
+.nhe-surface__swatch.is-on { box-shadow: 0 0 0 2px #1b1b1b, 0 0 0 4px #fff; }
+.nhe-surface__unlay { grid-column: 1 / -1; height: 32px; border: 0; border-radius: var(--nhe-radius-md); background: #2c2c2c; color: var(--nhe-text-primary); font-size: var(--nhe-font-size-sm); cursor: pointer; }
+.is-bending, .is-bending * { cursor: move !important; }
+.nhe-surface__swatch.is-auto { background: conic-gradient(#6152f0 0 33%, #d08a2e 0 66%, #2ea7a0 0); }
+
+/* the zoom buttons */
+.nhe-surface__zoom { position: absolute; left: 80px; bottom: 12px; display: flex; flex-direction: row; gap: 6px; z-index: 6; }
+.nhe-surface__zoom button { width: 44px; height: 44px; border: 0; border-radius: var(--nhe-radius-md); background: var(--nhe-surface-sunken); color: var(--nhe-text-primary); font-size: 24px; line-height: 1; cursor: pointer; }

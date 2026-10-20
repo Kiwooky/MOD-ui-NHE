@@ -26,13 +26,8 @@
     .box b { color: var(--nhe-accent-default); font-weight: 600; }
     .box .gone { color: #e07070; text-decoration: line-through; }
     .notes { color: #999; font-size: 13px; padding-left: 18px; margin: 0; }
-    .grid { display: grid; gap: 6px; margin-bottom: 12px; }
-    .cell { height: 54px; border: 0; border-radius: 6px; font: inherit; font-size: 11px; line-height: 1.2; color: inherit; padding: 4px; overflow: hidden; }
-    .cell.pedal { background: #3a2a40; }
-    .cell.port { background: #000; color: #aaa; }
-    .cell.plus { background: #1d1d1d; color: #888; font-size: 22px; cursor: pointer; }
-    .cell.plus:hover { background: #2a2a2a; color: #fff; }
-    .cell.edge { background: none; }
+    .wide { grid-column: 1 / -1; }
+    #surface { height: 66vh; min-height: 420px; border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -42,18 +37,23 @@
     <a href="/playground/addressing.html">Addressing playground</a>
 </header>
 <main>
-    <section>
-        <h2>Pretend pedalboard</h2>
+    <section class="wide">
         <div class="tools">
             <button id="add">+ Add a pedal</button>
             <button id="reset">Start the board again</button>
+            <button id="mode"></button>
         </div>
-        <div class="grid" id="grid"></div>
+        <div id="surface"></div>
+    </section>
+    <section>
+        <h2>Pretend pedalboard</h2>
         <div class="box" id="board"></div>
         <h2 style="margin-top:24px">Notes</h2>
         <ul class="notes">
             <li id="source"></li>
-            <li>Tap a + on the grid: the pedals nearest it come first in Input from and Output to (before the + leads the inputs, after it the outputs). Place puts the new pedal in that cell.</li>
+            <li>The surface: drag to pan, pinch or ctrl-scroll (or the + / − buttons) to zoom, the wheel to scroll. Long-press a pedal to lift it and drop it on a free cell (the wires follow). Tap a pedal: it would open its settings screen.</li>
+            <li>Tap a + on the surface: the pedals nearest it come first in Input from and Output to (before the + leads the inputs, after it the outputs). Place puts the new pedal in that cell.</li>
+            <li>One empty column and row stay at the right and bottom; when a pedal fills them, Expand surface adds another.</li>
             <li>Place adds the pedal and its wires to this pretend board, so the next + can pick it as an input or output.</li>
             <li>For the phone layout, use the browser's phone size: the dialog goes full screen.</li>
         </ul>
@@ -68,20 +68,21 @@
 <script src="/nhe/components/controls/controls.js"></script>
 <script src="/nhe/components/constructor/autowire.js"></script>
 <script src="/nhe/components/constructor/add.js"></script>
+<script src="/nhe/components/constructor/surface.js"></script>
 <script>
 (function () {
     var CAT_ORDER = ['Delay', 'Distortion', 'Dynamics', 'Filter', 'Generator', 'Instrument', 'MIDI', 'Modulator', 'Reverb', 'Simulator', 'Spectral', 'Utility', 'ControlVoltage']
     var LABEL = { ControlVoltage: 'Control Voltage' }
-    var plugins = [], categories = [], board, nextId = 1
-    var COLS = 6, ROWS = 3     // the pretend surface: MOD's ports sit just outside it
+    var plugins = [], categories = [], board, nextId = 1, surface = null
+    var COLS = 0               // MOD's ports sit just outside the surface (their column doesn't matter)
 
     // MOD's ports, on the edges of the surface
     var SYSTEM = [
-        { id: 'in_l', name: 'Audio In (L)', kind: 'input', icon: 'assign', channel: 'L', cell: { col: -1, row: 0 }, ports: { audio: { out: ['capture_1'] } } },
-        { id: 'in_r', name: 'Audio In (R)', kind: 'input', icon: 'assign', channel: 'R', cell: { col: -1, row: 1 }, ports: { audio: { out: ['capture_2'] } } },
+        { id: 'in_l', name: 'Audio In (L)', short: 'In (L)', kind: 'input', icon: 'assign', channel: 'L', cell: { col: -1, row: 0 }, ports: { audio: { out: ['capture_1'] } } },
+        { id: 'in_r', name: 'Audio In (R)', short: 'In (R)', kind: 'input', icon: 'assign', channel: 'R', cell: { col: -1, row: 1 }, ports: { audio: { out: ['capture_2'] } } },
         { id: 'midi_in', name: 'MIDI In', kind: 'input', icon: 'midi', cell: { col: -1, row: 2 }, ports: { midi: { out: ['midi_capture'] } } },
-        { id: 'out_l', name: 'Audio Out (L)', kind: 'output', icon: 'assign', channel: 'L', cell: { col: COLS, row: 0 }, ports: { audio: { in: ['playback_1'] } } },
-        { id: 'out_r', name: 'Audio Out (R)', kind: 'output', icon: 'assign', channel: 'R', cell: { col: COLS, row: 1 }, ports: { audio: { in: ['playback_2'] } } },
+        { id: 'out_l', name: 'Audio Out (L)', short: 'Out (L)', kind: 'output', icon: 'assign', channel: 'L', cell: { col: COLS, row: 0 }, ports: { audio: { in: ['playback_1'] } } },
+        { id: 'out_r', name: 'Audio Out (R)', short: 'Out (R)', kind: 'output', icon: 'assign', channel: 'R', cell: { col: COLS, row: 1 }, ports: { audio: { in: ['playback_2'] } } },
         { id: 'midi_out', name: 'MIDI Out', kind: 'output', icon: 'midi', cell: { col: COLS, row: 2 }, ports: { midi: { in: ['midi_playback'] } } }
     ]
 
@@ -135,13 +136,26 @@
         getJSON('/effect/get?uri=' + encodeURIComponent(plugin.uri), function (d) { if (d) plugin.ports = portsOf(d); done() })
     }
     // a pedal on the board: its ports named instance/symbol
+    // a pedal takes two cells when its picture is 1.8 x wider than tall (or taller than wide)
+    var spanOf = function (plugin, done) {
+        if (plugin.span || !plugin.thumb) { done(); return }
+        var img = new Image()
+        img.onload = function () {
+            var w = img.naturalWidth, h = img.naturalHeight
+            plugin.span = w >= 1.8 * h ? { w: 2, h: 1 } : h >= 1.8 * w ? { w: 1, h: 2 } : { w: 1, h: 1 }
+            done()
+        }
+        img.onerror = function () { done() }
+        img.src = plugin.thumb
+    }
     var pedalNode = function (plugin, instance, cell) {
         var ports = {}
         ;['audio', 'midi', 'cv'].forEach(function (t) {
             var p = plugin.ports[t] || {}
             ports[t] = { in: (p.in || []).map(function (s) { return instance + '/' + s }), out: (p.out || []).map(function (s) { return instance + '/' + s }) }
         })
-        return { id: instance, name: plugin.name, brand: plugin.brand, thumb: plugin.thumb, colour: plugin.colour, kind: 'pedal', ports: ports, cell: cell }
+        var face = /^urn:/.test(plugin.uri) ? null : '/effect/image/screenshot.png?uri=' + encodeURIComponent(plugin.uri)
+        return { id: instance, name: plugin.name, brand: plugin.brand, thumb: plugin.thumb, face: face, colour: plugin.colour, kind: 'pedal', ports: ports, cell: cell, span: plugin.span }
     }
 
     var render = function () {
@@ -162,14 +176,15 @@
         var left = picks.length
         board = { nodes: SYSTEM.slice(), connections: [] }
         if (!left) { render(); done && done(); return }
-        picks.forEach(function (p) { p.favourite = true; loadPorts(p, function () { if (--left === 0) build(picks, done) }) })
+        picks.forEach(function (p) { p.favourite = true; loadPorts(p, function () { spanOf(p, function () { if (--left === 0) build(picks, done) }) }) })
     }
     // a chain like the Figma mock-up: In L -> each pedal in turn -> Out L / R
     var build = function (picks, done) {
-        var prev = [SYSTEM[0]]
-        picks.forEach(function (p, i) {
+        var prev = [SYSTEM[0]], col = 0
+        picks.forEach(function (p) {
             if (!p.ports) return
-            var node = pedalNode(p, '/graph/' + p.name.toLowerCase().replace(/[^a-z0-9]+/g, '_'), { col: i, row: 0 })
+            var node = pedalNode(p, '/graph/' + p.name.toLowerCase().replace(/[^a-z0-9]+/g, '_'), { col: col, row: 0 })
+            col += (p.span && p.span.w) || 1
             board.nodes.push(node)
             var plan = NHE.autowire.plan(node, prev, [], [])
             board.connections = board.connections.concat(plan.connect)
@@ -196,7 +211,7 @@
 
     var setup = function (list) {
         if (list && list.length) {
-            plugins = list.map(function (p) { return { uri: p.uri, name: p.name, brand: p.brand, categories: p.category || [], thumb: thumbUrl(p.uri) } })
+            plugins = list.map(function (p) { return { uri: p.uri, name: p.name, brand: p.brand, categories: p.category || [], thumb: thumbUrl(p.uri), iotype: p.iotype } })
             document.getElementById('source').textContent = 'Pedals: the ' + plugins.length + ' installed in MOD Desktop, with their thumbnails; ports are fetched when a pedal is picked.'
         } else {
             fallback()
@@ -208,42 +223,49 @@
         start()
     }
 
-    var at = function (col, row) { return board.nodes.filter(function (n) { return n.cell && n.cell.col === col && n.cell.row === row })[0] }
-    var freeCell = function () {
-        for (var r = 0; r < ROWS; r++) for (var c = 0; c < COLS; c++) if (!at(c, r)) return { col: c, row: r }
-        return { col: COLS - 1, row: ROWS - 1 }
+    // the nearest cell to 'want' where the pedal fits (a two-cell pedal may not fit at the + itself)
+    var fitCell = function (node, want) {
+        want = want || { col: 0, row: 0 }
+        for (var d = 0; d < 40; d++) for (var r = Math.max(0, want.row - d); r <= want.row + d; r++) for (var c = Math.max(0, want.col - d); c <= want.col + d; c++) {
+            if (Math.max(Math.abs(c - want.col), Math.abs(r - want.row)) !== d) continue
+            if (surface.fits(node, c, r)) return { col: c, row: r }
+        }
+        return want
     }
 
-    // the surface: MOD's ports on the edges, pedals in their cells, + on the empty ones
+    // the surface: MOD's ports on the edges, pedals in their cells, + on the free ones
     var renderGrid = function () {
-        var g = document.getElementById('grid')
-        g.innerHTML = ''
-        g.style.gridTemplateColumns = 'repeat(' + (COLS + 2) + ', minmax(0, 1fr))'
-        for (var r = 0; r < ROWS; r++) for (var c = -1; c <= COLS; c++) (function (c, r) {
-            var n = at(c, r), cell = document.createElement('button')
-            cell.type = 'button'
-            if (n) {
-                cell.className = 'cell ' + (n.kind === 'pedal' ? 'pedal' : 'port')
-                cell.textContent = n.name
-                cell.disabled = true
-            } else if (c >= 0 && c < COLS) {
-                cell.className = 'cell plus'
-                cell.textContent = '+'
-                cell.title = 'Add a pedal here (column ' + (c + 1) + ', row ' + (r + 1) + ')'
-                cell.addEventListener('click', function () { open({ col: c, row: r }) })
-            } else { cell.className = 'cell edge'; cell.disabled = true }
-            g.appendChild(cell)
-        })(c, r)
+        if (!surface) {
+            surface = new NHE.Surface(document.getElementById('surface'), {
+                nodes: board.nodes, connections: board.connections, faces: faces,
+                onAdd: function (cell) { open(cell) },
+                // a cable's +: its two ends ticked, only pedals that fit in it
+                onInsert: function (r) { open(r.cell, { inputs: [r.from.id], outputs: [r.to.id], only: r.kind }) },
+                onTap: function (node) { log2('tap', node.name + ': would open its settings screen') },
+                wireColours: {},
+                wireRoutes: {},
+                onRoute: function (c, pts) { log2('route', c.join(' → ') + (pts ? ': laid by hand, ' + (pts.length - 2) + ' corners' : ': automatic again')) },
+                onWire: function (old, neu) { log2('wire', (old ? old.join(' → ') + ' out' : '') + (old && neu ? ', ' : '') + (neu ? neu.join(' → ') + ' in' : '')); render() },
+                onColour: function (c, colour) { log2('colour', c.join(' → ') + ': ' + (colour || 'by its type')) },
+                onFocus: function (node) { log2('tap', node.name + ': zoomed to full size (on MOD its controls play here)') },
+                onMove: function (node, cell) { log2('moved', node.name + ' to column ' + (cell.col + 1) + ', row ' + (cell.row + 1) + ' (wiring kept)') },
+                onResize: function (cols, rows) { log2('surface', cols + ' columns × ' + rows + ' rows') }
+            })
+        } else surface.update({ nodes: board.nodes, connections: board.connections })
+        if (showMode) showMode()
     }
 
-    var open = function (near) {
-        NHE.AddPedalDialog({
+    var open = function (near, extra) {
+        NHE.AddPedalDialog(Object.assign({
             near: near && near.col !== undefined ? near : null,
             categories: categories, plugins: plugins, nodes: board.nodes, connections: board.connections, loadPorts: loadPorts, loadInfo: loadInfo, onFavourite: function (p, on) { log2('favourite', p.name + (on ? ' on' : ' off')) },
-            onPlace: function (r) {
+            onPlace: function (r) { spanOf(r.plugin, function () { placed(r) }) }
+        }, extra || {}))
+        var placed = function (r) {
                 var instance = '/graph/' + r.plugin.name.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + (nextId++)
                 var fix = function (p) { return p.replace(NHE.AddPedalDialog.NEW, instance) }
-                var node = pedalNode(r.plugin, instance, near && near.col !== undefined ? near : freeCell())
+                var node = pedalNode(r.plugin, instance, null)
+                node.cell = fitCell(node, near && near.col !== undefined ? near : null)
                 var gone = JSON.stringify(r.plan.disconnect)
                 board.connections = board.connections.filter(function (c) { return gone.indexOf(JSON.stringify(c)) < 0 })
                 board.connections = board.connections.concat(r.plan.connect.map(function (c) { return [fix(c[0]), fix(c[1])] }))
@@ -256,13 +278,32 @@
                     '<div><b>Output to</b> ' + (r.outputs.map(name).join(', ') || 'nothing') + '</div>' +
                     '<div><b>Connects</b></div>' + r.plan.connect.map(function (c) { return '<div>  ' + fix(c[0]) + '  →  ' + fix(c[1]) + '</div>' }).join('') +
                     (r.plan.disconnect.length ? '<div><b>Removes</b></div>' + r.plan.disconnect.map(function (c) { return '<div class="gone">  ' + c[0] + '  →  ' + c[1] + '</div>' }).join('') : '')
-            }
-        })
+        }
     }
 
     var log2 = function (what, text) { document.getElementById('log').innerHTML = '<div><b>' + what + '</b> ' + text + '</div>' }
     document.getElementById('add').addEventListener('click', open)
-    document.getElementById('reset').addEventListener('click', function () { nextId = 1; start(); document.getElementById('log').innerHTML = '' })
+    document.getElementById('reset').addEventListener('click', function () { nextId = 1; if (surface) surface.cols = surface.rows = 0; start(); document.getElementById('log').innerHTML = '' })
+    // which version: ?faces=1 (desktop / large tablet) or ?faces=0 (phone);
+    // by default the surface decides from the screen's size
+    var m = /[?&]faces=([01])/.exec(location.search)
+    var faces = m ? m[1] === '1' : undefined
+    var modeBtn = document.getElementById('mode')
+    var showMode = function () {
+        var on = surface ? surface.faces : faces
+        modeBtn.textContent = on ? 'Show the phone version' : 'Show the large screen version'
+    }
+    modeBtn.addEventListener('click', function () {
+        faces = !(surface ? surface.faces : faces)
+        history.replaceState(null, '', '?faces=' + (faces ? 1 : 0))
+        // a fresh element: the old surface's listeners stay on the old one
+        var old = document.getElementById('surface'), fresh = old.cloneNode(false)
+        old.parentNode.replaceChild(fresh, old)
+        surface = null
+        renderGrid()
+        showMode()
+    })
+    showMode()
     getJSON('/effect/list', setup)
 })()
 </script>

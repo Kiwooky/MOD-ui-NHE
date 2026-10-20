@@ -9,7 +9,9 @@
  *
  *   NHE.AddPedalDialog({
  *       categories: [{ id, label }],          // the tabs after Favourites and All
- *       plugins: [{ uri, name, brand, categories: [id], favourite, thumb, ports }],
+ *       plugins: [{ uri, name, brand, categories: [id], favourite, thumb, ports,
+ *                   iotype }],                // MOD's kPluginIO*: 1 mono, 2 stereo audio,
+ *                                             // 3 instrument, 4 MIDI, 0 other (see `only`)
  *       loadPorts: fn(plugin, done),          // when a plugin comes without ports:
  *                                             // fill plugin.ports, then call done()
  *       loadInfo: fn(plugin, done),           // for the info page: fill plugin.info
@@ -25,6 +27,9 @@
  *       near: { col, row },                   // the + that was tapped: the nodes
  *                                             // nearest it come first on the sides
  *       connections: [[fromPort, toPort]],
+ *       inputs: [nodeId], outputs: [nodeId],  // ticked to start with (a cable's +)
+ *       only: 'audio' | 'midi' | 'cv',        // only pedals with an input and an output
+ *                                             // of that kind (a cable's +: they fit in it)
  *       onPlace: fn({ plugin, inputs: [nodeId], outputs: [nodeId], plan }),
  *       onCancel: fn()
  *   })
@@ -59,6 +64,10 @@
         this.plugin = null
         this.inputs = {}
         this.outputs = {}
+        ;(this.o.inputs || []).forEach(function (id) { self.inputs[id] = true })
+        ;(this.o.outputs || []).forEach(function (id) { self.outputs[id] = true })
+        // inserting into a cable: all pedals that fit, unless favourites have some
+        if (this.o.only && !this.o.plugins.some(function (p) { return p.favourite && self.fits(p) })) this.tab = 'all'
 
         var full = NHE.zoom && NHE.zoom() > 1
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay nhe-add-overlay' + (full ? ' is-full' : ''), document.body)
@@ -125,7 +134,40 @@
         this.renderTabs()
         this.renderResults()
         this.renderSides()
+        this.learn()
         setTimeout(function () { d.focus() }, 0)
+    }
+
+    // does a pedal fit `only` (an input and an output of that kind)? From
+    // its ports, else MOD's iotype; null: not known yet (learn() asks)
+    var IO = { 1: ['audio'], 2: ['audio'], 3: [], 4: ['midi'] }
+    Dialog.prototype.fits = function (p) {
+        var k = this.o.only
+        if (!k) return true
+        if (p.ports) return !!((p.ports[k] || {}).in || []).length && !!((p.ports[k] || {}).out || []).length
+        if (IO[p.iotype]) return IO[p.iotype].indexOf(k) >= 0
+        return null
+    }
+
+    // the pedals whose fit isn't known: their ports, a few at a time; the
+    // lists fill in as they arrive
+    Dialog.prototype.learn = function () {
+        var self = this
+        if (!this.o.only || typeof this.o.loadPorts !== 'function') return
+        var queue = this.o.plugins.filter(function (p) { return self.fits(p) === null }), busy = 0, timer = null
+        var refresh = function () {
+            if (timer || !self.overlay) return
+            timer = setTimeout(function () { timer = null; if (self.overlay) { self.renderTabs(); self.renderResults() } }, 150)
+        }
+        var next = function () {
+            if (!self.overlay) return
+            while (busy < 6 && queue.length) {
+                var p = queue.shift()
+                busy++
+                self.o.loadPorts(p, function () { busy--; refresh(); next() })
+            }
+        }
+        next()
     }
 
     var count = function (plugins, fn) { return plugins.filter(fn).length }
@@ -141,7 +183,7 @@
         box.innerHTML = ''
         var tabs = [{ id: 'favourites', label: 'Favourites' }, { id: 'all', label: 'All' }].concat(o.categories)
         tabs.forEach(function (t) {
-            var all = count(o.plugins, function (p) { var keep = self.tab; self.tab = t.id; var r = self.inTab(p); self.tab = keep; return r })
+            var all = count(o.plugins, function (p) { var keep = self.tab; self.tab = t.id; var r = self.inTab(p) && self.fits(p) === true; self.tab = keep; return r })
             if (!all && t.id !== 'favourites' && t.id !== 'all') return
             var b = el('button', 'nhe-add__tab' + (t.id === self.tab ? ' is-active' : ''), box)
             b.type = 'button'
@@ -154,6 +196,7 @@
     Dialog.prototype.matches = function () {
         var self = this, q = this.query.toLowerCase().replace(/^\s+|\s+$/g, '')
         return this.o.plugins.filter(function (p) {
+            if (self.fits(p) !== true) return false
             // a search looks through every pedal, not just the tab
             if (q) return (p.name + ' ' + (p.brand || '')).toLowerCase().indexOf(q) >= 0
             return self.inTab(p)
@@ -252,8 +295,16 @@
         var self = this, n = this.n, node = this.plugin && asNode(this.plugin)
         var side = function (c, kind, picked, test) {
             c.list.innerHTML = ''
-            c.col.classList.toggle('is-waiting', !node)
-            if (!node) { el('div', 'nhe-add__empty', c.list).textContent = 'Pick a pedal first.'; return }
+            c.col.classList.toggle('is-waiting', !node && !Object.keys(picked).length)
+            if (!node) {
+                // ticked to start with (a cable's +): shown already, the rest once a pedal is picked
+                Object.keys(picked).forEach(function (id) {
+                    var x = self.node(id)
+                    if (x) card(c.list, x, true, function () { delete picked[id]; self.renderSides() }, 'tick')
+                })
+                el('div', 'nhe-add__empty', c.list).textContent = Object.keys(picked).length ? 'Pick a pedal for more.' : 'Pick a pedal first.'
+                return
+            }
             var any = false
             // the Input from column lists sources (their outs), Output to targets (their ins)
             self.sorted(kind === 'output' ? 'out' : 'in').forEach(function (x) {
