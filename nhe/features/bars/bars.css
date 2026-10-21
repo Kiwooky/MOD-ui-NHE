@@ -262,7 +262,7 @@
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel__item svg { width: 26px; height: 26px; flex: none; }
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel__item svg .nhe-icon-fill { display: none; }
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel__item:hover { background: rgba(255, 255, 255, .08); }
-:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-selected, :is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-alert { color: #ff8d28; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-alert { color: #ff8d28; }
 
 /* CPU / RAM, and xruns: as tall as the bar (45px) */
 :is(#pedalboard-actions, #main-menu) .nhe-meters { display: flex; align-items: center; gap: 8px; height: 45px; padding: 0 6px 0 12px; border-radius: 9999px; background: rgba(0, 0, 0, .3); }
@@ -288,3 +288,90 @@
 
 /* the new name (Save as) */
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel__field { width: 100%; height: 40px; margin-top: var(--nhe-space-4); text-transform: uppercase; }
+
+/* ---- a phone held upright (is-phone, index.js layout) ------------------------ */
+
+/* the design's 390 px across the screen: CSS zoom (sharp text); its sizes below
+   are the design's. Figma "Default builder", "Main menu", "Save pedalboard" */
+:is(#pedalboard-actions, #main-menu) .nhe-menus.is-phone {
+    zoom: var(--nhe-bar-zoom, 1);
+    padding-left: 16px;
+    padding-right: 16px;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-topbar.is-phone { height: 64px; gap: 16px; }
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-topbar__logo { width: 40px; height: 40px; }
+/* only the camera stays up here: New and Save are in the bottom bar, Share in the Menu */
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-topbar__actions > :not(.nhe-topbar__snap) { display: none !important; }
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-topbar__snap svg { width: 32px; height: 32px; }
+
+/* the bottom bar: five items with labels instead of its own groups */
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar { display: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar.is-phone { height: 62px; justify-content: center; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar.is-phone > .nhe-bottombar__nav,
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar.is-phone > .nhe-bottombar__right { display: none; }
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-phonebar { display: flex; align-items: flex-start; gap: 24px; padding: 4px 0 0; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    height: auto;
+    min-width: 44px;
+    padding: 0 4px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: var(--nhe-font-weight-semibold);
+    line-height: 17px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__item svg { width: 32px; height: 32px; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__item:hover { background: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__item:last-child.is-modified::after { right: 6px; top: 0; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__meters svg { width: 28px; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__meters b { font-weight: inherit; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__meters .is-cpu { color: #a5c800; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__meters .is-ram { color: #40c9ff; }
+/* bpm: lower case, as the design */
+:is(#pedalboard-actions, #main-menu) .nhe-phonebar__item:nth-child(4) { text-transform: none; }
+
+/* the Save and Snapshots panels: the screen's width, the design's sizes */
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-menupanel {
+    left: 0;
+    right: 0;
+    width: auto;
+    gap: 8px;
+    padding: 16px 32px;
+    border-radius: 0;
+    font-size: 16px;
+}
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-menupanel__choice { height: 48px; font-size: 16px; gap: 16px; }
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-menupanel__choice svg { width: 32px; height: 32px; }
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-menupanel__radio { width: 28px; height: 28px; }
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-menupanel__buttons .nhe-text-button { height: 44px; font-size: 16px; }
+:is(#pedalboard-actions, #main-menu) .is-phone .nhe-menupanel__field { height: 44px; }
+
+/* the Menu: down from the top bar to the bottom one, × at its top right */
+:is(#pedalboard-actions, #main-menu) .nhe-phonemenu {
+    position: fixed;
+    top: 64px;
+    bottom: 62px;
+    left: 0;
+    right: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 8px 32px 16px;
+    background: #212121;
+    touch-action: none;                   /* NHE.dragScroll scrolls it */
+}
+:is(#pedalboard-actions, #main-menu) .nhe-phonemenu__close { display: flex; margin: 0 -16px 8px auto; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonemenu__close svg { width: 32px; height: 32px; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonemenu__rows { display: flex; flex-direction: column; gap: 8px; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonemenu .nhe-menupanel__item { height: 40px; gap: 16px; font-size: 16px; }
+:is(#pedalboard-actions, #main-menu) .nhe-phonemenu .nhe-menupanel__item svg { width: 32px; height: 32px; }
+/* the current screen: its icon lit (orange outline, white fill), the label white */
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-selected { color: #fff; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-selected svg .nhe-icon-fill { display: inline; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-selected svg .nhe-icon-edge { fill: #f68c2f; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-selected svg:not(:has(.nhe-icon-fill)) { color: #ff8d28; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-greyed { opacity: .45; }

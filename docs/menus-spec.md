@@ -4,7 +4,7 @@ NHE's top and bottom bars for MOD's page, phone and desktop / tablet.
 Figma: section "Touch friendly constructor menus" (`201:2996`): seven phone
 screens (390 × 844) and six desktop / tablet screens (2321 × 1433).
 
-Status: desktop / tablet bars built (first step); the phone's to come.
+Status: desktop / tablet bars and the phone's (held upright) built.
 
 ## What the designs show
 
@@ -126,3 +126,23 @@ items click them). 45 px tall, as MOD's.
   MIDI clock (as in MOD).
 - Still to do here: MOD's Library, Banks, File manager and Store windows
   cover the top bar (the designs keep it).
+
+## Built: the phone (held upright)
+
+When `NHE.zoom() > 1` (MOD's page shrunk onto an upright phone) both bars
+take `is-phone`: drawn at the design's 390 px across the screen (CSS zoom,
+`--nhe-bar-zoom`), 64 px top and 62 px bottom in the design's px. NHE's
+builder keeps clear of them (`--nhe-bars-top` / `--nhe-bars-bottom`).
+
+- **Top:** logo, name and snapshot, the camera (Snapshots panel, full width).
+- **Bottom:** New, the meters (CPU and RAM as two coloured numbers), Menu,
+  Play / Stop with the tempo under it, Save (its panel opens up from the
+  bar, full width; the orange dot for unsaved changes).
+- **Menu:** a list from the top bar down to the bottom one (× closes it):
+  Constructor, Plug-in store, Library, Banks, File manager, Manage CV ports,
+  Global tempo & sync, Performance view, Share your setup, Report a
+  problem, and on a device MIDI ports, Bypass 1 / 2, Devices, System
+  settings and the update state. The current screen's icon is lit; MOD
+  Desktop's locked screens greyed.
+- Held sideways (zoom 1) a phone gets the desktop / tablet bars.
+

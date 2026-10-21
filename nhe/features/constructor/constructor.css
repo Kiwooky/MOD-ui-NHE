@@ -5,8 +5,10 @@
    the performance view (z-index 6) uses, just under it */
 #nhe-constructor {
     position: absolute;
-    top: 45px;     /* below #pedalboard-actions */
-    bottom: 45px;  /* above #main-menu */
+    /* below #pedalboard-actions, above #main-menu; NHE's phone bars are
+       taller (features/bars: --nhe-bars-top / -bottom) */
+    top: var(--nhe-bars-top, 45px);
+    bottom: var(--nhe-bars-bottom, 45px);
     left: 0;
     right: 0;
     z-index: 5;    /* over MOD's canvas and plugin bar */
