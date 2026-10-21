@@ -54,29 +54,51 @@ NHE.register('bars', function (mod) {
         button.addClass('is-open')
         panel = $('<div class="nhe-menupanel" role="dialog">').attr('aria-label', button.attr('title')).appendTo(top)
         var pick = 0
+        // a choice with `ask` (Save as) shows a field for the new name under the
+        // choices; left empty, it takes the suggestion shown in it
+        var field = $('<input type="text" class="nhe-dialog__input nhe-menupanel__field" autocomplete="off" spellcheck="false">')
         var rows = choices.map(function (c, i) {
             var r = $('<button type="button" class="nhe-menupanel__choice">').html('<span class="nhe-menupanel__radio"></span>' + (c.icon || '') + '<span class="nhe-menupanel__label"></span>').appendTo(panel)
             r.find('.nhe-menupanel__label').text(c.label)
             if (c.note) $('<span class="nhe-menupanel__note">').text(c.note).appendTo(r)
-            r.on('click', function () { pick = i; rows.forEach(function (x, j) { x.toggleClass('is-on', j === i) }) })
+            r.on('click', function () { choose(i) })
             return r
         })
-        rows[0].addClass('is-on')
+        field.appendTo(panel).attr('aria-label', 'Name')
+        var choose = function (i) {
+            pick = i
+            rows.forEach(function (x, j) { x.toggleClass('is-on', j === i) })
+            var ask = choices[i].ask
+            field.toggle(!!ask)
+            if (ask) { field.val('').attr('placeholder', ask()); setTimeout(function () { field[0].focus() }, 0) }
+        }
+        var save = function () {
+            var c = choices[pick], name = c.ask ? $.trim(field.val()) || $.trim(field.attr('placeholder') || '') : null
+            if (c.ask && !name) return
+            closePanel()
+            c.run(name)
+        }
+        field.on('keydown', function (e) {
+            e.stopPropagation()               // MOD listens for keys on the page
+            if (e.key === 'Enter') { e.preventDefault(); save() }
+            if (e.key === 'Escape') { e.preventDefault(); closePanel() }
+        }).on('keyup keypress', function (e) { e.stopPropagation() })
         var foot = $('<div class="nhe-menupanel__buttons">').appendTo(panel)
         foot.append(NHE.textButton('Cancel', 'secondary', closePanel))
-        foot.append(NHE.textButton('Save', 'primary', function () { var c = choices[pick]; closePanel(); c.run() }))
+        foot.append(NHE.textButton('Save', 'primary', save))
+        choose(0)
         if (extra) extra(panel)
     }
     bSave.on('click', function () {
         openPanel('save', bSave, [
             { icon: I.save, label: 'Save', note: mod.boardName(), run: function () { mod.menuAction('save') } },
-            { icon: I.saveAs, label: 'Save as', run: function () { mod.menuAction('saveAs') } }
+            { icon: I.saveAs, label: 'Save as', ask: function () { return mod.boardTitle() || 'Pedalboard' }, run: function (name) { mod.saveBoardAs(name) } }
         ])
     })
     bSnap.on('click', function () {
         openPanel('snapshots', bSnap, [
             { icon: I.save, label: 'Save snapshot', run: function () { mod.menuAction('snapshotSave') } },
-            { icon: I.saveAs, label: 'Save snapshot as', run: function () { mod.menuAction('snapshotSaveAs') } }
+            { icon: I.saveAs, label: 'Save snapshot as', ask: function () { return mod.snapshotName() || 'Snapshot' }, run: function (name) { mod.saveSnapshotAs(name) } }
         ], function (p) {
             $('<button type="button" class="nhe-menupanel__link">').text('Load / manage snapshots').appendTo(p)
                 .on('click', function () { closePanel(); mod.menuAction('snapshotManage') })

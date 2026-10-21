@@ -105,15 +105,11 @@ items click them). 45 px tall, as MOD's.
 
 - **Top:** MOD's logo, the board's name and snapshot, New (with its label),
   Snapshots, Save (an orange dot while there are unsaved changes), Share
-  (when MOD offers it). Save and Snapshots drop a panel down: Save / Save
-  as (MOD's own name window for a new name), Save snapshot / Save snapshot
-  as, and Load / manage snapshots (MOD's window). Snapshot chips under the
-  bar when the board has more than one; a tap loads it.
+  (when MOD offers it). Save and Snapshots drop a panel down: Save / Save as, Save snapshot / Save snapshot as; picking an *as* shows a field for the new name (the current one suggested), and NHE answers MOD's own name window with it, so MOD saves as usual. Load / manage snapshots opens MOD's window.
 - **Bottom:** Constructor, Library, Banks, File manager, Store (the current
   one orange with its name; MOD Desktop's locked ones greyed), then on the
   right the device-only items when MOD shows them, the CPU / RAM meters
   and xruns, tempo, Play / Stop, CV ports, Performance view, Report a
   problem.
 - Still to do here: MOD's Library, Banks, File manager and Store windows
-  cover the top bar (the designs keep it), and the snapshot chips haven't
-  been tried with a board that has several snapshots.
+  cover the top bar (the designs keep it).

@@ -915,6 +915,40 @@
         } else if (!on && style) style.parentNode.removeChild(style)
     }
 
+    // Save as with a name given in NHE (the bars' panels), through MOD's own
+    // path: the button is clicked as usual, and the window MOD would open
+    // for the name is answered at once instead.
+    // The board: Save as calls desktop.saveCurrentPedalboard(true), which
+    // asks desktop.saveBox.saveBox('save', …, asNew, callback) (desktop.js
+    // JqueryClass 'saveBox'); NHE fills its input and sends it ('send'),
+    // so MOD's checks, saving and notices run unchanged.
+    mod.saveBoardAs = function (name) {
+        var box = window.desktop && desktop.saveBox
+        if (!box || !box.saveBox) { mod.menuAction('saveAs'); return }
+        var own = Object.prototype.hasOwnProperty.call(box, 'saveBox'), orig = box.saveBox
+        var restore = function () { if (own) box.saveBox = orig; else delete box.saveBox }
+        box.saveBox = function (method, windowTitle, current, asNew, callback) {
+            if (method !== 'save') return orig.apply(this, arguments)
+            restore()
+            box.find('input').val(name)
+            box.data('asNew', asNew)
+            box.data('callback', callback)
+            return orig.call(box, 'send')
+        }
+        try { mod.menuAction('saveAs') } finally { restore() }
+    }
+    // a snapshot: Save snapshot as asks desktop.openPresetSaveWindow(title,
+    // name, callback) for the name; that is answered with NHE's
+    mod.saveSnapshotAs = function (name) {
+        if (!window.desktop) return
+        var own = Object.prototype.hasOwnProperty.call(desktop, 'openPresetSaveWindow'), orig = desktop.openPresetSaveWindow
+        var restore = function () { if (own) desktop.openPresetSaveWindow = orig; else delete desktop.openPresetSaveWindow }
+        desktop.openPresetSaveWindow = function (title, current, callback) { restore(); callback(name) }
+        try { mod.menuAction('snapshotSaveAs') } finally { restore() }
+    }
+    // the snapshot's name now (desktop.pedalboardPresetName); the board's: mod.boardTitle
+    mod.snapshotName = function () { return (window.desktop && desktop.pedalboardPresetName) || '' }
+
     // MOD's logo, as its top bar shows it (#pedalboard-actions' background)
     mod.logoUrl = function () { return '/img/icons/36/mod.png' }
 
@@ -945,13 +979,17 @@
     }
     mod.onSnapshots = function (cb) {
         var socket = window.ws, timer = null
-        if (!socket || !socket.addEventListener) return
-        socket.addEventListener('message', function (evt) {
-            var cmd = String(evt.data).split(' ', 1)[0]
-            if (cmd !== 'pedal_snapshot' && cmd !== 'loading_end') return
-            clearTimeout(timer)
-            timer = setTimeout(cb, 120)
-        })
+        var later = function () { clearTimeout(timer); timer = setTimeout(cb, 120) }
+        if (socket && socket.addEventListener) {
+            socket.addEventListener('message', function (evt) {
+                var cmd = String(evt.data).split(' ', 1)[0]
+                if (cmd === 'pedal_snapshot' || cmd === 'loading_end') later()
+            })
+        }
+        // renames and deletes in MOD's snapshot window (snapshot.js) send
+        // nothing over the websocket: look again when that window closes
+        var win = document.getElementById('pedal-presets-window')
+        if (win && window.MutationObserver) new MutationObserver(function () { if (!$(win).is(':visible')) later() }).observe(win, { attributes: true, attributeFilter: ['style', 'class'] })
     }
 
     // the transport: rolling (desktop.transportControls' :rolling port), and

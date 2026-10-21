@@ -186,3 +186,6 @@
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button--secondary { background-color: transparent; border-color: var(--nhe-text-primary, #fff); }
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button:hover { background-color: rgba(255, 255, 255, .1); }
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button--primary:hover { background-color: var(--nhe-accent-default, #883996); background-image: linear-gradient(rgba(255, 255, 255, .12), rgba(255, 255, 255, .12)); }
+
+/* the new name (Save as) */
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__field { width: 100%; height: 40px; margin-top: var(--nhe-space-4); text-transform: uppercase; }
