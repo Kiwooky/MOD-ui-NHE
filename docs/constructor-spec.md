@@ -52,6 +52,15 @@ Status: being worked out with Niels; open points are marked **Open**.
   control. **Phone:** no hand wiring (a finger isn't precise enough); the
   + dialog and the settings screen do it.
 
+### Manage CV ports
+
+- While MOD's Manage CV ports is on (the bottom bar's menu), each pedal's
+  CV output gets a tick beside its jack, and its name once ticked, as on
+  MOD's builder: ticked, it's a CV source controls can be assigned to.
+  NHE sets MOD's own (hidden) tick and name field, so MOD registers it.
+- Faces only (cards draw no jacks); the device's own CV inputs, always
+  sources, get no tag.
+
 ## The + dialog
 
 Full screen on a phone; the bottom menu bar gives way to **Cancel** and

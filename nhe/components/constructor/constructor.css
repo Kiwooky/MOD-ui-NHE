@@ -496,3 +496,36 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 /* the zoom buttons */
 .nhe-surface__zoom { position: absolute; left: 80px; bottom: 12px; display: flex; flex-direction: row; gap: 6px; z-index: 6; }
 .nhe-surface__zoom button { width: 44px; height: 44px; border: 0; border-radius: var(--nhe-radius-md); background: var(--nhe-surface-sunken); color: var(--nhe-text-primary); font-size: 24px; line-height: 1; cursor: pointer; }
+
+/* Manage CV ports (surface.js renderCvTags): a tick beside each CV output,
+   its name once ticked, as on MOD's builder */
+.nhe-surface__cvtags { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.nhe-surface__cvtag {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    transform-origin: 0 50%;
+    border-radius: var(--nhe-radius-md);
+    background: rgba(0, 0, 0, .75);
+    color: #fff;
+    white-space: nowrap;
+    pointer-events: auto;
+    z-index: 2;
+}
+.nhe-surface__cvtag-tick { width: 18px; height: 18px; margin: 0; accent-color: var(--nhe-accent-default, #883996); cursor: pointer; }
+.nhe-surface__cvtag-name {
+    display: none;
+    width: 150px;
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, .4);
+    border-radius: 4px;
+    background: #000;
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+}
+.nhe-surface__cvtag.is-on .nhe-surface__cvtag-name { display: block; }
+.nhe-surface__cvtag-name:focus { outline: none; border-color: var(--nhe-accent-default, #883996); }

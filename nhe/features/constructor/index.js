@@ -132,8 +132,10 @@ NHE.register('constructor', function (mod) {
         if (mod.boardLoading() || busy() || unstyled) { clearTimeout(retry); retry = setTimeout(refresh, 250); return }
         read()
         if (!surface) create()
-        else surface.update({ nodes: nodes, connections: connections, wireColours: cache.colours, wireRoutes: cache.routes })
+        else surface.update({ nodes: nodes, connections: connections, wireColours: cache.colours, wireRoutes: cache.routes, cvOutputs: cvOutputs() })
     }
+    // MOD's Manage CV ports: on, the CV outputs' ticks and names
+    var cvOutputs = function () { return mod.cvManaging() ? mod.cvOutputs() : null }
 
     // ---- the surface --------------------------------------------------------
 
@@ -142,7 +144,12 @@ NHE.register('constructor', function (mod) {
         host = $('<div class="nhe-constructor__surface"><div></div></div>').prependTo(view)
         surface = new NHE.Surface(host.children()[0], {
             nodes: nodes, connections: connections, cols: cache.cols, rows: cache.rows,
-            wireColours: cache.colours, wireRoutes: cache.routes,
+            wireColours: cache.colours, wireRoutes: cache.routes, cvOutputs: cvOutputs(),
+            // MOD's own handlers register the port; the tags follow its state again
+            onCvOutput: function (port, on, name) {
+                mod.setCvOutput(port, on, name)
+                setTimeout(function () { if (surface) surface.update({ cvOutputs: cvOutputs() }) }, 400)
+            },
             onAdd: function (cell) { openAdd(cell) },
             // MOD's "No interface available" picture: the plain can instead
             onFaceLoad: function (img) { mod.cleanPicture(img) },
@@ -366,6 +373,8 @@ NHE.register('constructor', function (mod) {
         }
         if (shown()) refresh()
     })
+    // MOD's Manage CV ports switched on or off: the tags come or go
+    mod.onCvManaging(function () { if (surface) surface.update({ cvOutputs: cvOutputs() }) })
     // a board loaded before NHE started (or while it was MOD's builder)
     // gets its own origin when first shown
     cache = boardCache()

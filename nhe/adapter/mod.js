@@ -1078,6 +1078,40 @@
         if (win && window.MutationObserver) new MutationObserver(function () { if (!$(win).is(':visible')) later() }).observe(win, { attributes: true, attributeFilter: ['style', 'class'] })
     }
 
+    // Manage CV ports (the top bar's CV button; desktop.cvAddressing): which
+    // CV outputs are offered as CV sources to assign controls to. MOD puts a
+    // checkbox and a name field (.output-cv-checkbox) under every CV output
+    // jack it draws ([mod-role=output-cv-port], pedalboard.js) and shows
+    // them while the mode is on; NHE reads and sets those, so MOD's own
+    // change handlers register the port (/pedalboard/cv_addressing_plugin_port/
+    // add | remove, hardwareManager.addCvOutputPort). Hardware CV inputs
+    // there are ticked and disabled.
+    mod.cvManaging = function () { return !!(window.desktop && desktop.cvAddressing) }
+    mod.onCvManaging = function (cb) {
+        var b = barEl('cv')[0]
+        if (b && window.MutationObserver) new MutationObserver(function () { cb(mod.cvManaging()) }).observe(b, { attributes: true, attributeFilter: ['class'] })
+    }
+    var cvBox = function (port) {
+        return mod.pedalboard().find('[mod-role=output-cv-port]').filter(function () { return $(this).attr('mod-port') === port }).find('.output-cv-checkbox').first()
+    }
+    // { port: { on, name, fixed } }
+    mod.cvOutputs = function () {
+        var out = {}
+        mod.pedalboard().find('[mod-role=output-cv-port]').each(function () {
+            var box = $(this).find('.output-cv-checkbox').first(), tick = box.find('input[type=checkbox]')
+            if (!box.length) return
+            out[$(this).attr('mod-port')] = { on: tick.prop('checked'), name: box.find('input[type=text]').val() || '', fixed: tick.prop('disabled') }
+        })
+        return out
+    }
+    mod.setCvOutput = function (port, on, name) {
+        var box = cvBox(port), tick = box.find('input[type=checkbox]'), text = box.find('input[type=text]')
+        if (!box.length || tick.prop('disabled')) return
+        if (name) text.val(name)
+        if (tick.prop('checked') !== !!on) tick.prop('checked', !!on).change()   // registers or drops it (with the name)
+        else if (on) text.change()                                              // a new name
+    }
+
     // the transport: rolling (desktop.transportControls' :rolling port), and
     // setting it as MOD's play button does (ws "transport-rolling", then
     // setPlaybackState: transport.js)

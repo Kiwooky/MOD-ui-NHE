@@ -42,7 +42,11 @@
  *       wireRoutes: { 'from>to': [[x, y], ...] }, // cables laid by hand (faces): their corners
  *       onRoute: fn(connection, points),    // a cable was laid by hand (null: back to automatic)
  *       onMove: fn(node, cell),             // a pedal was long-pressed and dropped on a free cell
- *       onResize: fn(cols, rows)            // the grid grew or shrank
+ *       onResize: fn(cols, rows),           // the grid grew or shrank
+ *       cvOutputs: null | { portId: { on, name, fixed } }, // MOD's Manage CV ports is on (faces):
+ *                                           // beside each pedal's CV output a tick (offer it as a
+ *                                           // CV source to assign controls to) and its name
+ *       onCvOutput: fn(portId, on, name)    // a tick or a name changed there
  *   })
  *   s.update({ nodes, connections })
  *
@@ -131,6 +135,8 @@
         n.plugs = document.createElementNS(SVG, 'svg')
         n.plugs.setAttribute('class', 'nhe-surface__plugs')
         n.plane.appendChild(n.plugs)
+        // Manage CV ports: the CV outputs' ticks and names (renderCvTags)
+        n.cvTags = el('div', 'nhe-surface__cvtags', n.plane)
         // MOD's ports don't pan sideways: they stay against the screen's edges
         n.edge = el('div', 'nhe-surface__edge', root)
         // zoom buttons (desktop); pinch does the same
@@ -637,6 +643,7 @@
             })
             ;(this.hints || []).forEach(function (h) { top.appendChild(h) })
         }
+        this.renderCvTags()
         // the triangles: which side a connected pedal out of view lies
         ;(this.portEls || []).forEach(function (p) {
             var target = away[p.node.id]
@@ -804,6 +811,56 @@
                         }
                     })
                 })
+            })
+        })
+    }
+
+    // Manage CV ports (cvOutputs, faces): as on MOD's builder, beside each
+    // pedal's CV output a tick, and its name once ticked (typed over to
+    // rename it). Past the nut and any plug in it; screen-sized as the plugs.
+    Surface.prototype.renderCvTags = function () {
+        var self = this, box = this.n.cvTags, cv = this.o.cvOutputs, used = {}
+        box.innerHTML = ''
+        if (!cv || !this.faces) return
+        this.o.connections.forEach(function (c) { used[c[0]] = true })
+        var NW = this.nutW(), k = NW / NUT
+        this.o.nodes.forEach(function (nd) {
+            if (nd.kind !== 'pedal' || !nd.cell || !self.els[nd.id]) return
+            ;(((nd.ports && nd.ports.cv) || {}).out || []).forEach(function (port) {
+                var st = cv[port], j = st && self.jack(nd, port, 'out')
+                if (!j) return
+                var t = el('div', 'nhe-surface__cvtag' + (st.on ? ' is-on' : ''), box)
+                t.style.left = (j.x + NW + (used[port] ? self.plugLen() : 0) + 4 * k) + 'px'
+                t.style.top = j.y + 'px'
+                t.style.transform = 'translateY(-50%) scale(' + k + ')'
+                var tick = el('input', 'nhe-surface__cvtag-tick', t)
+                tick.type = 'checkbox'
+                tick.checked = !!st.on
+                tick.disabled = !!st.fixed
+                tick.setAttribute('aria-label', 'Use as a CV source')
+                tick.title = 'Use as a CV source'
+                var name = el('input', 'nhe-surface__cvtag-name', t)
+                name.type = 'text'
+                name.value = st.name || ''
+                name.disabled = !!st.fixed
+                name.setAttribute('aria-label', 'CV source name')
+                name.setAttribute('spellcheck', 'false')
+                var emit = function (on) { if (typeof self.o.onCvOutput === 'function') self.o.onCvOutput(port, on, name.value.trim() || st.name || '') }
+                // ticked: its name ready to type over, also after the tags are drawn again
+                tick.addEventListener('change', function () {
+                    t.classList.toggle('is-on', tick.checked)
+                    self.cvFocus = tick.checked ? port : null
+                    emit(tick.checked)
+                    if (tick.checked) name.select()
+                })
+                if (self.cvFocus === port && st.on) setTimeout(function () { name.focus(); name.select() }, 0)
+                name.addEventListener('blur', function () { if (self.cvFocus === port) self.cvFocus = null })
+                name.addEventListener('change', function () { emit(true) })
+                name.addEventListener('keydown', function (e) {
+                    e.stopPropagation()            // MOD listens for keys on the page
+                    if (e.key === 'Enter') name.blur()
+                })
+                name.addEventListener('keyup', function (e) { e.stopPropagation() })
             })
         })
     }
@@ -1270,7 +1327,7 @@
 
         root.addEventListener('pointerdown', function (e) {
             if (e.pointerType === 'mouse' && e.button !== 0) return
-            if (e.target.closest('.nhe-surface__zoom') || e.target.closest('.nhe-surface__colours')) return
+            if (e.target.closest('.nhe-surface__zoom') || e.target.closest('.nhe-surface__colours') || e.target.closest('.nhe-surface__cvtag')) return
             // the live face's knobs and switches: theirs
             if (self.onLive(e.target)) return
             self.closeColours()
@@ -1406,7 +1463,7 @@
 
         // a double click on the surface itself (not a pedal, a +, a cable…): the whole grid
         root.addEventListener('dblclick', function (e) {
-            if (e.target.closest('.nhe-surface__item, .nhe-surface__plus, .nhe-surface__expand, .nhe-surface__zoom, .nhe-surface__colours, .nhe-surface__plug, .nhe-surface__socket, .nhe-surface__wire-hit, .nhe-surface__insert')) return
+            if (e.target.closest('.nhe-surface__item, .nhe-surface__plus, .nhe-surface__expand, .nhe-surface__zoom, .nhe-surface__colours, .nhe-surface__cvtag, .nhe-surface__plug, .nhe-surface__socket, .nhe-surface__wire-hit, .nhe-surface__insert')) return
             e.preventDefault()
             self.fit()
         })
