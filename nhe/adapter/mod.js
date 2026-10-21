@@ -977,6 +977,41 @@
     mod.loadSnapshot = function (id, cb) {
         $.ajax({ url: '/snapshot/load', data: { id: id }, cache: false, success: function () { if (cb) cb(true) }, error: function () { mod.notify('error', 'Failed to load snapshot'); if (cb) cb(false) } })
     }
+    // snapshots assigned to a hardware control: MOD's window then refuses to
+    // load, rename or delete them (desktop.js snapshotManageButton, snapshot.js)
+    mod.snapshotsAddressed = function () {
+        var hw = window.desktop && desktop.hardwareManager
+        return !!(hw && hw.addressingsByPortSymbol && hw.addressingsByPortSymbol['/pedalboard/:presets'])
+    }
+    // rename (GET /snapshot/rename?id=&title= → { ok, title }) and delete
+    // (GET /snapshot/remove?id=), as snapshot.js does. MOD's title shows the
+    // current snapshot's name (desktop.titleBox, as its renamedCallback sets
+    // it); deleting the current one leaves none current on the host, so
+    // desktop.pedalboardPresetId follows (-1: "Nothing to save")
+    mod.renameSnapshot = function (id, title, cb) {
+        $.ajax({
+            url: '/snapshot/rename', data: { id: id, title: title }, cache: false, dataType: 'json',
+            success: function (r) {
+                if (r && r.ok && window.desktop && id === desktop.pedalboardPresetId) {
+                    desktop.pedalboardPresetName = r.title
+                    if (desktop.titleBox) desktop.titleBox.text((desktop.title || 'Untitled') + ' - ' + r.title)
+                }
+                if (cb) cb(!!(r && r.ok))
+            },
+            error: function () { mod.notify('error', 'Failed to rename snapshot'); if (cb) cb(false) }
+        })
+    }
+    mod.removeSnapshot = function (id, cb) {
+        $.ajax({
+            url: '/snapshot/remove', data: { id: id }, cache: false, dataType: 'json',
+            success: function (ok) {
+                if (ok && window.desktop && id === desktop.pedalboardPresetId) desktop.pedalboardPresetId = -1
+                if (!ok) mod.notify('error', 'Failed to delete snapshot')
+                if (cb) cb(!!ok)
+            },
+            error: function () { mod.notify('error', 'Failed to delete snapshot'); if (cb) cb(false) }
+        })
+    }
     mod.onSnapshots = function (cb) {
         var socket = window.ws, timer = null
         var later = function () { clearTimeout(timer); timer = setTimeout(cb, 120) }

@@ -41,10 +41,10 @@ NHE.register('bars', function (mod) {
 
     // the drop-down panels under the bar, at the right (Save, Snapshots):
     // two choices with radio buttons, Cancel / Save
-    var panel = null, panelFor = null
+    var panel = null, panelFor = null, refreshPanel = null
     var closePanel = function () {
         if (panel) panel.remove()
-        panel = panelFor = null
+        panel = panelFor = refreshPanel = null
         top.find('.nhe-menus__btn').removeClass('is-open')
     }
     var openPanel = function (which, button, choices, extra) {
@@ -97,15 +97,88 @@ NHE.register('bars', function (mod) {
     })
     bSnap.on('click', function () {
         openPanel('snapshots', bSnap, [
-            { icon: I.save, label: 'Save snapshot', run: function () { mod.menuAction('snapshotSave') } },
-            { icon: I.saveAs, label: 'Save snapshot as', ask: function () { return mod.snapshotName() || 'Snapshot' }, run: function (name) { mod.saveSnapshotAs(name) } }
-        ], function (p) {
-            $('<button type="button" class="nhe-menupanel__link">').text('Load / manage snapshots').appendTo(p)
-                .on('click', function () { closePanel(); mod.menuAction('snapshotManage') })
-        })
+            { icon: I.save, label: 'Save', note: mod.snapshotName(), run: function () { mod.menuAction('snapshotSave') } },
+            { icon: I.saveAs, label: 'Save as', ask: function () { return mod.snapshotName() || 'Snapshot' }, run: function (name) { mod.saveSnapshotAs(name) } }
+        ], manageSnapshots)
     })
+    // under the Save choices (Figma "Frame 93"): the board's snapshots, the
+    // current one highlighted; a tap loads one, the pencil renames the
+    // current one in place, the bin deletes it (after a yes)
+    var manageSnapshots = function (p) {
+        $('<div class="nhe-menupanel__heading">').text('Load / manage snapshots').appendTo(p)
+        var list = $('<div class="nhe-snaplist" role="listbox">').attr('aria-label', 'Snapshots').appendTo(p)
+        var tools = $('<div class="nhe-snaplist__tools">').appendTo(p)
+        var bRename = btn('nhe-menus__btn', I.rename, '', 'Rename snapshot').appendTo(tools)
+        var bDelete = btn('nhe-menus__btn', I.remove, '', 'Delete snapshot').appendTo(tools)
+        var snaps = []
+        var refused = function () {
+            if (!mod.snapshotsAddressed()) return false
+            mod.notify('warn', 'Cannot change snapshots while addressed to hardware', 3000)
+            return true
+        }
+        // renames and deletes send nothing over the websocket: redraw the list and the chips
+        var changed = function () {
+            if (panelFor === 'snapshots') render()
+            if (saved() === 'nhe') renderChips()
+        }
+        var render = function () {
+            mod.snapshots(function (l) {
+                snaps = l
+                var cur = mod.snapshotCurrent()
+                p.find('.nhe-menupanel__note').first().text(mod.snapshotName())     // Save: the current one
+                list.empty()
+                l.forEach(function (s) {
+                    $('<button type="button" class="nhe-snaplist__row" role="option">').text(s.name).attr('aria-selected', s.id === cur)
+                        .toggleClass('is-on', s.id === cur).data('id', s.id).appendTo(list)
+                        .on('click', function () {
+                            if (s.id === mod.snapshotCurrent() || refused()) return
+                            mod.loadSnapshot(s.id, function (ok) { if (ok && panelFor === 'snapshots') render() })
+                        })
+                })
+                var has = l.some(function (s) { return s.id === cur })
+                bRename.prop('disabled', !has)
+                bDelete.prop('disabled', !has || l.length < 2)      // MOD keeps at least one
+                var on = list.children('.is-on')[0]
+                if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' })
+            })
+        }
+        refreshPanel = function () { if (!list.find('.nhe-snaplist__field').length) render() }   // not mid-rename
+        bRename.on('click', function () {
+            var row = list.children('.is-on'), id = row.data('id')
+            if (!row.length || refused()) return
+            var old = row.text(), done = false
+            var field = $('<input type="text" class="nhe-snaplist__field" autocomplete="off" spellcheck="false">').val(old).attr('aria-label', 'Snapshot name')
+            row.empty().append(field)
+            var finish = function (keep) {
+                if (done) return
+                done = true
+                var name = $.trim(field.val())
+                if (!keep || !name || name === old) { row.text(old); return }
+                row.text(name)
+                mod.renameSnapshot(id, name, changed)
+            }
+            field.on('keydown', function (e) {
+                e.stopPropagation()               // MOD listens for keys on the page
+                if (e.key === 'Enter') { e.preventDefault(); finish(true) }
+                if (e.key === 'Escape') { e.preventDefault(); finish(false) }
+            }).on('keyup keypress click', function (e) { e.stopPropagation() })
+                .on('blur', function () { finish(true) })
+            field[0].focus()
+            field[0].select()
+        })
+        bDelete.on('click', function () {
+            var row = list.children('.is-on'), id = row.data('id')
+            if (!row.length || snaps.length < 2 || refused()) return
+            NHE.ConfirmDialog({
+                plugin: row.text(), pill: 'Snapshot',
+                title: 'Delete this snapshot?', icon: 'remove',
+                onYes: function () { mod.removeSnapshot(id, changed) }
+            })
+        })
+        render()
+    }
     // a press anywhere else closes a panel; so does Escape
-    $(document).on('pointerdown', function (e) { if (panel && !$(e.target).closest('.nhe-menupanel, .nhe-topbar__actions').length) closePanel() })
+    $(document).on('pointerdown', function (e) { if (panel && !$(e.target).closest('.nhe-menupanel, .nhe-topbar__actions, .nhe-dialog-overlay').length) closePanel() })
     $(document).on('keydown', function (e) { if (panel && e.key === 'Escape') closePanel() })
 
     // the board's snapshots as chips under the bar: a tap loads one
@@ -232,7 +305,10 @@ NHE.register('bars', function (mod) {
 
     mod.onMenusChange(function () { if (saved() === 'nhe') renderMenus() })
     mod.onBoardName(function () { if (saved() === 'nhe') { renderMenus(); renderChips() } })
-    mod.onSnapshots(function () { if (saved() === 'nhe') renderChips() })
+    mod.onSnapshots(function () {
+        if (saved() === 'nhe') renderChips()
+        if (refreshPanel) refreshPanel()
+    })
     mod.onStats(function (st) { if (saved() === 'nhe') renderStats(st) })
     mod.onTempo(function () { if (saved() === 'nhe') renderTempo() })
     apply()

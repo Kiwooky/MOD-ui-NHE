@@ -69,6 +69,7 @@
                 'components/icons.js',
                 'components/controls/controls.css',
                 'components/controls/controls.js',
+                'components/controls/confirm.js',
                 'features/bars/bars.css',
                 'features/bars/index.js'
             ]

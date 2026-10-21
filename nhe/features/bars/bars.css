@@ -147,18 +147,65 @@
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel__note { margin-left: var(--nhe-space-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel__buttons { display: flex; gap: var(--nhe-space-8); margin-top: var(--nhe-space-8); }
 :is(#pedalboard-actions, #main-menu) .nhe-menupanel__buttons .nhe-text-button { flex: 1 1 0; height: 36px; }
-:is(#pedalboard-actions, #main-menu) .nhe-menupanel__link {
+/* Snapshots: load / manage under the Save choices (Figma "Frame 93") */
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__heading {
     margin-top: var(--nhe-space-8);
-    padding: var(--nhe-space-8) 0 0;
-    border: 0;
-    border-top: 1px solid rgba(255, 255, 255, .15);
-    background: none;
-    color: inherit;
-    font: inherit;
-    font-size: 13px;
+    padding-top: var(--nhe-space-12, 12px);
+    border-top: 1px solid #8e8e93;
+    font-size: 12px;
+    font-weight: var(--nhe-font-weight-semibold);
+    text-align: center;
     text-transform: uppercase;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-snaplist {
+    display: flex;
+    flex-direction: column;
+    max-height: 200px;                    /* four and a half rows, then it scrolls */
+    margin-top: var(--nhe-space-8);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid #6155f5;
+    border-radius: 8px;
+    background: #000;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-snaplist__row {
+    opacity: 1;                           /* MOD styles the header's buttons */
+    line-height: normal;
+    background-image: none;
+    transition: none;
+    display: block;
+    width: 100%;
+    flex: none;
+    height: 44px;
+    padding: 0 var(--nhe-space-12, 12px);
+    border: 0;
+    background: none;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: var(--nhe-font-weight-semibold);
+    text-align: left;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     cursor: pointer;
 }
+:is(#pedalboard-actions, #main-menu) .nhe-snaplist__row.is-on { background: #6155f5; cursor: default; }
+:is(#pedalboard-actions, #main-menu) .nhe-snaplist__field {
+    width: 100%;
+    height: 32px;
+    padding: 0 var(--nhe-space-8);
+    border: 0;
+    border-radius: 4px;
+    background: #fff;
+    color: #000;
+    font: inherit;
+    text-transform: uppercase;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-snaplist__tools { display: flex; justify-content: center; gap: var(--nhe-space-24, 24px); margin-top: var(--nhe-space-4); }
+:is(#pedalboard-actions, #main-menu) .nhe-snaplist__tools .nhe-menus__btn:disabled { opacity: .35; cursor: default; }
 
 /* ---- bottom bar ------------------------------------------------------------- */
 
