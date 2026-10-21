@@ -217,18 +217,18 @@
 :is(#pedalboard-actions, #main-menu) .nhe-bottombar__extra.is-text { font-size: 11px; border: 1px solid rgba(255, 255, 255, .3); height: 26px; }
 :is(#pedalboard-actions, #main-menu) .nhe-bottombar__extra.is-text.is-on { background: var(--nhe-accent-default, #883996); border-color: transparent; }
 
-/* CPU / RAM, and xruns */
-:is(#pedalboard-actions, #main-menu) .nhe-meters { display: flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 8px; border-radius: 9999px; background: rgba(0, 0, 0, .3); }
-:is(#pedalboard-actions, #main-menu) .nhe-meters__icon svg { display: block; width: 24px; height: 24px; }
-:is(#pedalboard-actions, #main-menu) .nhe-meters__bars { display: flex; flex-direction: column; gap: 3px; }
-:is(#pedalboard-actions, #main-menu) .nhe-meters__row { display: flex; align-items: center; gap: 4px; font-size: 9px; line-height: 10px; }
-:is(#pedalboard-actions, #main-menu) .nhe-meters__label { width: 22px; }
-:is(#pedalboard-actions, #main-menu) .nhe-meters__value { width: 26px; text-align: right; }
-:is(#pedalboard-actions, #main-menu) .nhe-meters__track { position: relative; width: 90px; height: 8px; border-radius: 9999px; background: linear-gradient(90deg, #7b7b7b, #323232 55%); overflow: hidden; }
+/* CPU / RAM, and xruns: as tall as the bar (45px) */
+:is(#pedalboard-actions, #main-menu) .nhe-meters { display: flex; align-items: center; gap: 8px; height: 45px; padding: 0 6px 0 12px; border-radius: 9999px; background: rgba(0, 0, 0, .3); }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__icon svg { display: block; width: 30px; height: 30px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__bars { display: flex; flex-direction: column; gap: 5px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__row { display: flex; align-items: center; gap: 6px; font-size: 11px; line-height: 13px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__label { width: 28px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__value { width: 32px; text-align: right; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__track { position: relative; width: 120px; height: 12px; border-radius: 9999px; background: linear-gradient(90deg, #7b7b7b, #323232 55%); overflow: hidden; }
 :is(#pedalboard-actions, #main-menu) .nhe-meters__fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 9999px; }
 .is-cpu .nhe-meters__fill { background: linear-gradient(90deg, #da8e00, #8eab00); }
 .is-ram .nhe-meters__fill { background: linear-gradient(90deg, #8e00da, #40c9ff); }
-:is(#pedalboard-actions, #main-menu) .nhe-meters__xruns { height: 22px; padding: 0 8px; border-radius: 9999px; background: #ff383c; font-size: 10px; line-height: 22px; text-transform: uppercase; white-space: nowrap; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__xruns { height: 33px; padding: 0 12px; border-radius: 9999px; background: #ff383c; font-size: 12px; line-height: 33px; text-transform: uppercase; white-space: nowrap; }
 
 /* MOD's header styles every button in it (header#pedalboard-actions button):
    the panel's buttons and chips get theirs back */
