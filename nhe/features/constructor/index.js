@@ -40,15 +40,51 @@ NHE.register('constructor', function (mod) {
     var view = mod.addView('nhe-constructor', '<div class="nhe-constructor" style="display:none"></div>')
     var host = null, surface = null, switcher = null
     var origin = null                       // { x, y }: cell 0 / 0 in canvas px
-    var caches = {}, cache = null           // per board: wire colours, laid routes, grid size
+    var caches = {}, cache = null, cacheId = null   // per board: wire colours, laid routes, grid size
     var pending = {}                        // instance -> node: added, its icon not drawn yet
     var nodes = [], connections = []
     var plugins = null, categories = []
     var retry = null
 
+    var UNSAVED = '(unsaved)'
     var boardCache = function () {
-        var id = mod.boardId() || '(unsaved)'
+        var id = cacheId = mod.boardId() || UNSAVED
         return caches[id] || (caches[id] = { colours: {}, routes: {}, cols: 0, rows: 0 })
+    }
+
+    // The layouts are kept by the board's bundle (MOD keeps the pedals'
+    // places in the board itself): in localStorage "nhe-board-layouts", which
+    // components/config.js keeps on the MOD, so every browser on it shares
+    // them. The surface changes the cache's objects itself; keep() writes them
+    // out after each change. A board never saved has no bundle: its layout
+    // is kept once Save (as) gives it one.
+    var LAYOUTS = 'nhe-board-layouts', KEEP_MS = 500
+    try { caches = JSON.parse(localStorage.getItem(LAYOUTS) || '{}') || {} } catch (e) { caches = {} }
+    delete caches[UNSAVED]
+    var keepTimer = null
+    var keep = function () {
+        clearTimeout(keepTimer)
+        keepTimer = setTimeout(function () {
+            var out = {}
+            Object.keys(caches).forEach(function (id) {
+                var c = caches[id]
+                if (id === UNSAVED || !c) return
+                // nothing of its own: not kept
+                if (!Object.keys(c.colours || {}).length && !Object.keys(c.routes || {}).length && !c.cols && !c.rows) return
+                out[id] = c
+            })
+            try { localStorage.setItem(LAYOUTS, JSON.stringify(out)) } catch (e) {}
+        }, KEEP_MS)
+    }
+    // the board saved under another bundle (Save as, or an unsaved board's
+    // first Save): its layout goes with it
+    var followSave = function () {
+        var id = mod.boardId() || UNSAVED
+        if (!cache || id === cacheId) return
+        caches[id] = cache
+        if (cacheId === UNSAVED) delete caches[UNSAVED]
+        cacheId = id
+        keep()
     }
 
     // ---- MOD's board -> the surface's nodes --------------------------------
@@ -186,6 +222,7 @@ NHE.register('constructor', function (mod) {
             isControl: function (target) { return mod.isIconControl(target) },
             // a cable moved by hand: MOD's own disconnect, then connect
             onWire: function (old, neu) {
+                keep()                    // its colour and route moved with it
                 if (old) mod.disconnect(old[0], old[1])
                 if (neu) mod.connect(neu[0], neu[1], function (ok) { if (!ok) refused(); refresh() })
             },
@@ -194,7 +231,9 @@ NHE.register('constructor', function (mod) {
                 if (!origin) origin = { x: 0, y: 0 }
                 mod.movePlugin(node.id, origin.x + cell.col * STEP_X, origin.y + cell.row * STEP_Y)
             },
-            onResize: function (cols, rows) { cache.cols = cols; cache.rows = rows }
+            onColour: keep,
+            onRoute: keep,
+            onResize: function (cols, rows) { cache.cols = cols; cache.rows = rows; keep() }
         })
     }
 
@@ -368,11 +407,14 @@ NHE.register('constructor', function (mod) {
         if (reloaded) {
             origin = null
             pending = {}
+            if (!mod.boardId()) delete caches[UNSAVED]      // a new, empty board starts afresh
             cache = boardCache()
             drop()
         }
         if (shown()) refresh()
     })
+    // MOD's title changes when a board is saved: under a new bundle, the layout follows
+    mod.onBoardName(function () { setTimeout(followSave, 300) })   // the bundle may be set just after the title
     // MOD's Manage CV ports switched on or off: the tags come or go
     mod.onCvManaging(function () { if (surface) surface.update({ cvOutputs: cvOutputs() }) })
     // a board loaded before NHE started (or while it was MOD's builder)

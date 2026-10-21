@@ -52,6 +52,15 @@ Status: being worked out with Niels; open points are marked **Open**.
   control. **Phone:** no hand wiring (a finger isn't precise enough); the
   + dialog and the settings screen do it.
 
+### Kept per board
+
+- A board's cable colours, hand-laid cables and grid size are kept by its
+  bundle (`nhe-board-layouts`), on the MOD with NHE's other settings, so
+  every browser on it shows the same. MOD keeps the pedals' places in the
+  board itself.
+- A board never saved has none kept until it is saved; Save as takes the
+  layout to the new bundle. A new, empty board starts afresh.
+
 ### Manage CV ports
 
 - While MOD's Manage CV ports is on (the bottom bar's menu), each pedal's

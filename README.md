@@ -89,7 +89,7 @@ Turn it off with `NHE.mod.setPreference('nhe-settings', 'false')`.
 
 ## Your settings
 
-NHE's settings (plugin colours, which editor, builder and menus, the work surface, the performance view's layout) are kept on the MOD itself, in MOD's own preferences (`nhe-config`): every browser that opens that MOD gets them, and two MODs keep their own. SET → **Settings file** exports them to a `.json` file, labelled with the MOD it came from, and imports one (into this MOD or another). `nhe/components/config.js` does it: it mirrors NHE's keys in the browser's localStorage, so features keep using localStorage as before.
+NHE's settings (plugin colours, which editor, builder and menus, the work surface, the performance view's layout, and each board's cable colours, hand-laid cables and grid size in NHE's builder) are kept on the MOD itself, in MOD's own preferences (`nhe-config`): every browser that opens that MOD gets them, and two MODs keep their own. SET → **Settings file** exports them to a `.json` file, labelled with the MOD it came from, and imports one (into this MOD or another). `nhe/components/config.js` does it: it mirrors NHE's keys in the browser's localStorage, so features keep using localStorage as before.
 
 ## Try components on their own
 
