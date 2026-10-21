@@ -15,7 +15,7 @@
  */
 NHE.register('bars', function (mod) {
     var KEY = 'nhe-menus'
-    var I = NHE.icons
+    var I = NHE.icons, M = NHE.menuIcons     // M: two-layer, orange fill when active (components/icons.js)
     var saved = function () { try { return localStorage.getItem(KEY) === 'mod' ? 'mod' : 'nhe' } catch (e) { return 'nhe' } }
 
     var btn = function (cls, icon, label, title) {
@@ -31,9 +31,9 @@ NHE.register('bars', function (mod) {
     var title = $('<span class="nhe-topbar__title">').appendTo(top)
     var acts = $('<div class="nhe-topbar__actions">').appendTo(top)
     var bNew = btn('nhe-menus__btn nhe-menus__btn--label', I.sparkle, 'New', 'New pedalboard').appendTo(acts)
-    var bSnap = btn('nhe-menus__btn', I.camera, '', 'Snapshots').appendTo(acts)
-    var bSave = btn('nhe-menus__btn nhe-topbar__save', I.save, '', 'Save').appendTo(acts)
-    var bShare = btn('nhe-menus__btn', I.share, '', 'Share').appendTo(acts)
+    var bSnap = btn('nhe-menus__btn', M.snapshot, '', 'Snapshots').appendTo(acts)
+    var bSave = btn('nhe-menus__btn nhe-topbar__save', M.save, '', 'Save').appendTo(acts)
+    var bShare = btn('nhe-menus__btn', M.share, '', 'Share').appendTo(acts)
     var chips = $('<div class="nhe-snapchips">').appendTo(top)
 
     bNew.on('click', function () { closePanel(); mod.menuAction('new') })
@@ -126,8 +126,8 @@ NHE.register('bars', function (mod) {
     var bottom = $('<div class="nhe-ctl nhe-menus nhe-bottombar">')
     var nav = $('<div class="nhe-bottombar__nav">').appendTo(bottom)
     var NAV = [
-        ['constructor', I.puzzle, 'Constructor'], ['library', I.book, 'Library'], ['banks', I.banks, 'Banks'],
-        ['files', I.folderOpen, 'File manager'], ['store', I.cart, 'Store']
+        ['constructor', M.constructor, 'Constructor'], ['library', M.library, 'Library'], ['banks', M.banks, 'Banks'],
+        ['files', M.filemanager, 'File manager'], ['store', M.store, 'Store']
     ]
     var navBtns = {}
     NAV.forEach(function (n) {
@@ -139,7 +139,7 @@ NHE.register('bars', function (mod) {
     // designs: small icons here; docs/menus-spec.md)
     var extras = $('<div class="nhe-bottombar__extras">').appendTo(right)
     var EXTRA = [
-        ['bypass1', null, 'Bypass 1'], ['bypass2', null, 'Bypass 2'], ['midiPorts', I.midi, 'MIDI ports'],
+        ['bypass1', null, 'Bypass 1'], ['bypass2', null, 'Bypass 2'], ['midiPorts', M.midi, 'MIDI ports'],
         ['devices', I.device, 'Devices'], ['settings', I.gear, 'Settings'], ['update', null, 'Update']
     ]
     var extraBtns = {}
@@ -161,11 +161,11 @@ NHE.register('bars', function (mod) {
     var cpu = meter('CPU', 'is-cpu'), ram = meter('RAM', 'is-ram')
     var xruns = $('<span class="nhe-meters__xruns">').appendTo(meters)
 
-    var bTempo = btn('nhe-menus__btn nhe-menus__btn--label nhe-bottombar__tempo', I.metronome, '120bpm', 'Tempo and sync').appendTo(right).on('click', function () { mod.menuAction('tempo') })
-    var bPlay = btn('nhe-menus__btn', I.play, '', 'Play').appendTo(right).on('click', function () { mod.setRolling(!mod.rolling()); renderTransport() })
-    var bCv = btn('nhe-menus__btn', I.cv, '', 'Manage CV ports').appendTo(right).on('click', function () { mod.menuAction('cv') })
+    var bTempo = btn('nhe-menus__btn nhe-menus__btn--label nhe-bottombar__tempo', M.tempo, '120bpm', 'Tempo and sync').appendTo(right).on('click', function () { mod.menuAction('tempo') })
+    var bPlay = btn('nhe-menus__btn', M.play, '', 'Play').appendTo(right).on('click', function () { mod.setRolling(!mod.rolling()); renderTransport() })
+    var bCv = btn('nhe-menus__btn', M.cv, '', 'Manage CV ports').appendTo(right).on('click', function () { mod.menuAction('cv') })
     var bPerf = btn('nhe-menus__btn', I.bolt, '', 'Performance view').appendTo(right).on('click', function () { mod.menuAction('performance') })
-    var bReport = btn('nhe-menus__btn', I.report, '', 'Report a problem').appendTo(right).on('click', function () { mod.menuAction('report') })
+    var bReport = btn('nhe-menus__btn', M.report, '', 'Report a problem').appendTo(right).on('click', function () { mod.menuAction('report') })
 
     // ---- following MOD -------------------------------------------------------
 
@@ -205,7 +205,8 @@ NHE.register('bars', function (mod) {
     }
     var renderTransport = function () {
         var on = mod.rolling()
-        bPlay.html(on ? I.pause : I.play).attr({ title: on ? 'Stop' : 'Play', 'aria-label': on ? 'Stop' : 'Play' }).toggleClass('is-selected', on)
+        // rolling: the stop square, active (orange); stopped: play
+        bPlay.html(on ? M.stop : M.play).attr({ title: on ? 'Stop' : 'Play', 'aria-label': on ? 'Stop' : 'Play' }).toggleClass('is-selected', on)
     }
 
     // ---- NHE's or MOD's ------------------------------------------------------

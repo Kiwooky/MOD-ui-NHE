@@ -51,7 +51,12 @@
 }
 :is(#pedalboard-actions, #main-menu) .nhe-menus__btn svg { width: 26px; height: 26px; flex: none; }
 :is(#pedalboard-actions, #main-menu) .nhe-menus__btn:hover { background: rgba(255, 255, 255, .08); }
-:is(#pedalboard-actions, #main-menu) .nhe-menus__btn.is-open, :is(#pedalboard-actions, #main-menu) .nhe-menus__btn.is-selected { color: #ff8d28; }      /* Figma: the open / current one in orange */
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn svg .nhe-icon-fill { display: none; }
+/* the open / current one, as Menuicons supplies it: orange outline, white fill */
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn:is(.is-open, .is-selected) svg .nhe-icon-fill { display: inline; }
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn:is(.is-open, .is-selected) svg .nhe-icon-edge { fill: #f68c2f; }
+/* one-colour icons (New, Performance view) turn orange */
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn:is(.is-open, .is-selected) svg:not(:has(.nhe-icon-fill)) { color: #ff8d28; }
 :is(#pedalboard-actions, #main-menu) .nhe-menus__btn.is-greyed { opacity: .45; }                                  /* MOD Desktop: only on a device */
 
 /* ---- top bar ---------------------------------------------------------------- */
