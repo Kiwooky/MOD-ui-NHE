@@ -536,6 +536,58 @@
         }
         try { box.find(btn).click() } finally { restore() }
     }
+    // For a plugin's presets to / from a file. MOD has no call that reads a
+    // preset's values or writes a preset file, so a preset is read by
+    // loading it (GET /effect/preset/load: the host sends its values, which
+    // land in gui.controls) and written by setting the values and saving as
+    // new (MOD's own Save as button, desktop.openPresetSaveWindow answered
+    // with the name). Control ports only: LV2 parameters (files) aren't in.
+    //   presetValues(instance) -> { symbol: value } of its control inputs
+    //   loadPreset(instance, uri, cb(ok))       the values in once settled
+    //   setPresetValues(instance, values)       through MOD's own path
+    //   saveNewPreset(instance, name, cb(ok))   once it's in MOD's user list
+    //   markPreset(instance, uri)               MOD's selected preset (no load)
+    mod.presetValues = function (instance) {
+        var gui = mod.gui(instance), out = {}
+        if (!gui) return out
+        var ports = (((gui.effect || {}).ports || {}).control || {}).input || []
+        ports.forEach(function (p) {
+            var c = gui.controls[p.symbol]
+            if (c && p.symbol.charAt(0) !== ':') out[p.symbol] = c.value
+        })
+        return out
+    }
+    mod.loadPreset = function (instance, uri, cb) {
+        $.ajax({
+            url: '/effect/preset/load/' + instance, data: { uri: uri }, cache: false, dataType: 'json',
+            success: function (ok) { setTimeout(function () { cb(!!ok) }, 400) },     // its values come over the websocket
+            error: function () { cb(false) }
+        })
+    }
+    mod.setPresetValues = function (instance, values) {
+        var gui = mod.gui(instance)
+        if (!gui) return
+        Object.keys(values || {}).forEach(function (symbol) {
+            var c = gui.controls[symbol], v = Number(values[symbol])
+            if (!c || isNaN(v) || c.value === v) return
+            if (c.ranges) v = Math.max(c.ranges.minimum, Math.min(c.ranges.maximum, v))
+            gui.setPortValue(symbol, v)
+        })
+    }
+    mod.saveNewPreset = function (instance, name, cb) {
+        var before = mod.presets(instance).user.length, waited = 0
+        mod.presetAction(instance, 'saveAs', null, function (ask, done) { done(name) })
+        var check = function () {
+            if (mod.presets(instance).user.length > before) { cb(true); return }
+            if ((waited += 100) > 8000) { cb(false); return }
+            setTimeout(check, 100)
+        }
+        setTimeout(check, 100)
+    }
+    mod.markPreset = function (instance, uri) {
+        var gui = mod.gui(instance)
+        if (gui && gui.selectPreset) gui.selectPreset(uri || '')
+    }
     mod.onPresetsChange = function (instance, cb) {
         hook(instance, 'selectPreset', function () { cb() })
         var box = presetBox(instance)[0]

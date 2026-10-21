@@ -54,6 +54,7 @@
                 'components/controls/colour.js',
                 'components/controls/name.js',
                 'components/controls/confirm.js',
+                'components/controls/presetfile.js',
                 // the info page and the healing on delete (the constructor's)
                 'components/constructor/constructor.css',
                 'components/constructor/autowire.js',

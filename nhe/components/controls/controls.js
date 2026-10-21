@@ -9,7 +9,7 @@
  *   new NHE.Toggle(el, { title, value: true|false, binding, onChange, onSettings, onBlocked })
  *   new NHE.Trigger(el, { title, binding, onTrigger, onSettings, onBlocked })
  *   new NHE.PluginHeader(el, { name, on: true|false, binding, onChange, onSettings, onBlocked,
- *                              onColour, onInfo, onDelete })   // the last three: a row of icons
+ *                              onPresets, onColour, onInfo, onDelete })   // the last four: a row of icons
  *                                                              // under the name, each when given
  *   new NHE.OptionList(el, { title, options: [{ label, value }], value, binding, onChange, onSettings, onBlocked })
  *   new NHE.Segmented(el, { options: ['Factory', 'User'], value: 0, onChange })
@@ -239,9 +239,9 @@
         var n = this.n = {}
         n.name = el('div', 'nhe-plugin-header__name', root)
         n.nameText = el('span', 'nhe-plugin-header__text', n.name)
-        // a row of icons under the name: the plugin's colour (colour.js), its
-        // info, delete it; each when the host offers it
-        var tools = [['onColour', 'palette', 'Plugin colour'], ['onInfo', 'info', 'Plugin info'], ['onDelete', 'remove', 'Delete plugin']]
+        // a row of icons under the name: its user presets to / from a file, the
+        // plugin's colour (colour.js), its info, delete it; each when the host offers it
+        var tools = [['onPresets', 'bookmarks', 'Export / import presets'], ['onColour', 'palette', 'Plugin colour'], ['onInfo', 'info', 'Plugin info'], ['onDelete', 'remove', 'Delete plugin']]
             .filter(function (t) { return typeof self.o[t[0]] === 'function' })
         if (tools.length) {
             n.tools = el('div', 'nhe-plugin-header__tools', root)
@@ -688,4 +688,24 @@
         window.addEventListener('orientationchange', function () { setTimeout(fitAll, 300) })
     }
     if (window.MutationObserver && document.body) watch()
+})();
+
+/*
+ * A file for the person to keep: downloaded (a computer), or offered to save
+ * or share (a phone or tablet).
+ *
+ *   NHE.saveFile('name.json', text)
+ */
+(function () {
+    var NHE = window.NHE = window.NHE || {}
+    NHE.saveFile = function (name, text, type) {
+        var url = URL.createObjectURL(new Blob([text], { type: type || 'application/json' }))
+        var a = document.createElement('a')
+        a.href = url
+        a.download = name
+        document.body.appendChild(a)
+        a.click()
+        a.parentNode.removeChild(a)
+        setTimeout(function () { URL.revokeObjectURL(url) }, 10000)
+    }
 })();

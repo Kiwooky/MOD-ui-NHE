@@ -183,6 +183,7 @@ NHE.register('settings', function (mod) {
             height: h,
             plugin: { name: info.label, on: mod.pluginOn(instance), binding: mod.binding(instance, ':bypass'),
                       presets: presetOptions(instance),
+                      onPresets: info.uri && NHE.PresetFileDialog ? function () { presetFile(st, info) } : null,
                       onColour: info.uri ? function () {
                           NHE.ColourDialog({ plugin: info.label, value: colourOf(instance), onPick: function (hex) { setColour(info.uri, hex) } })
                       } : null,
@@ -214,6 +215,82 @@ NHE.register('settings', function (mod) {
         var sr = st.stage[0].getBoundingClientRect()     // its zoomed size (CSS zoom), whatever offsetWidth means in this browser
         st.sizer.css({ width: Math.ceil(sr.width) + 'px', height: Math.ceil(sr.height) + 'px' })
         st.hint.update()
+    }
+
+    // A plugin's user presets to a file and a file's presets added to them
+    // (components/controls/presetfile.js). The file: { nhe: 'presets',
+    // version, plugin: { uri, name, brand }, from (the MOD), saved, count,
+    // presets: [{ name, values: { symbol: value } }] }; it is only taken for
+    // the plugin it names, and whole (count). MOD's own preset actions do
+    // the work (the adapter), then the plugin goes back to how it was.
+    var presetFile = function (st, info) {
+        var instance = st.instance
+        var back = function (keep, was) { mod.setPresetValues(instance, keep); mod.markPreset(instance, was) }
+        NHE.PresetFileDialog({
+            plugin: info.label, accent: colourOf(instance),
+            count: function () { return mod.presets(instance).user.length },
+            onExport: function (progress, done) {
+                var user = mod.presets(instance).user, keep = mod.presetValues(instance), was = mod.presets(instance).selected
+                var out = [], i = 0
+                var next = function () {
+                    if (i < user.length) {
+                        var p = user[i]
+                        progress('Reading ' + (i + 1) + ' of ' + user.length + ': ' + p.name)
+                        mod.loadPreset(instance, p.id, function (ok) {
+                            if (ok) out.push({ name: p.name, values: mod.presetValues(instance) })
+                            i++
+                            next()
+                        })
+                        return
+                    }
+                    back(keep, was)
+                    mod.systemInfo(function (sys) {
+                        var now = new Date(), two = function (n) { return (n < 10 ? '0' : '') + n }
+                        var day = now.getFullYear() + '-' + two(now.getMonth() + 1) + '-' + two(now.getDate())
+                        var data = { nhe: 'presets', version: 1, plugin: { uri: info.uri, name: info.name || info.label, brand: info.brand || '' },
+                                     from: sys.hwname || 'MOD', saved: now.toISOString(), count: out.length, presets: out }
+                        NHE.saveFile('presets-' + (info.name || info.label).replace(/[^\w-]+/g, '-') + '-' + day + '.json', JSON.stringify(data, null, 2))
+                        done(out.length === user.length ? 'Exported ' + out.length + ' preset' + (out.length === 1 ? '' : 's') + '.'
+                            : 'Exported ' + out.length + ' of ' + user.length + ' (some would not load).', out.length === user.length)
+                    })
+                }
+                next()
+            },
+            onImport: function (text, progress, done) {
+                var d = null
+                try { d = JSON.parse(text) } catch (e) {}
+                if (!d || d.nhe !== 'presets' || !d.plugin || !Array.isArray(d.presets) || d.count !== d.presets.length) { done("That isn't an NHE presets file, or it's incomplete.", false); return }
+                if (d.plugin.uri !== info.uri) { done('These presets are for ' + (d.plugin.name || d.plugin.uri) + ', not ' + (info.name || info.label) + '.', false); return }
+                var list = d.presets.filter(function (p) { return p && p.name && p.values && typeof p.values === 'object' })
+                if (!list.length) { done('No presets in that file.', false); return }
+                var keep = mod.presetValues(instance), was = mod.presets(instance).selected
+                // a name that's taken gets a number
+                var taken = {}
+                mod.presets(instance).user.forEach(function (p) { taken[p.name.toLowerCase()] = true })
+                var unique = function (name) {
+                    var n = name, k = 2
+                    while (taken[n.toLowerCase()]) n = name + ' ' + k++
+                    taken[n.toLowerCase()] = true
+                    return n
+                }
+                var added = 0, i = 0
+                var next = function () {
+                    if (i >= list.length) {
+                        back(keep, was)
+                        done('Added ' + added + ' preset' + (added === 1 ? '' : 's') + (added < list.length ? ' (' + (list.length - added) + ' failed)' : '') + '.', added === list.length)
+                        return
+                    }
+                    var p = list[i], name = unique(String(p.name))
+                    progress('Adding ' + (i + 1) + ' of ' + list.length + ': ' + name)
+                    mod.setPresetValues(instance, p.values)
+                    // the values reach the host over the websocket before it saves
+                    setTimeout(function () {
+                        mod.saveNewPreset(instance, name, function (ok) { if (ok) added++; i++; next() })
+                    }, 300)
+                }
+                next()
+            }
+        })
     }
 
     // the plugin's info page, as the + dialog shows it (components/constructor/add.js)
@@ -364,11 +441,7 @@ NHE.register('settings', function (mod) {
             var row = $('<div class="nhe-dialog__setting nhe-set-dialog__files">').appendTo(d)
             row.append(NHE.textButton('Export', 'secondary', function () {
                 NHE.config.exportFile(function (f) {
-                    var url = URL.createObjectURL(new Blob([f.text], { type: 'application/json' }))
-                    var a = $('<a>').attr({ href: url, download: f.name }).appendTo('body')
-                    a[0].click()
-                    a.remove()
-                    setTimeout(function () { URL.revokeObjectURL(url) }, 10000)
+                    NHE.saveFile(f.name, f.text)
                 })
             }))
             var picker = $('<input type="file" accept=".json,application/json">').css('display', 'none').appendTo(d)   // MOD's styles show [hidden] inputs

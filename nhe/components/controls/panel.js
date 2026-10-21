@@ -18,7 +18,7 @@
  *   var panel = new NHE.Panel(el, {
  *       height: 646,                                // the slider height
  *       plugin: { name, on, binding, presets: { factory, user, selected },
- *                 onColour, onInfo, onDelete,
+ *                 onPresets, onColour, onInfo, onDelete,
  *                 picture, onPicture: fn(img) },                              // optional left column; picture: the
  *                                                         // plugin's GUI, under the header
  *       controls: [{ id, type: 'slider'|'toggle'|'trigger'|'list',
@@ -128,7 +128,7 @@
         if (o.plugin) {
             var pc = el('div', 'nhe-panel__plugin', root)
             pc.style.height = o.height + 'px'
-            this.header = new NHE.PluginHeader(el('div', null, pc), mix({ name: o.plugin.name, on: o.plugin.on !== false, binding: o.plugin.binding || null, onColour: o.plugin.onColour, onInfo: o.plugin.onInfo, onDelete: o.plugin.onDelete }, mix(cb(':bypass'), {})))
+            this.header = new NHE.PluginHeader(el('div', null, pc), mix({ name: o.plugin.name, on: o.plugin.on !== false, binding: o.plugin.binding || null, onPresets: o.plugin.onPresets, onColour: o.plugin.onColour, onInfo: o.plugin.onInfo, onDelete: o.plugin.onDelete }, mix(cb(':bypass'), {})))
             // the plugin's GUI, 180 px tall at most, under the name and its icons;
             // the presets take what is left
             if (o.plugin.picture) {

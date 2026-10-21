@@ -900,3 +900,12 @@
 @media (hover: hover) { .nhe-transport__button:not(.is-on):hover { background: rgba(255, 255, 255, .1); } }
 .nhe-transport.is-locked .nhe-transport__button { cursor: not-allowed; opacity: .5; }
 .nhe-transport.is-blocked .nhe-transport__pair { outline: 2px solid var(--nhe-status-warn); outline-offset: 4px; border-radius: var(--nhe-radius-md); }
+
+/* ---- presets file dialog (presetfile.js) ---------------------------------- */
+
+.nhe-presetfile-dialog__section { flex: none; margin-top: var(--nhe-space-16); }
+.nhe-presetfile-dialog__button { align-self: stretch; height: 40px; margin-top: var(--nhe-space-8); }
+.nhe-presetfile-dialog__button:disabled { opacity: .35; cursor: default; }
+.nhe-presetfile-dialog__limit { margin-top: var(--nhe-space-16); opacity: .7; }
+.nhe-presetfile-dialog__status { min-height: 1.4em; margin-top: var(--nhe-space-8); color: var(--nhe-text-primary); }
+.nhe-presetfile-dialog__status.is-error { color: var(--nhe-status-warn); }
