@@ -209,13 +209,60 @@
 
 /* ---- bottom bar ------------------------------------------------------------- */
 
-:is(#pedalboard-actions, #main-menu) .nhe-bottombar__nav, :is(#pedalboard-actions, #main-menu) .nhe-bottombar__right, :is(#pedalboard-actions, #main-menu) .nhe-bottombar__extras { display: flex; align-items: center; gap: var(--nhe-space-4); min-width: 0; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__nav, :is(#pedalboard-actions, #main-menu) .nhe-bottombar__right { display: flex; align-items: center; gap: var(--nhe-space-4); min-width: 0; }
 :is(#pedalboard-actions, #main-menu) .nhe-bottombar__right { gap: var(--nhe-space-8); }
 /* the screens: only the current one shows its name */
 :is(#pedalboard-actions, #main-menu) .nhe-bottombar__screen span { display: none; }
 :is(#pedalboard-actions, #main-menu) .nhe-bottombar__screen.is-selected span { display: inline; color: #fff; }
-:is(#pedalboard-actions, #main-menu) .nhe-bottombar__extra.is-text { font-size: 11px; border: 1px solid rgba(255, 255, 255, .3); height: 26px; }
-:is(#pedalboard-actions, #main-menu) .nhe-bottombar__extra.is-text.is-on { background: var(--nhe-accent-default, #883996); border-color: transparent; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__right { position: relative; }
+/* Bypass 1 / 2 (a device only): framed in orange while bypassed (Figma "Frame 94") */
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__bypass { gap: 2px; border: 1px solid transparent; border-radius: 8px; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__bypass.is-bypassed { border-color: #ff8d28; }
+/* the menu button; an update waiting: a dot, as on the floppy */
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__more { position: relative; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__more.is-modified::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff8d28;
+}
+/* its menu: up from the bar's right end */
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel--up {
+    top: auto;
+    bottom: 100%;
+    gap: var(--nhe-space-8);
+    padding: var(--nhe-space-16);
+    border-radius: var(--nhe-radius-lg) var(--nhe-radius-lg) 0 0;
+    box-shadow: 0 -10px 24px rgba(0, 0, 0, .5);
+}
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item {
+    opacity: 1;                           /* MOD styles the bar's buttons */
+    line-height: normal;
+    background-image: none;
+    transition: none;
+    display: flex;
+    align-items: center;
+    gap: var(--nhe-space-12, 12px);
+    height: 36px;
+    padding: 0 var(--nhe-space-4);
+    border: 0;
+    border-radius: var(--nhe-radius-md);
+    background: none;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item svg { width: 26px; height: 26px; flex: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item svg .nhe-icon-fill { display: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item:hover { background: rgba(255, 255, 255, .08); }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-selected, :is(#pedalboard-actions, #main-menu) .nhe-menupanel__item.is-alert { color: #ff8d28; }
 
 /* CPU / RAM, and xruns: as tall as the bar (45px) */
 :is(#pedalboard-actions, #main-menu) .nhe-meters { display: flex; align-items: center; gap: 8px; height: 45px; padding: 0 6px 0 12px; border-radius: 9999px; background: rgba(0, 0, 0, .3); }

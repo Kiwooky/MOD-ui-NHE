@@ -105,11 +105,24 @@ items click them). 45 px tall, as MOD's.
 
 - **Top:** MOD's logo, the board's name and snapshot, New (with its label),
   Snapshots, Save (an orange dot while there are unsaved changes), Share
-  (when MOD offers it). Save and Snapshots drop a panel down: Save / Save as, Save snapshot / Save snapshot as; picking an *as* shows a field for the new name (the current one suggested), and NHE answers MOD's own name window with it, so MOD saves as usual. Load / manage snapshots opens MOD's window.
+  (when MOD offers it). Save and Snapshots drop a panel down: Save / Save as, Save snapshot / Save snapshot as; picking an *as* shows a field for the new name (the current one suggested), and NHE answers MOD's own name window with it, so MOD saves as usual. Under the Snapshots choices, Load / manage snapshots lists them (the current one highlighted): a tap loads one, the pencil renames it in place, the bin deletes it after a yes.
 - **Bottom:** Constructor, Library, Banks, File manager, Store (the current
   one orange with its name; MOD Desktop's locked ones greyed), then on the
-  right the device-only items when MOD shows them, the CPU / RAM meters
-  and xruns, tempo, Play / Stop, CV ports, Performance view, Report a
-  problem.
+  right the CPU / RAM meters and xruns (as tall as the bar), tempo, Play /
+  Stop, Bypass 1 and 2 (a device only; framed in orange while true bypass
+  is on) and the sliders button. That opens a menu up from the bar: MIDI
+  ports, Manage CV ports, Global tempo & sync, Performance view, Report a
+  problem, Devices, System settings, and System is up to date / Update
+  available (an orange dot on the button while one waits), each when MOD
+  shows it (MIDI ports, Devices, Settings and Update on a device only). The
+  device-only items used to sit in the bar, where on the Duo they ended up
+  behind the meters.
+- **Tempo and sync** (the tempo button): NHE's dialog in place of MOD's
+  transport window (components/controls/tempo.js), centred, full screen on
+  a phone. The sync mode list with the transport (stop / play) under it,
+  then BPM and beats per bar as sliders; each settings icon opens NHE's
+  addressing dialog for MOD's `/pedalboard/:bpm`, `:bpb` or `:rolling`. BPM
+  is locked while MIDI clock drives it, and can't be assigned under Link or
+  MIDI clock (as in MOD).
 - Still to do here: MOD's Library, Banks, File manager and Store windows
   cover the top bar (the designs keep it).

@@ -858,3 +858,43 @@
 
 /* a field being typed into starts empty: the old value shows faintly */
 .nhe-ctl input::placeholder { color: inherit; opacity: .45; }
+
+/* ---- tempo and sync dialog (tempo.js) ------------------------------------ */
+
+/* three columns: the sync mode list over the transport, then two sliders as
+   tall as that stack (tempo.js sets --nhe-slider-height) */
+.nhe-tempo-dialog { width: auto; }
+/* a phone (NHE.zoom, tempo.js): full screen, the controls in the middle */
+.nhe-dialog-overlay.is-full { padding: 0; }
+.nhe-tempo-dialog.is-full { width: 100%; height: 100%; max-width: none; max-height: none; border-radius: 0; }
+.nhe-tempo-dialog.is-full .nhe-tempo__body { margin: auto 0; }
+.nhe-tempo-dialog.is-full .nhe-dialog__buttons { margin-top: 0; }
+.nhe-tempo__body { display: flex; justify-content: center; margin-top: var(--nhe-space-16); flex: none; }
+.nhe-tempo__stack { display: flex; flex-direction: column; flex: none; }
+.nhe-tempo-dialog .nhe-slider { --nhe-slider-band: 0px; }        /* no group band */
+.nhe-tempo-dialog .nhe-slider__band { display: none; }
+.nhe-tempo__sync .nhe-footer .nhe-icon-button { visibility: hidden; }   /* the sync mode can't be assigned */
+.nhe-tempo__sync .nhe-row__label { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: var(--nhe-font-line-tight); }   /* Ableton Link */
+
+/* the transport cell: stop and play, the one that holds lit */
+.nhe-transport { height: 169px; }
+.nhe-transport__pair { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; gap: var(--nhe-space-8); }
+.nhe-transport__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--nhe-radius-md);
+    background: var(--nhe-surface-sunken);
+    cursor: pointer;
+}
+.nhe-transport__button svg { display: block; width: 24px; height: 24px; }
+.nhe-transport__button .nhe-icon-fill { display: none; }
+.nhe-transport__button.is-on { background: var(--nhe-accent-default); }
+.nhe-transport__button.is-on .nhe-icon-fill { display: inline; }      /* white filled on the accent */
+@media (hover: hover) { .nhe-transport__button:not(.is-on):hover { background: rgba(255, 255, 255, .1); } }
+.nhe-transport.is-locked .nhe-transport__button { cursor: not-allowed; opacity: .5; }
+.nhe-transport.is-blocked .nhe-transport__pair { outline: 2px solid var(--nhe-status-warn); outline-offset: 4px; border-radius: var(--nhe-radius-md); }

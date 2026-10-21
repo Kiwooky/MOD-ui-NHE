@@ -194,6 +194,35 @@ NHE.register('bars', function (mod) {
         })
     }
 
+    // ---- tempo and sync (components/controls/tempo.js) in place of MOD's window
+
+    var tempoDialog = null
+    var transportBindings = function () {
+        return { ':bpm': mod.transportBinding(':bpm'), ':bpb': mod.transportBinding(':bpb'), ':rolling': mod.transportBinding(':rolling') }
+    }
+    var openTempo = function () {
+        if (tempoDialog) return
+        bTempo.addClass('is-selected')
+        tempoDialog = NHE.TempoDialog({
+            state: mod.transport(),
+            bindings: transportBindings(),
+            onSync: function (mode) { mod.setSyncMode(mode) },
+            onBpm: function (v) { mod.setTempo(v) },
+            onBpb: function (v) { mod.setBeatsPerBar(v) },
+            onRolling: function (on) { mod.setRolling(on) },
+            // NHE's addressing dialog over MOD's form; bindings shown again when it closes
+            onSettings: function (symbol) {
+                var a = mod.transportAddressing(symbol)
+                if (!a) return
+                NHE.AddressingDialog({
+                    plugin: a.plugin, control: a.control, model: a.model, minimised: null,
+                    onClose: function () { if (tempoDialog) tempoDialog.update(mod.transport(), transportBindings()) }
+                })
+            },
+            onClose: function () { tempoDialog = null; bTempo.removeClass('is-selected') }
+        })
+    }
+
     // ---- bottom bar ----------------------------------------------------------
 
     var bottom = $('<div class="nhe-ctl nhe-menus nhe-bottombar">')
@@ -208,18 +237,6 @@ NHE.register('bars', function (mod) {
     })
 
     var right = $('<div class="nhe-bottombar__right">').appendTo(bottom)
-    // MOD's device-only items and NHE's performance view (not in the
-    // designs: small icons here; docs/menus-spec.md)
-    var extras = $('<div class="nhe-bottombar__extras">').appendTo(right)
-    var EXTRA = [
-        ['bypass1', null, 'Bypass 1'], ['bypass2', null, 'Bypass 2'], ['midiPorts', M.midi, 'MIDI ports'],
-        ['devices', I.device, 'Devices'], ['settings', I.gear, 'Settings'], ['update', null, 'Update']
-    ]
-    var extraBtns = {}
-    EXTRA.forEach(function (x) {
-        extraBtns[x[0]] = btn('nhe-menus__btn nhe-bottombar__extra' + (x[1] ? '' : ' is-text'), x[1], x[1] ? '' : x[2], x[2]).appendTo(extras).on('click', function () { mod.menuAction(x[0]) })
-    })
-
     var meters = $('<div class="nhe-meters" title="CPU and RAM">').appendTo(right)
     $('<span class="nhe-meters__icon">').html(I.meters).appendTo(meters)
     var bars = $('<span class="nhe-meters__bars">').appendTo(meters)
@@ -234,11 +251,56 @@ NHE.register('bars', function (mod) {
     var cpu = meter('CPU', 'is-cpu'), ram = meter('RAM', 'is-ram')
     var xruns = $('<span class="nhe-meters__xruns">').appendTo(meters)
 
-    var bTempo = btn('nhe-menus__btn nhe-menus__btn--label nhe-bottombar__tempo', M.tempo, '120bpm', 'Tempo and sync').appendTo(right).on('click', function () { mod.menuAction('tempo') })
+    var bTempo = btn('nhe-menus__btn nhe-menus__btn--label nhe-bottombar__tempo', M.tempo, '120bpm', 'Tempo and sync').appendTo(right).on('click', function () { openTempo() })
     var bPlay = btn('nhe-menus__btn', M.play, '', 'Play').appendTo(right).on('click', function () { mod.setRolling(!mod.rolling()); renderTransport() })
-    var bCv = btn('nhe-menus__btn', M.cv, '', 'Manage CV ports').appendTo(right).on('click', function () { mod.menuAction('cv') })
-    var bPerf = btn('nhe-menus__btn', I.bolt, '', 'Performance view').appendTo(right).on('click', function () { mod.menuAction('performance') })
-    var bReport = btn('nhe-menus__btn', M.report, '', 'Report a problem').appendTo(right).on('click', function () { mod.menuAction('report') })
+    // MOD's Bypass 1 / 2 (on a device only): orange framed while bypassed
+    var bypassBtns = {}
+    ;[['bypass1', '1'], ['bypass2', '2']].forEach(function (x) {
+        bypassBtns[x[0]] = btn('nhe-menus__btn nhe-menus__btn--label nhe-bottombar__bypass', I.shuffle, x[1], 'Bypass ' + x[1]).appendTo(right)
+            .on('click', function () { mod.menuAction(x[0]) })
+    })
+    var bMenu = btn('nhe-menus__btn nhe-bottombar__more', M.sliders, '', 'More').appendTo(right).on('click', function () { toggleMore() })
+
+    // the rest in a menu over the bar's right end (Figma "Frame 77"): each
+    // item when MOD shows it; the device-only ones (MIDI ports, Devices,
+    // Settings, Update) never on MOD Desktop
+    var DEVICE_ONLY = { midiPorts: 'mod-show-midi-port', devices: 'mod-devices', settings: 'mod-settings', update: 'mod-update' }
+    var deviceShows = function (name) { return $(document.getElementById(DEVICE_ONLY[name])).is(':visible') }
+    var MORE = [
+        { id: 'midiPorts', icon: M.midi, label: 'MIDI ports' },
+        { id: 'cv', icon: M.cv, label: 'Manage CV ports' },
+        { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() } },
+        { id: 'performance', icon: I.bolt, label: 'Performance view' },
+        { id: 'report', icon: M.report, label: 'Report a problem' },
+        { id: 'devices', icon: I.device, label: 'Devices' },
+        { id: 'settings', icon: I.cpu, label: 'System settings' },
+        { id: 'update', icon: I.checkSquare, label: function (it) { return it.available ? 'Update available' : 'System is up to date' } }
+    ]
+    var more = null
+    var closeMore = function () {
+        if (more) more.remove()
+        more = null
+        bMenu.removeClass('is-open')
+    }
+    var toggleMore = function () {
+        if (more) { closeMore(); return }
+        closePanel()
+        bMenu.addClass('is-open')
+        more = $('<div class="nhe-menupanel nhe-menupanel--up" role="menu">').attr('aria-label', 'More').appendTo(bottom)
+        MORE.forEach(function (m) {
+            var it = m.id === 'tempo' ? { shown: true } : mod.menuItem(m.id)
+            if (!it.shown || (DEVICE_ONLY[m.id] && !deviceShows(m.id))) return
+            var r = $('<button type="button" class="nhe-menupanel__item" role="menuitem">').html(m.icon + '<span></span>').appendTo(more)
+            r.find('span').text(typeof m.label === 'function' ? m.label(it) : m.label)
+            r.toggleClass('is-selected', !!it.selected).toggleClass('is-alert', !!it.available)
+            r.on('click', function () {
+                closeMore()
+                if (m.run) m.run(); else mod.menuAction(m.id)
+            })
+        })
+    }
+    $(document).on('pointerdown', function (e) { if (more && !$(e.target).closest('.nhe-menupanel--up, .nhe-bottombar__more').length) closeMore() })
+    $(document).on('keydown', function (e) { if (more && e.key === 'Escape') closeMore() })
 
     // ---- following MOD -------------------------------------------------------
 
@@ -251,16 +313,13 @@ NHE.register('bars', function (mod) {
             var it = mod.menuItem(n[0]), b = navBtns[n[0]]
             b.toggle(!!it.shown).toggleClass('is-selected', !!it.selected).toggleClass('is-greyed', !!it.greyed)
         })
-        EXTRA.forEach(function (x) {
-            var it = mod.menuItem(x[0]), b = extraBtns[x[0]]
-            // on a device only: MOD shows them there (display), never on MOD Desktop
-            b.toggle(!!it.shown && $(document.getElementById({ bypass1: 'mod-bypassLeft', bypass2: 'mod-bypassRight', midiPorts: 'mod-show-midi-port', devices: 'mod-devices', settings: 'mod-settings', update: 'mod-update' }[x[0]])).is(':visible'))
-            if (x[0] === 'bypass1' || x[0] === 'bypass2') b.toggleClass('is-on', !!it.on)
+        // Bypass 1 / 2: on a device only (MOD shows them there, never on MOD Desktop)
+        ;[['bypass1', 'mod-bypassLeft'], ['bypass2', 'mod-bypassRight']].forEach(function (x) {
+            var it = mod.menuItem(x[0])
+            bypassBtns[x[0]].toggle(!!it.shown && $(document.getElementById(x[1])).is(':visible')).toggleClass('is-bypassed', !it.on)
         })
-        var perf = mod.menuItem('performance')
-        bPerf.toggle(!!perf.shown).toggleClass('is-selected', !!perf.selected)
-        var cv = mod.menuItem('cv')
-        bCv.toggle(!!cv.shown)
+        // an update waiting: a dot on the menu button
+        bMenu.toggleClass('is-modified', !!mod.menuItem('update').available && deviceShows('update'))
     }
     var pct = function (v) { return v == null || isNaN(v) ? null : Math.max(0, Math.min(100, v)) }
     var renderStats = function (st) {
@@ -292,7 +351,7 @@ NHE.register('bars', function (mod) {
         bottom.toggle(on)
         mod.coverMenus(on)
         $('body').toggleClass('nhe-menus-on', on)
-        if (on) { renderMenus(); renderStats(); renderTempo(); renderChips() } else closePanel()
+        if (on) { renderMenus(); renderStats(); renderTempo(); renderChips() } else { closePanel(); closeMore() }
     }
     NHE.menus = {
         current: saved,
@@ -310,6 +369,9 @@ NHE.register('bars', function (mod) {
         if (refreshPanel) refreshPanel()
     })
     mod.onStats(function (st) { if (saved() === 'nhe') renderStats(st) })
-    mod.onTempo(function () { if (saved() === 'nhe') renderTempo() })
+    mod.onTempo(function () {
+        if (saved() === 'nhe') renderTempo()
+        if (tempoDialog) tempoDialog.update(mod.transport())
+    })
     apply()
 })

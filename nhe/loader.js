@@ -70,6 +70,10 @@
                 'components/controls/controls.css',
                 'components/controls/controls.js',
                 'components/controls/confirm.js',
+                'components/slider/slider.css',
+                'components/slider/slider.js',
+                'components/controls/tempo.js',
+                'components/controls/addressing.js',
                 'features/bars/bars.css',
                 'features/bars/index.js'
             ]

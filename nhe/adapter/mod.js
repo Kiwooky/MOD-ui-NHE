@@ -346,12 +346,14 @@
         var hw = mod.pedalboard().data('hardwareManager') || (desktop && desktop.hardwareManager)
         var gui = mod.gui(instance)
         if (!hw || !gui) return null
-        var key = instance + '/' + symbol
+        var port = gui.controls[symbol]
+        return bindingOf(hw, instance + '/' + symbol, port ? port.enabled === false : false)
+    }
+    // hardwareManager's addressing of a port key ("<instance>/<symbol>")
+    var bindingOf = function (hw, key, locked) {
         var uri = hw.addressingsByPortSymbol && hw.addressingsByPortSymbol[key]
         if (!uri || uri === 'null') return null
         var data = (hw.addressingsData && hw.addressingsData[key]) || {}
-        var port = gui.controls[symbol]
-        var locked = port ? port.enabled === false : false
         var m
         if (uri === '/midi-learn') return { type: 'midi', kind: 'MIDI', label: 'Learning…', locked: locked }
         if ((m = /^\/midi-custom_Ch\.(\d+)_CC#(\d+)/.exec(uri))) return { type: 'midi', kind: 'MIDI', label: 'CC ' + m[2] + ' · Ch ' + m[1], locked: locked }
@@ -387,7 +389,12 @@
         var port = gui && gui.controls[symbol]
         if (!hw || !port) return null
         var pluginLabel = (icon && icon.data('label')) || ''
-        hw.open(instance, port, pluginLabel)
+        var control = symbol === ':bypass' ? 'On/off' : symbol === ':presets' ? 'Presets' : (port.shortName || port.name || symbol)
+        return addressingForm(hw, instance, port, pluginLabel, pluginLabel, control)
+    }
+    // label: what MOD's open() is given; heading: the dialog's
+    var addressingForm = function (hw, instance, port, label, heading, control) {
+        hw.open(instance, port, label)
         var form = $('body > .mod-pedal-settings-address').last()
         if (!form.length) return null
         form.addClass('nhe-hidden-form')
@@ -484,8 +491,7 @@
             // MOD's Cancel removes its form
             cancel: function () { form.find('.js-close').first().click(); form.remove() }
         }
-        var control = symbol === ':bypass' ? 'On/off' : symbol === ':presets' ? 'Presets' : (port.shortName || port.name || symbol)
-        return { model: model, plugin: pluginLabel, control: control }
+        return { model: model, plugin: heading, control: control }
     }
 
     // plugin on/off: MOD's ':bypass' port is the inverse (1 = bypassed)
@@ -580,13 +586,56 @@
         t.setBeatsPerMinuteValue(bpm, true, true)
     }
 
+    // Tempo and sync (MOD's #mod-transport-window, transport.js): its three
+    // ports (desktop.transportControls' beatsPerMinutePort, beatsPerBarPort,
+    // rollingPort, addressed as "/pedalboard/:bpm" etc.) and the sync mode
+    // ('none' | 'midi_clock_slave' | 'link')
+    var transportPort = function (symbol) {
+        var t = window.desktop && desktop.transportControls
+        return t ? ({ ':bpm': t.beatsPerMinutePort, ':bpb': t.beatsPerBarPort, ':rolling': t.rollingPort })[symbol] || null : null
+    }
+    mod.transport = function () {
+        var bpb = transportPort(':bpb')
+        return { bpm: mod.tempo().bpm, bpb: bpb && bpb.value != null ? bpb.value : 4, rolling: mod.rolling(), sync: syncMode() }
+    }
+    mod.setBeatsPerBar = function (bpb) {
+        var t = window.desktop && desktop.transportControls
+        if (!t || !window.ws) return
+        ws.send('transport-bpb ' + bpb)
+        t.setBeatsPerBarValue(bpb, true, true)
+    }
+    // MOD's own list item: its click asks the host (set_sync_mode) and,
+    // when that works, updates MOD's window (and drops a BPM addressing)
+    mod.setSyncMode = function (mode) { $('#mod-enum-transport-sync-mode [mod-sync-mode="' + mode + '"]').click() }
+    // a transport port's binding, as mod.binding; the BPM is locked while
+    // MIDI clock drives it (MOD greys its knob)
+    mod.transportBinding = function (symbol) {
+        var hw = window.desktop && desktop.hardwareManager
+        var b = hw ? bindingOf(hw, '/pedalboard/' + symbol, false) : null
+        if (symbol === ':bpm' && syncMode() === 'midi_clock_slave') return { type: 'midi', kind: 'MIDI clock', label: 'Sync', locked: true }
+        return b
+    }
+    // the addressing dialog's model for a transport port (as mod.addressing),
+    // or null where MOD refuses: BPM while Link or MIDI clock sets it
+    mod.transportAddressing = function (symbol) {
+        var hw = window.desktop && desktop.hardwareManager, port = transportPort(symbol)
+        if (!hw || !port) return null
+        var mode = syncMode()
+        if (symbol === ':bpm' && mode !== 'none') {
+            mod.notify('warn', 'Cannot address BPM parameter with ' + (mode === 'link' ? 'Link' : 'MIDI Clock Slave') + ' enabled', 5000)
+            return null
+        }
+        var label = { ':bpm': 'Global-BPM', ':bpb': 'Global-BPB', ':rolling': 'Global-Rolling' }[symbol]
+        return addressingForm(hw, '/pedalboard', port, label, 'Tempo and sync', port.shortName || port.name)
+    }
+
     mod.onTempo = function (cb) {
         var t = desktop && desktop.transportControls
         if (!t) return
         // wrapped once; every caller's listener joins the list
         if (!t.__nheTempo) {
             t.__nheTempo = []
-            ;['setBeatsPerMinuteValue', 'setSyncMode', 'setPlaybackState'].forEach(function (m) {
+            ;['setBeatsPerMinuteValue', 'setBeatsPerBarValue', 'setSyncMode', 'setPlaybackState'].forEach(function (m) {
                 var original = t[m]
                 if (!original) return
                 t[m] = function () { var r = original.apply(this, arguments); t.__nheTempo.forEach(function (fn) { fn(mod.tempo()) }); return r }
@@ -872,16 +921,18 @@
     }
     var barEl = function (name) { return BAR[name] ? $(BAR[name]).first() : $() }
     mod.menuAction = function (name) { barEl(name).click() }
-    // { shown, selected, greyed, modified, text } of one of MOD's bar items:
-    // shown when MOD shows it (not .mod-hidden, not display: none); greyed:
-    // MOD Desktop's locked items (desktop-app-greyed: a tap shows MOD's notice)
+    // { shown, selected, greyed, modified, on, available, text } of one of
+    // MOD's bar items: shown when MOD shows it (not .mod-hidden, not display:
+    // none); greyed: MOD Desktop's locked items (desktop-app-greyed: a tap
+    // shows MOD's notice); available: an update (upgrade.js sets the
+    // statusTooltip status 'update-available' on #mod-update)
     mod.menuItem = function (name) {
         var e = barEl(name)
         if (!e.length) return { shown: false }
         var shown = !e.hasClass('mod-hidden') && e.css('display') !== 'none' && (!e[0].style || e[0].style.display !== 'none')
         return {
             shown: shown, selected: e.hasClass('selected'), greyed: e.hasClass('desktop-app-greyed'),
-            modified: e.hasClass('unmodified-changes'), on: !e.hasClass('bypassed'),
+            modified: e.hasClass('unmodified-changes'), on: !e.hasClass('bypassed'), available: e.hasClass('update-available'),
             text: $.trim(e.text())
         }
     }
