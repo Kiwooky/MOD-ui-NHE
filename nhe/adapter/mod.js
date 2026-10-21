@@ -582,12 +582,16 @@
 
     mod.onTempo = function (cb) {
         var t = desktop && desktop.transportControls
-        if (!t || t.__nheTempo) return
-        t.__nheTempo = []
-        ;['setBeatsPerMinuteValue', 'setSyncMode'].forEach(function (m) {
-            var original = t[m]
-            t[m] = function () { var r = original.apply(this, arguments); t.__nheTempo.forEach(function (fn) { fn(mod.tempo()) }); return r }
-        })
+        if (!t) return
+        // wrapped once; every caller's listener joins the list
+        if (!t.__nheTempo) {
+            t.__nheTempo = []
+            ;['setBeatsPerMinuteValue', 'setSyncMode', 'setPlaybackState'].forEach(function (m) {
+                var original = t[m]
+                if (!original) return
+                t[m] = function () { var r = original.apply(this, arguments); t.__nheTempo.forEach(function (fn) { fn(mod.tempo()) }); return r }
+            })
+        }
         t.__nheTempo.push(cb)
     }
 
@@ -845,6 +849,124 @@
     }
 
     var plugsUrl = function (path, a, b) { return '/effect/' + path + '/' + a + ',' + b }
+
+    // ------------------------------------------------------------------
+    // MOD's top and bottom bars, for NHE's own (features/bars)
+    //
+    // NHE's bars drive MOD's: each item clicks MOD's own button or icon
+    // (index.html #pedalboard-actions and #main-menu; desktop.js binds their
+    // clicks), so MOD's dialogs, checks and upsells run unchanged. MOD's
+    // bars stay in the page, hidden (mod.coverMenus); NHE's are mounted in
+    // them (mod.mountMenus), so they stack as MOD's do.
+    var BAR = {
+        // top bar (#pedalboard-info)
+        'new': '#pedalboard-info .js-reset', save: '#pedalboard-info .js-save', saveAs: '#pedalboard-info .js-save-as',
+        share: '#pedalboard-info .js-cloud', cv: '#pedalboard-info .js-cv-addressing',
+        snapshotSave: '#pedalboard-info .js-preset-save', snapshotSaveAs: '#pedalboard-info .js-preset-save-as',
+        snapshotManage: '#pedalboard-info .js-preset-manage',
+        // bottom bar (#main-menu)
+        constructor: '#mod-plugins', performance: '#mod-performance', library: '#mod-pedalboard', banks: '#mod-bank',
+        files: '#mod-file-manager', store: '#mod-cloud-plugins', report: '#mod-report', tempo: '#mod-transport-icon',
+        bypass1: '#mod-bypassLeft', bypass2: '#mod-bypassRight', midiPorts: '#mod-show-midi-port',
+        settings: '#mod-settings', devices: '#mod-devices', update: '#mod-update'
+    }
+    var barEl = function (name) { return BAR[name] ? $(BAR[name]).first() : $() }
+    mod.menuAction = function (name) { barEl(name).click() }
+    // { shown, selected, greyed, modified, text } of one of MOD's bar items:
+    // shown when MOD shows it (not .mod-hidden, not display: none); greyed:
+    // MOD Desktop's locked items (desktop-app-greyed: a tap shows MOD's notice)
+    mod.menuItem = function (name) {
+        var e = barEl(name)
+        if (!e.length) return { shown: false }
+        var shown = !e.hasClass('mod-hidden') && e.css('display') !== 'none' && (!e[0].style || e[0].style.display !== 'none')
+        return {
+            shown: shown, selected: e.hasClass('selected'), greyed: e.hasClass('desktop-app-greyed'),
+            modified: e.hasClass('unmodified-changes'), on: !e.hasClass('bypassed'),
+            text: $.trim(e.text())
+        }
+    }
+    // cb() when any of MOD's bar items changes (selected, shown, its text)
+    mod.onMenusChange = function (cb) {
+        if (!window.MutationObserver) return
+        var timer = null
+        var later = function () { clearTimeout(timer); timer = setTimeout(cb, 30) }
+        ;['#pedalboard-actions', '#main-menu'].forEach(function (sel) {
+            var el = $(sel)[0]
+            if (el) new MutationObserver(later).observe(el, { subtree: true, attributes: true, attributeFilter: ['class', 'style'], childList: true, characterData: true })
+        })
+    }
+    // NHE's bars in MOD's: top in #pedalboard-actions, bottom in #main-menu
+    mod.mountMenus = function (top, bottom) {
+        $(top).appendTo('#pedalboard-actions')
+        $(bottom).appendTo('#main-menu')
+    }
+    // MOD's own bar contents hidden (NHE's, .nhe-menus, stay visible)
+    mod.coverMenus = function (on) {
+        var style = document.getElementById('nhe-cover-menus')
+        if (on && !style) {
+            style = document.createElement('style')
+            style.id = 'nhe-cover-menus'
+            style.textContent = '#pedalboard-actions > :not(.nhe-menus), #main-menu > :not(.nhe-menus) { visibility: hidden !important; }' +
+                '#pedalboard-actions, #main-menu { background-image: none !important; }' +
+                // NHE's drop-down panels and snapshot chips hang below the top bar: over
+                // NHE's builder (z-index 5) and the performance view (6), under MOD's windows (1000+)
+                '#pedalboard-actions { z-index: 8 !important; }'
+            document.head.appendChild(style)
+        } else if (!on && style) style.parentNode.removeChild(style)
+    }
+
+    // MOD's logo, as its top bar shows it (#pedalboard-actions' background)
+    mod.logoUrl = function () { return '/img/icons/36/mod.png' }
+
+    // the board's name with its snapshot, as MOD's title shows it
+    // (desktop.titleBox: #pedalboard-info h1), and when it changes
+    mod.boardName = function () { return $.trim($('#pedalboard-info h1').first().text()) }
+    mod.onBoardName = function (cb) {
+        var el = $('#pedalboard-info h1')[0]
+        if (el && window.MutationObserver) new MutationObserver(function () { cb(mod.boardName()) }).observe(el, { childList: true, characterData: true, subtree: true })
+    }
+
+    // snapshots: the list (GET /snapshot/list: { index: name }) as
+    // [{ id, name }], the current one (desktop.pedalboardPresetId), loading
+    // one (GET /snapshot/load?id=, as snapshot.js does), and when they
+    // change (ws "pedal_snapshot", "loading_end")
+    mod.snapshots = function (cb) {
+        $.ajax({
+            url: '/snapshot/list', cache: false, dataType: 'json',
+            success: function (r) {
+                cb(Object.keys(r || {}).map(function (k) { return { id: parseInt(k, 10), name: r[k] } }).sort(function (a, b) { return a.id - b.id }))
+            },
+            error: function () { cb([]) }
+        })
+    }
+    mod.snapshotCurrent = function () { return window.desktop ? desktop.pedalboardPresetId : null }
+    mod.loadSnapshot = function (id, cb) {
+        $.ajax({ url: '/snapshot/load', data: { id: id }, cache: false, success: function () { if (cb) cb(true) }, error: function () { mod.notify('error', 'Failed to load snapshot'); if (cb) cb(false) } })
+    }
+    mod.onSnapshots = function (cb) {
+        var socket = window.ws, timer = null
+        if (!socket || !socket.addEventListener) return
+        socket.addEventListener('message', function (evt) {
+            var cmd = String(evt.data).split(' ', 1)[0]
+            if (cmd !== 'pedal_snapshot' && cmd !== 'loading_end') return
+            clearTimeout(timer)
+            timer = setTimeout(cb, 120)
+        })
+    }
+
+    // the transport: rolling (desktop.transportControls' :rolling port), and
+    // setting it as MOD's play button does (ws "transport-rolling", then
+    // setPlaybackState: transport.js)
+    mod.rolling = function () {
+        var t = window.desktop && desktop.transportControls
+        return !!(t && t.rollingPort && t.rollingPort.value > 0.5)
+    }
+    mod.setRolling = function (on) {
+        var t = window.desktop && desktop.transportControls
+        if (!t || !window.ws) return
+        ws.send('transport-rolling ' + (on ? '1' : '0'))
+        if (t.setPlaybackState) t.setPlaybackState(!!on, true, true)
+    }
 
     // a message in MOD's own notification bar (notification.js: the global
     // Notification(type, message, timeout), which shadows the browser's)

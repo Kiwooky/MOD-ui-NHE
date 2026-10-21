@@ -63,6 +63,17 @@
             ]
         },
         {
+            // NHE's top and bottom bars in place of MOD's (SET → Menus)
+            id: 'bars',
+            files: [
+                'components/icons.js',
+                'components/controls/controls.css',
+                'components/controls/controls.js',
+                'features/bars/bars.css',
+                'features/bars/index.js'
+            ]
+        },
+        {
             // NHE's builder over MOD's (SET → Builder); MOD's stays the default
             id: 'constructor',
             files: [

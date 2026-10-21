@@ -16,6 +16,8 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 
 - **NHE's builder (first step)**: SET → Builder: NHE shows the constructor surface over MOD's builder on the real pedalboard. Checked in MOD Desktop: wiring by hand, moving a pedal, adding one with the + dialog and inserting one with a cable's + all change MOD's board, and survive a reload. A tapped face zooms to 100% and plays (MOD's own GUI); tall pedals take one cell; a double click zooms out to the whole grid.
 
+- **Menu bars (desktop / tablet)**: NHE's top and bottom bars in place of MOD's (SET → Menus): name and snapshot, New, Snapshots, Save panels, snapshot chips; screens, meters, tempo, play, CV, performance, report (docs/menus-spec.md).
+
 ## Not tested yet
 
 - NHE's builder: Rewire on a phone; loading another pedalboard while it shows; touch on a tablet; the Duo.

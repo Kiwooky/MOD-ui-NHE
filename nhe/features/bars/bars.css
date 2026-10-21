@@ -1,0 +1,188 @@
+/* SPDX-FileCopyrightText: 2026 New Horizon Electronics */
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+/* NHE's menu bars (docs/menus-spec.md), in MOD's #pedalboard-actions (top)
+   and #main-menu (bottom), over MOD's own (hidden: NHE.mod.coverMenus).
+   Desktop / tablet layout, Figma "Touch friendly constructor menus". */
+
+:is(#pedalboard-actions, #main-menu) .nhe-menus {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--nhe-space-16);
+    height: 45px;
+    padding: 0 var(--nhe-space-8);
+    padding-left: calc(var(--nhe-space-8) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--nhe-space-8) + env(safe-area-inset-right, 0px));
+    background: #212121;
+    color: var(--nhe-text-primary);
+    font-family: var(--nhe-font-family-base);
+    visibility: visible;            /* MOD's bar around it is hidden */
+    z-index: 2;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-topbar { top: 0; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar { bottom: 0; justify-content: space-between; }
+
+/* an icon button, its label beside it when it has one */
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn {
+    opacity: 1;
+    line-height: normal;
+    background-image: none;
+    transition: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: var(--nhe-radius-md);
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    font-weight: var(--nhe-font-weight-medium);
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn svg { width: 26px; height: 26px; flex: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn:hover { background: rgba(255, 255, 255, .08); }
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn.is-open, :is(#pedalboard-actions, #main-menu) .nhe-menus__btn.is-selected { color: #ff8d28; }      /* Figma: the open / current one in orange */
+:is(#pedalboard-actions, #main-menu) .nhe-menus__btn.is-greyed { opacity: .45; }                                  /* MOD Desktop: only on a device */
+
+/* ---- top bar ---------------------------------------------------------------- */
+
+:is(#pedalboard-actions, #main-menu) .nhe-topbar__logo { flex: none; width: 32px; height: 32px; background: center / contain no-repeat; }
+:is(#pedalboard-actions, #main-menu) .nhe-topbar__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-topbar__actions { display: flex; align-items: center; gap: var(--nhe-space-8); flex: none; }
+/* unsaved changes: a dot on the floppy */
+:is(#pedalboard-actions, #main-menu) .nhe-topbar__save { position: relative; }
+:is(#pedalboard-actions, #main-menu) .nhe-topbar__save.is-modified::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff8d28;
+}
+
+/* the snapshots as chips, under the bar at the left */
+:is(#pedalboard-actions, #main-menu) .nhe-snapchips {
+    position: absolute;
+    top: 100%;
+    left: calc(var(--nhe-space-8) + env(safe-area-inset-left, 0px));
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--nhe-space-8);
+    padding-top: var(--nhe-space-8);
+    pointer-events: none;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-snapchip {
+    height: 24px;
+    padding: 0 var(--nhe-space-8);
+    border: 0;
+    border-radius: 8px;
+    background: #575757;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    text-transform: uppercase;
+    cursor: pointer;
+    pointer-events: auto;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-snapchip.is-on { background: var(--nhe-accent-default, #883996); }
+
+/* a drop-down panel under the bar, at the right (Save, Snapshots) */
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel {
+    position: absolute;
+    top: 100%;
+    right: calc(var(--nhe-space-8) + env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: var(--nhe-space-4);
+    width: 300px;
+    padding: var(--nhe-space-8) var(--nhe-space-16) var(--nhe-space-16);
+    border-radius: 0 0 var(--nhe-radius-lg) var(--nhe-radius-lg);
+    background: #212121;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .5);
+}
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__choice {
+    display: flex;
+    align-items: center;
+    gap: var(--nhe-space-10, 10px);
+    height: 40px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+    text-transform: uppercase;
+    text-align: left;
+    cursor: pointer;
+}
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__choice svg { width: 24px; height: 24px; flex: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__radio { flex: none; width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__choice.is-on .nhe-menupanel__radio { box-shadow: inset 0 0 0 3px #212121; background: #fff; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__note { margin-left: var(--nhe-space-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__buttons { display: flex; gap: var(--nhe-space-8); margin-top: var(--nhe-space-8); }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__buttons .nhe-text-button { flex: 1 1 0; height: 36px; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel__link {
+    margin-top: var(--nhe-space-8);
+    padding: var(--nhe-space-8) 0 0;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, .15);
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+/* ---- bottom bar ------------------------------------------------------------- */
+
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__nav, :is(#pedalboard-actions, #main-menu) .nhe-bottombar__right, :is(#pedalboard-actions, #main-menu) .nhe-bottombar__extras { display: flex; align-items: center; gap: var(--nhe-space-4); min-width: 0; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__right { gap: var(--nhe-space-8); }
+/* the screens: only the current one shows its name */
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__screen span { display: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__screen.is-selected span { display: inline; color: #fff; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__extra.is-text { font-size: 11px; border: 1px solid rgba(255, 255, 255, .3); height: 26px; }
+:is(#pedalboard-actions, #main-menu) .nhe-bottombar__extra.is-text.is-on { background: var(--nhe-accent-default, #883996); border-color: transparent; }
+
+/* CPU / RAM, and xruns */
+:is(#pedalboard-actions, #main-menu) .nhe-meters { display: flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 8px; border-radius: 9999px; background: rgba(0, 0, 0, .3); }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__icon svg { display: block; width: 24px; height: 24px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__bars { display: flex; flex-direction: column; gap: 3px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__row { display: flex; align-items: center; gap: 4px; font-size: 9px; line-height: 10px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__label { width: 22px; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__value { width: 26px; text-align: right; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__track { position: relative; width: 90px; height: 8px; border-radius: 9999px; background: linear-gradient(90deg, #7b7b7b, #323232 55%); overflow: hidden; }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 9999px; }
+.is-cpu .nhe-meters__fill { background: linear-gradient(90deg, #da8e00, #8eab00); }
+.is-ram .nhe-meters__fill { background: linear-gradient(90deg, #8e00da, #40c9ff); }
+:is(#pedalboard-actions, #main-menu) .nhe-meters__xruns { height: 22px; padding: 0 8px; border-radius: 9999px; background: #ff383c; font-size: 10px; line-height: 22px; text-transform: uppercase; white-space: nowrap; }
+
+/* MOD's header styles every button in it (header#pedalboard-actions button):
+   the panel's buttons and chips get theirs back */
+:is(#pedalboard-actions, #main-menu) .nhe-menus button { opacity: 1; line-height: normal; background-image: none; transition: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button { min-width: 0; height: 36px; padding: 0 var(--nhe-space-16); border: 1px solid transparent; border-radius: var(--nhe-radius-full); font-size: 14px; font-weight: var(--nhe-font-weight-semibold); }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button--primary { background-color: var(--nhe-accent-default, #883996); }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button--secondary { background-color: transparent; border-color: var(--nhe-text-primary, #fff); }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button:hover { background-color: rgba(255, 255, 255, .1); }
+:is(#pedalboard-actions, #main-menu) .nhe-menupanel .nhe-text-button--primary:hover { background-color: var(--nhe-accent-default, #883996); background-image: linear-gradient(rgba(255, 255, 255, .12), rgba(255, 255, 255, .12)); }

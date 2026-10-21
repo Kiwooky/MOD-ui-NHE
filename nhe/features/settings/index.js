@@ -326,6 +326,17 @@ NHE.register('settings', function (mod) {
             $('<div class="nhe-dialog__note">').text("The pedalboard builder: NHE's grid with automatic wiring, or MOD's own. Remembered in this browser.").appendTo(d)
         }
 
+        // the menu bars: NHE's or MOD's (features/bars)
+        if (NHE.menus) {
+            d = $('<div class="nhe-dialog__group">').appendTo(body)
+            $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.exit + '<span>Menus</span>').appendTo(d)
+            var mseg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
+            new NHE.Segmented(mseg[0], { options: ['NHE', 'MOD'], value: NHE.menus.current() === 'nhe' ? 0 : 1, onChange: function (i) {
+                NHE.menus.set(i ? 'mod' : 'nhe')
+            } })
+            $('<div class="nhe-dialog__note">').text("The top and bottom bars: NHE's, or MOD's own. Remembered in this browser.").appendTo(d)
+        }
+
         // the work surface: the builder's background (features/background)
         if (NHE.backgroundList) {
             d = $('<div class="nhe-dialog__group">').appendTo(body)
