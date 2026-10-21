@@ -406,8 +406,11 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
    Figma: a 48 x 48 black tile rounded on its inner side, the label under it */
 .nhe-surface__edge { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
 .nhe-surface__item.is-port { position: absolute; width: 48px; pointer-events: auto; }
-.nhe-surface__item.is-input { left: 0; align-items: flex-start; }
-.nhe-surface__item.is-output { right: 0; align-items: flex-end; }
+.nhe-surface__item.is-input { left: env(safe-area-inset-left, 0px); align-items: flex-start; }
+.nhe-surface__item.is-output { right: env(safe-area-inset-right, 0px); align-items: flex-end; }
+/* surface.js measures the notch / Dynamic Island insets on this (phones held
+   sideways under viewport-fit=cover; 0 elsewhere) */
+.nhe-surface__safe { position: absolute; left: 0; top: 0; width: 0; height: 0; visibility: hidden; pointer-events: none; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); box-sizing: content-box !important; }
 .nhe-surface__port { position: relative; display: flex; width: 48px; height: 48px; padding: 8px; background: #000; color: var(--nhe-icon-default); }
 .is-input .nhe-surface__port { border-radius: 0 16px 16px 0; }
 .is-output .nhe-surface__port { border-radius: 16px 0 0 16px; }

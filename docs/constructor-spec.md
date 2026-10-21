@@ -153,7 +153,8 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   that pedal lies.
 - The surface: `calm-dark.jpg` (a grey sheet), tiled so its holes come
   three to a cell with one under every +, also in SET → Work surface for MOD's builder. The + circles are
-  solid and dark. Zoom buttons sit bottom left (on MOD: top right, under the NHE / MOD switch).
+  solid and dark. Zoom buttons sit bottom left (on MOD: one row at the top
+  right with the NHE / MOD switch, left of MOD's output tiles).
 - **Desktop and large tablets** (the screen's short side 600 px or more):
   the pedals' faces with no card behind them, 20% larger than the phone's
   cards' pictures, and a tap zooms in until the face shows at its full
@@ -255,7 +256,14 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
 - **Phones held upright:** MOD's page is 980 px wide there, so NHE's
   builder is scaled up by `NHE.zoom` (about 1.8×, as NHE's other screens)
   and starts zoomed to about two and a half columns: the half column
-  leaves room for the cables out to MOD's port tiles.
+  leaves room for the cables out to MOD's port tiles. The view can also pan
+  160 px past the last column, so the cables down to MOD's outputs show.
+- **Phones: tapping an input with nothing on it** (MOD's In tiles) opens
+  the + dialog with that input ticked; the new pedal goes in the free
+  cell nearest the board's start.
+- **Notch / Dynamic Island** (a phone held sideways, the page under it):
+  MOD's port tiles and the top row of buttons keep clear of it
+  (`env(safe-area-inset-left / right)`).
 - **SET → Work surface** applies to NHE's builder too: "NHE constructor
   grid" (`calm-dark.jpg`, its holes lined up with the cells) by default,
   or another image from `nhe/backgrounds/`, or MOD's wood.

@@ -243,6 +243,8 @@
                 onInsert: function (r) { open(r.cell, { inputs: [r.from.id], outputs: [r.to.id], only: r.kind }) },
                 onTap: function (node) { log2('tap', node.name + ': would open its settings screen') },
                 onSettings: function (node) { log2('gear', node.name + ': would open its settings screen') },
+                // phones: an unconnected input opens the + dialog with it picked as the input
+                onPortTap: function (node, connected) { if (node.kind === 'input' && !connected) open({ col: 0, row: 0 }, { inputs: [node.id] }) },
                 // a card's plug button: the + dialog with the pedal picked and its wiring ticked
                 onRewire: function (node) {
                     var owner = function (port) { return board.nodes.filter(function (n) { return ['audio', 'midi', 'cv'].some(function (t) { var p = n.ports[t] || {}; return (p.in || []).concat(p.out || []).indexOf(port) >= 0 }) })[0] }

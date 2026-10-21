@@ -23,6 +23,7 @@
  *                                           // a desktop or large tablet); else cards, a tap is onTap
  *       onTap: fn(node),                    // a pedal card was tapped (phones: its settings screen)
  *       onRewire: fn(node),                 // a card's plug button (phones: no hand wiring)
+ *       onPortTap: fn(node, connected),     // cards: one of MOD's port tiles was tapped
  *       onSettings: fn(node),               // a face's gear, just outside its top right
  *                                           // corner (as on MOD's builder): its settings
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
@@ -95,6 +96,7 @@
     var MIN_COLS = 3, MIN_ROWS = 3
     var FOOT = 96           // a strip under the grid for the Expand buttons
     var HEAD = 30           // screen px above the top row: room for the faces' gears
+    var RIGHT_ROOM = 160    // plane px the view can pan past the last column: the cables to MOD's outputs
     var PORT = 48           // MOD's port tiles: screen px, flush against the screen's left and right edges
     var SIDE = 0            // (Figma: 48 x 48, rounded on the inner side only)
     var PORT_STEP = 84      // one port to the next, down the edge (tile, label, gap)
@@ -144,7 +146,9 @@
 
         // the grid starts at the screen's size (the surface's own px: a page
         // that scales it, NHE.zoom on a phone, doesn't count)
-        var r = { width: root.clientWidth, height: root.clientHeight }, gap = SIDE + PORT + 8   // the port tiles' strip, each side
+        var r = { width: root.clientWidth, height: root.clientHeight }
+        this.safe()
+        var gap = (this.gapL() + this.gapR()) / 2              // the port tiles' strips, each side
         this.minCols = Math.max(MIN_COLS, Math.floor((r.width - 2 * gap) / CELL))
         this.minRows = Math.max(MIN_ROWS, Math.floor((r.height - FOOT) / CELL))
         this.cols = Math.max(this.minCols, this.o.cols || 0)
@@ -160,7 +164,7 @@
         }
 
         // the first column starts clear of the port tiles on the left
-        this.view.x = SIDE + PORT + 8 - EDGE * this.view.z
+        this.view.x = this.gapL() - EDGE * this.view.z
 
         this.pointers()
         root.addEventListener('wheel', function (e) { self.wheel(e) }, { passive: false })
@@ -182,12 +186,29 @@
         }
     }
 
+    // a phone held sideways, with the page under its notch / Dynamic Island
+    // (viewport-fit=cover, NHE.mod.fullBleed): MOD's port tiles keep clear of
+    // it (env(safe-area-inset-left / right), measured on a probe; 0 elsewhere)
+    Surface.prototype.safe = function () {
+        var p = this.n && this.n.safe
+        if (!p) {
+            p = el('div', 'nhe-surface__safe', this.root)
+            if (this.n) this.n.safe = p
+        }
+        var cs = getComputedStyle(p)
+        this.inL = parseFloat(cs.paddingLeft) || 0
+        this.inR = parseFloat(cs.paddingRight) || 0
+    }
+    Surface.prototype.gapL = function () { return (this.inL || 0) + SIDE + PORT + 8 }
+    Surface.prototype.gapR = function () { return (this.inR || 0) + SIDE + PORT + 8 }
+
     Surface.prototype.resized = function () {
-        var W = this.root.clientWidth, Hh = this.root.clientHeight, gap = SIDE + PORT + 8
+        var W = this.root.clientWidth, Hh = this.root.clientHeight
         if (!W || !Hh || (W === this.seen.w && Hh === this.seen.h)) return
         this.seen = { w: W, h: Hh }
+        this.safe()
         var z = Math.min(1, this.view.z)
-        this.minCols = Math.max(MIN_COLS, Math.floor((W / z - 2 * gap) / CELL))
+        this.minCols = Math.max(MIN_COLS, Math.floor((W / z - this.gapL() - this.gapR()) / CELL))
         this.minRows = Math.max(MIN_ROWS, Math.floor((Hh / z - FOOT) / CELL))
         this.clamp()
         this.render()
@@ -207,7 +228,7 @@
         // MOD's ports: where their tile is on screen, in plane coordinates
         if (nd.kind === 'input' || nd.kind === 'output') {
             var v = this.view, W = this.root.clientWidth
-            var sx = nd.kind === 'input' ? SIDE : W - SIDE - PORT
+            var sx = nd.kind === 'input' ? (this.inL || 0) + SIDE : W - (this.inR || 0) - SIDE - PORT
             return { x: (sx - v.x) / v.z, y: (this.portTop(nd) - v.y) / v.z, w: PORT / v.z, h: PORT / v.z, port: true }
         }
         var s = this.span(nd)
@@ -1076,20 +1097,21 @@
         var v = this.view, W = this.root.clientWidth, Hh = this.root.clientHeight
         var x1 = v.x + b.x * v.z, y1 = v.y + b.y * v.z, x2 = x1 + b.w * v.z, y2 = y1 + b.h * v.z
         if (y2 <= 0 || y1 >= Hh) return false
-        var tx1 = port.kind === 'input' ? SIDE : W - SIDE - PORT, tx2 = tx1 + PORT
+        var tx1 = port.kind === 'input' ? (this.inL || 0) + SIDE : W - (this.inR || 0) - SIDE - PORT, tx2 = tx1 + PORT
         var ty1 = this.portTop(port), ty2 = ty1 + PORT + PORT_LABEL
         if (x1 < tx2 && x2 > tx1 && y1 < ty2 && y2 > ty1) return false
         return port.kind === 'input' ? x1 >= 0 : x2 <= W
     }
 
     // pan no further than the grid: its first column just clear of the port
-    // tiles on the left, its last one on the right, its top row at the top
-    // and the Expand strip at the bottom. A grid smaller than the screen
-    // stays put at the top left.
+    // tiles on the left; on the right past its last column by RIGHT_ROOM,
+    // where the cables run down to MOD's outputs (on a phone they ran off
+    // the screen); its top row at the top and the Expand strip at the
+    // bottom. A grid smaller than the screen stays put at the top left.
     Surface.prototype.clamp = function (v) {
         v = v || this.view
-        var W = this.root.clientWidth, Hh = this.root.clientHeight, gap = SIDE + PORT + 8
-        var maxX = gap - EDGE * v.z, minX = W - gap - (EDGE + this.cols * CELL) * v.z
+        var W = this.root.clientWidth, Hh = this.root.clientHeight
+        var maxX = this.gapL() - EDGE * v.z, minX = W - this.gapR() - (EDGE + this.cols * CELL + RIGHT_ROOM) * v.z
         var maxY = HEAD, minY = Hh - (this.rows * CELL + FOOT) * v.z
         v.x = Math.max(Math.min(maxX, minX), Math.min(maxX, v.x))
         v.y = Math.max(Math.min(maxY, minY), Math.min(maxY, v.y))
@@ -1122,7 +1144,7 @@
         if (img && img.offsetWidth && d) {
             var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
             var top = parseFloat(d.style.top) + img.offsetTop + a.y, left = parseFloat(d.style.left) + img.offsetLeft + a.x
-            var side = 2 * (SIDE + PORT + 8)                          // MOD's port tiles, each side
+            var side = this.gapL() + this.gapR()                      // MOD's port tiles, each side
             var fit = Math.min((W - side) / a.w, (Hh - FIT_ABOVE - FIT_BELOW) / a.h)
             if (fit > 0) z = Math.min(z, fit)
             cx = left + a.w / 2
@@ -1200,11 +1222,11 @@
 
     // zoom out until the whole grid shows (a double click on the surface)
     Surface.prototype.fit = function () {
-        var W = this.root.clientWidth, Hh = this.root.clientHeight, gap = SIDE + PORT + 8
-        var z = Math.min((W - 2 * gap) / (this.cols * CELL), (Hh - HEAD) / (this.rows * CELL + FOOT))
+        var W = this.root.clientWidth, Hh = this.root.clientHeight
+        var z = Math.min((W - this.gapL() - this.gapR()) / (this.cols * CELL), (Hh - HEAD) / (this.rows * CELL + FOOT))
         z = Math.max(ZMIN, Math.min(1, z))
         this.blur()
-        this.animate(this.clamp({ x: gap - EDGE * z, y: HEAD, z: z }))
+        this.animate(this.clamp({ x: this.gapL() - EDGE * z, y: HEAD, z: z }))
     }
 
     Surface.prototype.animate = function (to, done) {
@@ -1281,7 +1303,9 @@
             // a card's plug button is a button, not the card (no tap, no long-press)
             var item = !e.target.closest('.nhe-surface__rewire, .nhe-surface__gear') && e.target.closest('.nhe-surface__item.is-pedal')
             var cable = self.faces && e.target.closest('.nhe-surface__wire-hit')
-            g = { mode: 'press', start: local(e), view: { x: self.view.x, y: self.view.y }, item: item, cable: cable, moved: false }
+            // cards (phones): a tap on one of MOD's port tiles is reported (onPortTap)
+            var tile = !self.faces && e.target.closest('.nhe-surface__item.is-port')
+            g = { mode: 'press', start: local(e), view: { x: self.view.x, y: self.view.y }, item: item, cable: cable, tile: tile, moved: false }
             self.moved = false
             if (item) {
                 g.timer = setTimeout(function () { if (g && g.mode === 'press' && !g.moved) self.lift(g) }, LONG_MS)
@@ -1356,6 +1380,10 @@
             // full size; a card reports it
             // a tap on a cable (faces): its colour
             if (g.cable && !g.moved && e.type === 'pointerup') self.pickColour(+g.cable.getAttribute('data-cable'), local(e))
+            if (g.tile && !g.moved && e.type === 'pointerup' && typeof self.o.onPortTap === 'function') {
+                var pn = self.node(g.tile.getAttribute('data-id'))
+                if (pn) self.o.onPortTap(pn, self.connected(pn))
+            }
             if (g.item && !g.moved && e.type === 'pointerup') {
                 var nd = self.node(g.item.getAttribute('data-id'))
                 if (nd && self.faces) { if (!self.focused || self.focused.id !== nd.id) self.focus(nd) }

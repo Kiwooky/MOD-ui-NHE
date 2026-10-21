@@ -151,6 +151,12 @@ NHE.register('constructor', function (mod) {
             // cards (phones): the pedal's settings screen
             onTap: function (node) { if (node.kind === 'pedal' && !pending[node.id]) mod.openSettings(node.id) },
             onRewire: function (node) { if (!pending[node.id]) rewire(node) },
+            // phones: an input with nothing on it opens the + dialog with it as the input,
+            // the new pedal near the board's start
+            onPortTap: function (node, connected) {
+                if (node.kind !== 'input' || connected) return
+                openAdd({ col: 0, row: 0 }, { inputs: [node.id] })
+            },
             // faces: the gear at the pedal's top right, as on MOD's builder (NHE's settings screen, or MOD's)
             onSettings: function (node) { if (!pending[node.id]) mod.openSettings(node.id) },
             // faces: zoomed to 100%, MOD's working icon in the picture's place
