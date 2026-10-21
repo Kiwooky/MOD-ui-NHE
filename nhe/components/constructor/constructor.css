@@ -348,8 +348,12 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__face.is-blank { max-width: 90px; border-radius: var(--nhe-radius-md); background: linear-gradient(160deg, var(--tile), #111); font-size: var(--nhe-font-size-lg); font-weight: var(--nhe-font-weight-semibold); }
 /* a pedal's name and maker: smaller with the pedal when zoomed out, but
    no larger than their own size when zoomed in */
-.nhe-surface__name { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: min(var(--nhe-font-size-sm), calc(var(--nhe-font-size-sm) / var(--nhe-surface-z, 1))); font-weight: var(--nhe-font-weight-semibold); }
-.nhe-surface__brand { flex: none; font-size: min(var(--nhe-font-size-xs), calc(var(--nhe-font-size-xs) / var(--nhe-surface-z, 1))); opacity: .8; }
+.nhe-surface__name { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); }
+.nhe-surface__brand { flex: none; font-size: var(--nhe-font-size-xs); opacity: .8; }
+/* cards (phones) scale with the zoom, their text and plug button too; faces
+   (desktop, tablet) keep the text at most its own size when zoomed in */
+.is-faces .nhe-surface__name { font-size: min(var(--nhe-font-size-sm), calc(var(--nhe-font-size-sm) / var(--nhe-surface-z, 1))); }
+.is-faces .nhe-surface__brand { font-size: min(var(--nhe-font-size-xs), calc(var(--nhe-font-size-xs) / var(--nhe-surface-z, 1))); }
 /* their lines keep one height whatever the zoom, so the face above them
    (which takes the rest) doesn't change size as the text does */
 .nhe-surface__name { height: 16px; line-height: 16px; }
@@ -372,7 +376,7 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .is-faces .nhe-surface__caption .nhe-surface__brand { height: auto; line-height: calc(14px / max(1, var(--nhe-surface-z, 1))); }
 /* a card's plug button (phones): the wiring dialog */
 /* screen-sized whatever the zoom (surface.js sets --nhe-surface-z): a 24 px icon, 4 px in */
-.nhe-surface__rewire { position: absolute; top: calc(4px / var(--nhe-surface-z, 1)); right: calc(4px / var(--nhe-surface-z, 1)); display: flex; width: calc(24px / var(--nhe-surface-z, 1)); height: calc(24px / var(--nhe-surface-z, 1)); padding: 0; border: 0; background: none; color: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; }
+.nhe-surface__rewire { position: absolute; top: calc(4px / min(1, var(--nhe-surface-z, 1))); right: calc(4px / min(1, var(--nhe-surface-z, 1))); display: flex; width: calc(24px / min(1, var(--nhe-surface-z, 1))); height: calc(24px / min(1, var(--nhe-surface-z, 1)));   /* screen-sized zoomed out, with the card zoomed in */ padding: 0; border: 0; background: none; color: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; }
 .nhe-surface__rewire svg { width: 100%; height: 100%; }
 .nhe-surface__rewire:hover { color: var(--nhe-accent-default); }
 /* faces: the gear just outside the pedal's top right corner (as on MOD's

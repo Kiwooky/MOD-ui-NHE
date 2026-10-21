@@ -616,7 +616,14 @@
         if (h <= w) return 1
         return Math.max(1, Math.min(ZOOM_MAX, w / ZOOM_TARGET))
     }
-    var apply = function () { document.documentElement.style.setProperty('--nhe-zoom', NHE.zoom()) }
+    // the plugin settings screen: a little larger again everywhere (its text
+    // and icons were on the small side); CSS: var(--nhe-settings-zoom)
+    var SETTINGS_SCALE = 1.15
+    NHE.settingsZoom = function () { return NHE.zoom() * SETTINGS_SCALE }
+    var apply = function () {
+        document.documentElement.style.setProperty('--nhe-zoom', NHE.zoom())
+        document.documentElement.style.setProperty('--nhe-settings-zoom', NHE.settingsZoom())
+    }
     apply()
     window.addEventListener('resize', function (e) { if (e.target === window) apply() })
     window.addEventListener('orientationchange', apply)

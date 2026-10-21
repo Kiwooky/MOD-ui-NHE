@@ -173,7 +173,7 @@ NHE.register('settings', function (mod) {
         NHE.accent.apply(st.root[0], colourOf(instance))
 
         // the column height follows the host, in the stage's own (scaled) px
-        var z = NHE.zoom ? NHE.zoom() : 1
+        var z = NHE.settingsZoom ? NHE.settingsZoom() : 1
         var h = Math.max(MIN_HEIGHT, Math.floor(((st.root.innerHeight() || st.host.innerHeight()) - 8) / z))
 
         st.barEl.css('height', h + 'px')
@@ -314,8 +314,9 @@ NHE.register('settings', function (mod) {
         if (NHE.builder) {
             $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.chainView + '<span>Builder</span>').appendTo(d)
             var bseg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
-            new NHE.Segmented(bseg[0], { options: ['MOD', 'NHE'], value: NHE.builder.current() === 'nhe' ? 1 : 0, onChange: function (i) {
-                NHE.builder.set(i ? 'nhe' : 'mod')
+            // NHE first, as in the editor switch above
+            new NHE.Segmented(bseg[0], { options: ['NHE', 'MOD'], value: NHE.builder.current() === 'nhe' ? 0 : 1, onChange: function (i) {
+                NHE.builder.set(i ? 'mod' : 'nhe')
             } })
             $('<div class="nhe-dialog__note">').text("The pedalboard builder: MOD's, or NHE's grid with automatic wiring. Remembered in this browser.").appendTo(d)
         }

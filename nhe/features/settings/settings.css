@@ -40,10 +40,11 @@
 .mod-settings.performance-settings > .nhe-settings__switch { display: none; }
 
 /* the system bar at the left, then the panel; they scroll together.
-   Upright on a phone the stage is scaled up (NHE.zoom, components/controls);
+   The stage is scaled up (NHE.settingsZoom, components/controls: a bit
+   everywhere, more upright on a phone);
    the sizer around it takes the scaled size, so scrolling covers it all */
 .nhe-settings__sizer { position: relative; }
-.nhe-settings__stage { display: flex; align-items: flex-start; width: max-content; transform-origin: 0 0; transform: scale(var(--nhe-zoom, 1)); }
+.nhe-settings__stage { display: flex; align-items: flex-start; width: max-content; transform-origin: 0 0; transform: scale(var(--nhe-settings-zoom, 1)); }
 
 /* full width on a phone held sideways (NHE.mod.fullBleed): the background
    runs edge to edge, the content keeps clear of the notch */
@@ -68,8 +69,8 @@
 }
 
 /* the scroll arrows, scaled with the stage upright on a phone */
-.nhe-settings .nhe-scroll-hint { width: calc(60px * var(--nhe-zoom, 1)); }
-.nhe-settings .nhe-scroll-hint svg { width: calc(32px * var(--nhe-zoom, 1)); height: calc(32px * var(--nhe-zoom, 1)); }
+.nhe-settings .nhe-scroll-hint { width: calc(60px * var(--nhe-settings-zoom, 1)); }
+.nhe-settings .nhe-scroll-hint svg { width: calc(32px * var(--nhe-settings-zoom, 1)); height: calc(32px * var(--nhe-settings-zoom, 1)); }
 
 /* SET's dialog: short, nothing to stretch */
 .nhe-set-dialog .nhe-dialog__setting { margin-top: 0; }

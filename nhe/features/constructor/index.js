@@ -174,7 +174,7 @@ NHE.register('constructor', function (mod) {
             // a cable moved by hand: MOD's own disconnect, then connect
             onWire: function (old, neu) {
                 if (old) mod.disconnect(old[0], old[1])
-                if (neu) mod.connect(neu[0], neu[1], function (ok) { if (!ok) refresh() })
+                if (neu) mod.connect(neu[0], neu[1], function (ok) { if (!ok) refused(); refresh() })
             },
             onMove: function (node, cell) {
                 if (pending[node.id]) return
@@ -191,6 +191,10 @@ NHE.register('constructor', function (mod) {
         if (host) host.remove()
         host = surface = null
     }
+
+    // MOD's host said no to a connection (MOD's own builder only logs it):
+    // the cable goes back as it was, and say why
+    var refused = function () { mod.notify('error', "MOD couldn't make that connection. If none connect, restart MOD's audio engine (MOD Desktop: restart the app).") }
 
     // ---- the + dialog -------------------------------------------------------
 
@@ -273,7 +277,7 @@ NHE.register('constructor', function (mod) {
         var instance = mod.addPlugin(r.plugin.uri, origin.x + cell.col * STEP_X, origin.y + cell.row * STEP_Y, function (inst) {
             if (!inst) { delete pending[instance]; refresh(); return }
             r.plan.disconnect.forEach(function (c) { mod.disconnect(c[0], c[1]) })
-            fixPorts(r.plan.connect, inst).forEach(function (c) { mod.connect(c[0], c[1]) })
+            fixPorts(r.plan.connect, inst).forEach(function (c) { mod.connect(c[0], c[1], function (ok) { if (!ok) refused() }) })
         })
         if (!instance) return
         // shown at once, without ports, until MOD draws it
@@ -320,7 +324,7 @@ NHE.register('constructor', function (mod) {
         if (!on && surface) surface.blur()  // MOD's builder gets its icon back
         view.toggle(on)
         mod.coverBuilder(on)
-        if (switcher) switcher.update({ value: on ? 1 : 0 })
+        if (switcher) switcher.update({ value: on ? 0 : 1 })
         if (on) {
             cache = cache || boardCache()
             refresh()
@@ -339,10 +343,10 @@ NHE.register('constructor', function (mod) {
     // the switch at the top right: back to MOD's builder
     var sw = $('<div class="nhe-ctl nhe-constructor__switch">').appendTo(view)
     switcher = new NHE.Segmented($('<div>').appendTo(sw)[0], {
-        options: ['MOD', 'NHE'], value: shown() ? 1 : 0,
-        onChange: function (i) { NHE.builder.set(i ? 'nhe' : 'mod') }
+        options: ['NHE', 'MOD'], value: shown() ? 0 : 1,
+        onChange: function (i) { NHE.builder.set(i ? 'mod' : 'nhe') }
     })
-    sw.attr('title', 'Builder: MOD\'s or NHE\'s')
+    sw.attr('title', 'Builder: NHE\'s or MOD\'s')
 
     // SET → Work surface changed (features/background): the surface's image
     window.addEventListener('nhe-background', function () { if (surface) { surface.texture(); surface.apply() } })

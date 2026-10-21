@@ -846,6 +846,12 @@
 
     var plugsUrl = function (path, a, b) { return '/effect/' + path + '/' + a + ',' + b }
 
+    // a message in MOD's own notification bar (notification.js: the global
+    // Notification(type, message, timeout), which shadows the browser's)
+    mod.notify = function (type, text, ms) {
+        try { new window.Notification(type || 'error', text, ms || 5000) } catch (e) { if (window.console) console.warn('[nhe]', text) }
+    }
+
     // connect / disconnect two ports (instance/symbol or MOD's /graph/... port);
     // cb(ok) when the host has answered
     mod.connect = function (from, to, cb) {

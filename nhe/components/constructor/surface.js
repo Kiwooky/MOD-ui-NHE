@@ -139,18 +139,20 @@
             b.type = 'button'
             b.textContent = z[0]
             b.setAttribute('aria-label', z[2])
-            b.addEventListener('click', function () { var r = root.getBoundingClientRect(); self.zoomAt(r.width / 2, r.height / 2, self.view.z * z[1]) })
+            b.addEventListener('click', function () { self.zoomAt(root.clientWidth / 2, root.clientHeight / 2, self.view.z * z[1]) })
         })
 
-        // the grid starts at the screen's size
-        var r = root.getBoundingClientRect(), gap = SIDE + PORT + 8   // the port tiles' strip, each side
+        // the grid starts at the screen's size (the surface's own px: a page
+        // that scales it, NHE.zoom on a phone, doesn't count)
+        var r = { width: root.clientWidth, height: root.clientHeight }, gap = SIDE + PORT + 8   // the port tiles' strip, each side
         this.minCols = Math.max(MIN_COLS, Math.floor((r.width - 2 * gap) / CELL))
         this.minRows = Math.max(MIN_ROWS, Math.floor((r.height - FOOT) / CELL))
         this.cols = Math.max(this.minCols, this.o.cols || 0)
         this.rows = Math.max(this.minRows, this.o.rows || 0)
-        // a narrow screen (a phone) starts zoomed out to about two columns
-        // and MOD's ports; more is a pan or a pinch away
-        var fit = (r.width - 2 * gap) / (2 * CELL)
+        // a narrow screen (a phone) starts zoomed out to about two and a half
+        // columns and MOD's ports (the half: room for cables out to the right);
+        // more is a pan or a pinch away
+        var fit = (r.width - 2 * gap) / (2.5 * CELL)
         if (fit < 1) {
             this.view.z = Math.max(ZMIN, fit)
             this.minRows = Math.max(MIN_ROWS, Math.floor((r.height / this.view.z - FOOT) / CELL))
@@ -841,8 +843,8 @@
         ;(this.portEls || []).forEach(function (pe) {
             var port = self.tileTarget(pe.node, d)
             if (!port) return
-            var r = pe.el.querySelector('.nhe-surface__port').getBoundingClientRect(), R = self.root.getBoundingClientRect()
-            if (q.x >= r.left - R.left - 8 && q.x <= r.right - R.left + 8 && q.y >= r.top - R.top - 8 && q.y <= r.bottom - R.top + 8) {
+            var r = pe.el.querySelector('.nhe-surface__port').getBoundingClientRect(), R = self.root.getBoundingClientRect(), k = self.scale()
+            if (q.x >= (r.left - R.left) / k - 8 && q.x <= (r.right - R.left) / k + 8 && q.y >= (r.top - R.top) / k - 8 && q.y <= (r.bottom - R.top) / k + 8) {
                 var b = self.box(pe.node)
                 best = { port: port, x: d.want.dir === 'in' ? b.x : b.x + b.w, y: b.y + b.h / 2 }
                 bestD = 0
@@ -1112,7 +1114,7 @@
         if (this.focused && this.focused.id !== nd.id) this.blur()
         // the picture at FOCUS x its own size: the pedal in it at 120%
         var z = 1.5
-        if (img && img.naturalWidth) z = FOCUS * img.naturalWidth / (img.getBoundingClientRect().width / v.z)
+        if (img && img.naturalWidth) z = FOCUS * img.naturalWidth / (img.getBoundingClientRect().width / this.scale() / v.z)
         var W = this.root.clientWidth, Hh = this.root.clientHeight
         var b = this.box(nd), cx = b.x + b.w / 2, cy = b.y + b.h / 2
         // the pedal itself (within its picture), with its gear above and its
@@ -1223,16 +1225,20 @@
     Surface.prototype.wheel = function (e) {
         if (this.onLive(e.target)) return
         e.preventDefault()
-        var r = this.root.getBoundingClientRect()
-        if (e.ctrlKey) this.zoomAt(e.clientX - r.left, e.clientY - r.top, this.view.z * Math.exp(-e.deltaY * 0.01))
-        else { this.view.x -= e.deltaX; this.view.y -= e.deltaY; this.clamp(); this.apply() }
+        var r = this.root.getBoundingClientRect(), k = this.scale()
+        if (e.ctrlKey) this.zoomAt((e.clientX - r.left) / k, (e.clientY - r.top) / k, this.view.z * Math.exp(-e.deltaY * 0.01))
+        else { this.view.x -= e.deltaX / k; this.view.y -= e.deltaY / k; this.clamp(); this.apply() }
     }
+
+    // how much the page scales the surface on screen (NHE.zoom on a phone):
+    // screen px per surface px; pointers are measured in screen px
+    Surface.prototype.scale = function () { return (this.root.getBoundingClientRect().width / this.root.clientWidth) || 1 }
 
     // ---- pointers: pan, pinch, tap, long-press move ------------------------
 
     Surface.prototype.pointers = function () {
         var self = this, root = this.root, down = {}, g = null
-        var local = function (e) { var r = root.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top } }
+        var local = function (e) { var r = root.getBoundingClientRect(), k = self.scale(); return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k } }
         var pts = function () { return Object.keys(down).map(function (k) { return down[k] }) }
 
         root.addEventListener('pointerdown', function (e) {

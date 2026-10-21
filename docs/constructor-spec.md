@@ -153,7 +153,7 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   that pedal lies.
 - The surface: `calm-dark.jpg` (a grey sheet), tiled so its holes come
   three to a cell with one under every +, also in SET → Work surface for MOD's builder. The + circles are
-  solid and dark. Zoom buttons sit bottom left (on MOD: top right, under the MOD / NHE switch).
+  solid and dark. Zoom buttons sit bottom left (on MOD: top right, under the NHE / MOD switch).
 - **Desktop and large tablets** (the screen's short side 600 px or more):
   the pedals' faces with no card behind them, 20% larger than the phone's
   cards' pictures, and a tap zooms in until the face shows at its full
@@ -202,7 +202,7 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   out of and into the jacks too. Several cables from one jack part right
   after it; several into one jack join just before it.
 - **On MOD's real pedalboard** (`nhe/features/constructor/`, preference
-  `nhe-constructor`): SET → Builder (MOD / NHE, remembered per browser,
+  `nhe-constructor`): SET → Builder (NHE / MOD, remembered per browser,
   MOD's by default; also the switch at the surface's top right, or
   `NHE.builder.set('nhe')`) shows the surface over MOD's builder, between
   its header and footer. The adapter reads the board (`mod.board()`:
@@ -252,6 +252,10 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   on a pair (stereo) the first one's sits above its plug, so the two keep
   clear of each other.
 - The free cells' + circles are at 50% until hovered.
+- **Phones held upright:** MOD's page is 980 px wide there, so NHE's
+  builder is scaled up by `NHE.zoom` (about 1.8×, as NHE's other screens)
+  and starts zoomed to about two and a half columns: the half column
+  leaves room for the cables out to MOD's port tiles.
 - **SET → Work surface** applies to NHE's builder too: "NHE constructor
   grid" (`calm-dark.jpg`, its holes lined up with the cells) by default,
   or another image from `nhe/backgrounds/`, or MOD's wood.
