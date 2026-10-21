@@ -88,3 +88,7 @@
     background-size: 16px 16px;
     cursor: pointer;
 }
+/* SET side by side (a phone held sideways): each group's heading at the top */
+@media (orientation: landscape) and (max-height: 560px) {
+    .nhe-dialog--columns .nhe-dialog__group > .nhe-set-dialog__section:first-child { margin-top: 0; }
+}

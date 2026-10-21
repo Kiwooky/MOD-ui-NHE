@@ -296,11 +296,14 @@ NHE.register('settings', function (mod) {
     // own). More settings will join it here.
     var openSet = function (st) {
         var overlay = $('<div class="nhe-ctl nhe-dialog-overlay">').appendTo('body')
-        var d = $('<div class="nhe-dialog nhe-set-dialog" role="dialog" aria-modal="true" aria-label="NHE settings" tabindex="-1">').appendTo(overlay)
+        var dlg = $('<div class="nhe-dialog nhe-dialog--columns nhe-set-dialog" role="dialog" aria-modal="true" aria-label="NHE settings" tabindex="-1">').appendTo(overlay)
         NHE.accent.apply(overlay[0], colourOf(st.instance))
-        var head = $('<div class="nhe-dialog__header">').appendTo(d)
+        var head = $('<div class="nhe-dialog__header">').appendTo(dlg)
         $('<span class="nhe-dialog__plugin">').text('NHE').appendTo(head)
         $('<span class="nhe-dialog__pill">').text('Settings').appendTo(head)
+        // the settings in groups: side by side on a short, wide screen (a phone held sideways)
+        var body = $('<div class="nhe-dialog__body">').appendTo(dlg)
+        var d = $('<div class="nhe-dialog__group">').appendTo(body)
         $('<div class="nhe-dialog__title">').html(NHE.icons.gear + '<span>Plugin settings editor</span>').appendTo(d)
         var seg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
         new NHE.Segmented(seg[0], { options: ['NHE', 'MOD'], value: view() === 'mod' ? 1 : 0, onChange: function (i) {
@@ -313,6 +316,7 @@ NHE.register('settings', function (mod) {
 
         // the builder: MOD's or NHE's (features/constructor)
         if (NHE.builder) {
+            d = $('<div class="nhe-dialog__group">').appendTo(body)
             $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.chainView + '<span>Builder</span>').appendTo(d)
             var bseg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
             // NHE first, as in the editor switch above
@@ -324,6 +328,7 @@ NHE.register('settings', function (mod) {
 
         // the work surface: the builder's background (features/background)
         if (NHE.backgroundList) {
+            d = $('<div class="nhe-dialog__group">').appendTo(body)
             $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.palette + '<span>Work surface</span>').appendTo(d)
             var select = $('<select class="nhe-dialog__input nhe-dialog__select" aria-label="Work surface">').appendTo(d)
             NHE.backgroundList(function (list) {
@@ -340,6 +345,7 @@ NHE.register('settings', function (mod) {
                 else NHE.background(file, found && found.height)
             })
         }
+        d = dlg
         var foot = $('<div class="nhe-dialog__buttons">').appendTo(d)
         var close = function () { overlay.remove() }
         foot.append(NHE.textButton('Close', 'primary', close))

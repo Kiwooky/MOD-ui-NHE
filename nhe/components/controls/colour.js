@@ -99,7 +99,7 @@
         this.o = mix({ plugin: '', value: null }, options || {})
         this.value = this.o.value
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
-        var d = el('div', 'nhe-dialog nhe-colour-dialog', overlay)
+        var d = el('div', 'nhe-dialog nhe-dialog--columns nhe-colour-dialog', overlay)
         d.setAttribute('role', 'dialog')
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', this.o.plugin + ' colour')
@@ -110,6 +110,9 @@
         el('span', 'nhe-dialog__plugin', head).textContent = this.o.plugin
         el('span', 'nhe-dialog__pill', head).textContent = 'Colour'
 
+        // the swatches and the custom colour: side by side on a short, wide screen
+        var dlg = d, body = el('div', 'nhe-dialog__body', d)
+        d = el('div', 'nhe-dialog__group', body)
         el('div', 'nhe-dialog__title', d, icon('palette') + '<span>Plugin colour</span>')
         var grid = el('div', 'nhe-swatches', d)
         grid.setAttribute('role', 'listbox')
@@ -130,6 +133,7 @@
 
         // custom: hue, saturation and brightness; brightness stays within
         // what works on the dark panel with white text
+        d = el('div', 'nhe-dialog__group', body)
         el('div', 'nhe-dialog__title', d, '<span>Custom</span>')
         var cust = el('div', 'nhe-custom', d)
         var start = this.o.value && !inPalette ? this.o.value : null
@@ -149,6 +153,7 @@
 
         el('div', 'nhe-dialog__note', d).textContent = 'Every copy of this plugin takes the colour, on every pedalboard, in this browser.'
 
+        d = dlg
         var foot = el('div', 'nhe-dialog__buttons', d)
         foot.appendChild(NHE.textButton('Cancel', 'secondary', function () { self.close() }))
         foot.appendChild(NHE.textButton('Save', 'primary', function () { self.save() }))
