@@ -18,25 +18,26 @@
     inset: 0;
 }
 /* a phone held upright lays MOD's page out 980 px wide: the surface is
-   scaled up by NHE.zoom (--nhe-zoom, controls.js) like NHE's other screens,
-   so its tiles, buttons and text are a usable size; it measures itself in
-   its own px (surface.js scale()) */
+   enlarged by NHE.zoom (--nhe-zoom, controls.js) like NHE's other screens,
+   so its tiles, buttons and text are a usable size. CSS zoom, not a
+   transform: the text is laid out at its real size and stays sharp (a
+   scaled transform let iOS stretch a low-resolution picture of it). It
+   measures itself in its own px (surface.js scale()) */
 #nhe-constructor .nhe-constructor__surface > .nhe-surface {
-    width: calc(100% / var(--nhe-zoom, 1));
-    height: calc(100% / var(--nhe-zoom, 1));
-    transform: scale(var(--nhe-zoom, 1));
-    transform-origin: 0 0;
+    width: 100%;
+    height: 100%;
+    zoom: var(--nhe-zoom, 1);
 }
-/* NHE's builder / MOD's, top right */
+/* NHE's builder / MOD's, top right. Zoomed: its own lengths count in
+   zoomed px, so the top is divided back */
 #nhe-constructor .nhe-constructor__switch {
     position: absolute;
-    top: 12px;
-    /* left of MOD's output tiles (48 px and a gap, scaled with the surface),
+    top: calc(12px / var(--nhe-zoom, 1));
+    /* left of MOD's output tiles (48 px and a gap, zoomed like the surface),
        clear of a phone's notch held sideways */
-    right: calc(64px * var(--nhe-zoom, 1) + env(safe-area-inset-right, 0px));
+    right: calc(64px + env(safe-area-inset-right, 0px) / var(--nhe-zoom, 1));
     z-index: 7;    /* over the surface's own layers */
-    transform: scale(var(--nhe-zoom, 1));
-    transform-origin: 100% 0;
+    zoom: var(--nhe-zoom, 1);
 }
 #nhe-constructor .nhe-constructor__switch .nhe-segmented { width: 120px; height: 36px; }
 #nhe-constructor .nhe-constructor__switch .nhe-segmented button { color: var(--nhe-text-primary); }

@@ -27,12 +27,13 @@
    Close button (the way back to NHE). In the NHE view it lives in SET. */
 .mod-settings > .nhe-settings__switch {
     position: absolute;
-    top: 6px;
-    right: 120px;
+    /* CSS zoom (sharp text, not a transform): its own top / right zoom too,
+       so they're divided back to stay where they were */
+    top: calc(6px / var(--nhe-zoom, 1));
+    right: calc(120px / var(--nhe-zoom, 1));
     width: 140px;
     z-index: 2;
-    transform-origin: 100% 0;
-    transform: scale(var(--nhe-zoom, 1));
+    zoom: var(--nhe-zoom, 1);
 }
 
 .mod-settings.nhe-settings-on > .nhe-settings__switch { display: none; }
@@ -44,7 +45,7 @@
    everywhere, more upright on a phone);
    the sizer around it takes the scaled size, so scrolling covers it all */
 .nhe-settings__sizer { position: relative; }
-.nhe-settings__stage { display: flex; align-items: flex-start; width: max-content; transform-origin: 0 0; transform: scale(var(--nhe-settings-zoom, 1)); }
+.nhe-settings__stage { display: flex; align-items: flex-start; width: max-content; zoom: var(--nhe-settings-zoom, 1); }   /* CSS zoom: the text laid out at its size, sharp */
 
 /* full width on a phone held sideways (NHE.mod.fullBleed): the background
    runs edge to edge, the content keeps clear of the notch */

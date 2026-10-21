@@ -211,7 +211,8 @@ NHE.register('settings', function (mod) {
             onT3K: function (uri) { mod.fileT3K(instance, uri) },
         })
         // the sizer takes the scaled stage's size, so the scroller can reach all of it
-        st.sizer.css({ width: Math.ceil(st.stage[0].offsetWidth * z) + 'px', height: Math.ceil(st.stage[0].offsetHeight * z) + 'px' })
+        var sr = st.stage[0].getBoundingClientRect()     // its zoomed size (CSS zoom), whatever offsetWidth means in this browser
+        st.sizer.css({ width: Math.ceil(sr.width) + 'px', height: Math.ceil(sr.height) + 'px' })
         st.hint.update()
     }
 
@@ -318,7 +319,7 @@ NHE.register('settings', function (mod) {
             new NHE.Segmented(bseg[0], { options: ['NHE', 'MOD'], value: NHE.builder.current() === 'nhe' ? 0 : 1, onChange: function (i) {
                 NHE.builder.set(i ? 'mod' : 'nhe')
             } })
-            $('<div class="nhe-dialog__note">').text("The pedalboard builder: MOD's, or NHE's grid with automatic wiring. Remembered in this browser.").appendTo(d)
+            $('<div class="nhe-dialog__note">').text("The pedalboard builder: NHE's grid with automatic wiring, or MOD's own. Remembered in this browser.").appendTo(d)
         }
 
         // the work surface: the builder's background (features/background)

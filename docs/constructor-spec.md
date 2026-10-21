@@ -254,7 +254,8 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   clear of each other.
 - The free cells' + circles are at 50% until hovered.
 - **Phones held upright:** MOD's page is 980 px wide there, so NHE's
-  builder is scaled up by `NHE.zoom` (about 1.8×, as NHE's other screens)
+  builder is enlarged by `NHE.zoom` (about 1.8×, as NHE's other screens;
+  with CSS zoom, not a transform, so its text stays sharp on iOS)
   and starts zoomed to about two and a half columns: the half column
   leaves room for the cables out to MOD's port tiles. The view can also pan
   160 px past the last column, so the cables down to MOD's outputs show.
@@ -263,7 +264,10 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   cell nearest the board's start.
 - **Notch / Dynamic Island** (a phone held sideways, the page under it):
   MOD's port tiles and the top row of buttons keep clear of it
-  (`env(safe-area-inset-left / right)`).
+  (`env(safe-area-inset-left / right)`); tiles held off the edge that
+  way are rounded on all four corners.
+- **Cards show the pedal's full-size picture** (MOD's screenshot), not its
+  thumbnail: the thumbnails are about 40 × 64 px and blurred on a phone.
 - **SET → Work surface** applies to NHE's builder too: "NHE constructor
   grid" (`calm-dark.jpg`, its holes lined up with the cells) by default,
   or another image from `nhe/backgrounds/`, or MOD's wood.

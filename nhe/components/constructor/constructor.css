@@ -25,12 +25,12 @@
 .nhe-add-overlay.is-full { padding: 0; }
 .nhe-add.is-full {
     flex: none;
-    width: calc(100% / var(--nhe-zoom, 1));
-    height: calc(100% / var(--nhe-zoom, 1));
+    width: 100%;
+    height: 100%;
     max-width: none;
     max-height: none;
     border-radius: 0;
-    transform: scale(var(--nhe-zoom, 1));
+    zoom: var(--nhe-zoom, 1);       /* sharp text (CSS zoom, not a transform) */
 }
 
 /* a page with its own phone viewport (no NHE.zoom): full screen too */
@@ -414,6 +414,8 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__port { position: relative; display: flex; width: 48px; height: 48px; padding: 8px; background: #000; color: var(--nhe-icon-default); }
 .is-input .nhe-surface__port { border-radius: 0 16px 16px 0; }
 .is-output .nhe-surface__port { border-radius: 16px 0 0 16px; }
+/* held clear of a notch / Dynamic Island, the tiles float: round all round */
+.is-inset-l .is-input .nhe-surface__port, .is-inset-r .is-output .nhe-surface__port { border-radius: 16px; }
 .nhe-surface__port > svg { width: 32px; height: 32px; }
 .nhe-surface__label { width: 72px; margin-top: 4px; font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); line-height: 1.1; text-transform: uppercase; text-shadow: 0 1px 2px #000; }
 .is-input .nhe-surface__label { margin-left: -12px; }

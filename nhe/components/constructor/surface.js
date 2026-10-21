@@ -198,6 +198,9 @@
         var cs = getComputedStyle(p)
         this.inL = parseFloat(cs.paddingLeft) || 0
         this.inR = parseFloat(cs.paddingRight) || 0
+        // tiles held off the screen's edge (notch side): rounded all round
+        this.root.classList.toggle('is-inset-l', this.inL > 0)
+        this.root.classList.toggle('is-inset-r', this.inR > 0)
     }
     Surface.prototype.gapL = function () { return (this.inL || 0) + SIDE + PORT + 8 }
     Surface.prototype.gapR = function () { return (this.inR || 0) + SIDE + PORT + 8 }
@@ -370,7 +373,9 @@
                         if (typeof self.o.onFaceLoad === 'function') self.o.onFaceLoad(img, nd)
                         if (self.faces) { self.renderWires(); self.placeGear(nd) }
                     }
-                    img.src = (self.faces && nd.face) || nd.thumb
+                    // the full-size picture for cards too: MOD's thumbnails are about 40 x 64
+                    // px and blur when a phone shows a card larger than that
+                    img.src = nd.face || nd.thumb
                 } else {
                     face.classList.add('is-blank')
                     face.style.setProperty('--tile', nd.colour || '#555')
