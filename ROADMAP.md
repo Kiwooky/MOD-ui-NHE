@@ -16,14 +16,17 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 
 - **NHE's builder (first step)**: SET → Builder: NHE shows the constructor surface over MOD's builder on the real pedalboard. Checked in MOD Desktop: wiring by hand, moving a pedal, adding one with the + dialog and inserting one with a cable's + all change MOD's board, and survive a reload. A tapped face zooms to 100% and plays (MOD's own GUI); tall pedals take one cell; a double click zooms out to the whole grid.
 
-- **Menu bars (desktop / tablet)**: NHE's top and bottom bars in place of MOD's (SET → Menus): name and snapshot, New, Snapshots, Save panels, snapshot chips; screens, meters, tempo, play, CV, performance, report (docs/menus-spec.md).
+- **Menu bars**: NHE's top and bottom bars in place of MOD's (SET → Menus), desktop / tablet and phone (held upright): name and snapshot, New, Snapshots (load / manage), Save panels, snapshot chips; screens, meters, tempo and sync dialog, play, bypass, and a menu for the rest (docs/menus-spec.md). Manage CV ports shows its ticks on NHE's builder.
+- **Dialogs fit the screen**: on a touch screen (phone or tablet) every NHE dialog runs full screen; elsewhere a card that would spill goes full screen too.
+- **Settings kept on the MOD**: NHE's settings (colours, editor, builder, menus, work surface, performance view) are stored on the MOD itself, shared by every browser that opens it; SET → Settings file exports / imports them.
 
 ## Not tested yet
 
 - NHE's builder: Rewire on a phone; loading another pedalboard while it shows; touch on a tablet; the Duo.
 
 - On a MOD device (Duo, Duo X, Dwarf): footswitch and knob assignment and their settings (sensitivity, latching / momentary, LED colour), tempo sync, the File Manager and Banks, which MOD Desktop hides.
-- On a tablet with touch.
+- On a tablet with touch (an iPad: dialogs ran off screen before they went full screen on touch).
+- Settings kept on a Duo (only MOD Desktop so far).
 - Saving a real preset through the name dialog.
 - The browser tests in `test/` after the performance view's flip (see test/README.md).
 
@@ -32,7 +35,6 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 - **Slider titles get cut off** (seen on the Duo): a minimised slider's title can be clipped at the column edge ("FEEDBACK" shows as "FEEDBAC"), and possibly a regular slider's too. Check whether it is the title's width / overflow or the next column drawn over it (stacking order).
 - **Locked slider's fill at 50 % opacity:** while CV drives a slider (thumb parked at the bottom), the grey fill showing the value can be half-transparent: still visible, less distracting.
 - **Darker overlay behind dialogs:** the 60 % black under NHE's dialogs (`--nhe-surface-scrim`) can go a bit darker.
-- **Control settings full screen on a phone**, not a card over the overlay. The dialog already has a full-screen layout for narrow screens (`@media (max-width: 480px)` in controls.css), but it never applies: MOD's page is laid out 980 px wide on a phone, so it needs to go by the phone itself (as `NHE.zoom` does) instead.
 - **System bar, Chain tab:** bigger IN / OUT headings and cards (a larger font), so the chain is easier to step through. Explore how to hop through parallel chains (where a plugin feeds or is fed by more than one): harder, but worth trying.
 - **System bar, Meters tab** (the "dashboard"): CPU / RAM need not take all the height. It could hold actions that now mean a trip to the builder: transport (start / stop, for MIDI clock), snapshots, and so on.
 - **Phones and tablets, MOD's own screens:**

@@ -92,3 +92,7 @@
 @media (orientation: landscape) and (max-height: 560px) {
     .nhe-dialog--columns .nhe-dialog__group > .nhe-set-dialog__section:first-child { margin-top: 0; }
 }
+
+/* SET → Settings file: Export / Import side by side */
+.nhe-set-dialog__files { display: flex; gap: var(--nhe-space-16); }
+.nhe-set-dialog__files .nhe-text-button { flex: 1 1 0; min-width: 0; height: 40px; }

@@ -83,9 +83,13 @@ MOD Desktop hides the device-only parts of the UI (File Manager, Banks, Plugin S
 
 ## The settings panel
 
-With the `settings` feature on (the default), a pedal's gear opens MOD's settings window with the NHE screen: sliders, toggles, triggers, option lists, presets, file lists and plugin on/off, stacked into columns. The **NHE / MOD** switch at the top right shows MOD's own panel instead (remembered per browser). Values go through MOD's own path both ways, bindings show as shared or locked, and the addressing dialog, presets and on/off drive MOD's existing functions. Under the plugin's name: its colour, its info page, and delete (after a yes; what fed it is then connected straight to what it fed, as if it were bypassed). The system bar sits on the left (tempo, CPU / RAM, the signal chain; EXIT closes the window). Text settings (e.g. Button to CV's texts) aren't handled yet: use the MOD view for those. The same screen is the back of a flipped pedal in the performance view.
+With the `settings` feature on (the default), a pedal's gear opens MOD's settings window with the NHE screen: sliders, toggles, triggers, option lists, presets, file lists and plugin on/off, stacked into columns. The **NHE / MOD** switch at the top right shows MOD's own panel instead. Values go through MOD's own path both ways, bindings show as shared or locked, and the addressing dialog, presets and on/off drive MOD's existing functions. Under the plugin's name: its colour, its info page, and delete (after a yes; what fed it is then connected straight to what it fed, as if it were bypassed). The system bar sits on the left (tempo, CPU / RAM, the signal chain; EXIT closes the window). Text settings (e.g. Button to CV's texts) aren't handled yet: use the MOD view for those. The same screen is the back of a flipped pedal in the performance view.
 
 Turn it off with `NHE.mod.setPreference('nhe-settings', 'false')`.
+
+## Your settings
+
+NHE's settings (plugin colours, which editor, builder and menus, the work surface, the performance view's layout) are kept on the MOD itself, in MOD's own preferences (`nhe-config`): every browser that opens that MOD gets them, and two MODs keep their own. SET → **Settings file** exports them to a `.json` file, labelled with the MOD it came from, and imports one (into this MOD or another). `nhe/components/config.js` does it: it mirrors NHE's keys in the browser's localStorage, so features keep using localStorage as before.
 
 ## Try components on their own
 

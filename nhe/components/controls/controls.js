@@ -628,3 +628,64 @@
     window.addEventListener('resize', function (e) { if (e.target === window) apply() })
     window.addEventListener('orientationchange', apply)
 })();
+
+/*
+ * Dialogs that fit the screen. Every NHE dialog is a .nhe-dialog-overlay
+ * put straight into <body>; this watches for them. On a touch screen (a
+ * phone or a tablet: no hover, a coarse pointer) each one runs full screen;
+ * elsewhere it stays a centred card unless it would spill over the window,
+ * then it goes full screen too (also when it grows, or the window shrinks).
+ * Full screen is sized in px from the window, divided by the dialog's own
+ * CSS zoom: Safari multiplies a zoomed box's percentage sizes by its zoom,
+ * so 100% could run off the screen.
+ *
+ *   NHE.fitDialog(overlay)   // again, by hand (the watcher does it on its own)
+ */
+(function () {
+    var NHE = window.NHE = window.NHE || {}
+    var DIALOG = '.nhe-dialog, .nhe-add'
+    var touch = function () { return !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) }
+
+    NHE.fitDialog = function (overlay) {
+        var d = overlay && overlay.querySelector(DIALOG)
+        if (!d || !overlay.parentNode) return
+        var full = touch()
+        if (!full) {
+            // as a card: does it spill?
+            overlay.classList.remove('is-full')
+            d.classList.remove('is-full')
+            d.style.width = d.style.height = ''
+            var r = d.getBoundingClientRect(), o = overlay.getBoundingClientRect()
+            full = r.height > o.height + 1 || r.width > o.width + 1 || r.top < o.top - 1 || r.left < o.left - 1
+        }
+        overlay.classList.toggle('is-full', full)
+        d.classList.toggle('is-full', full)
+        if (!full) return
+        // its zoom as full screen (the + dialog only zooms then)
+        var z = parseFloat(getComputedStyle(d).zoom) || 1, box = overlay.getBoundingClientRect()
+        d.style.width = box.width / z + 'px'
+        d.style.height = box.height / z + 'px'
+    }
+
+    var watch = function () {
+        var fitAll = function () {
+            var list = document.querySelectorAll('body > .nhe-dialog-overlay')
+            for (var i = 0; i < list.length; i++) NHE.fitDialog(list[i])
+        }
+        new MutationObserver(function (records) {
+            records.forEach(function (rec) {
+                for (var i = 0; i < rec.addedNodes.length; i++) {
+                    var n = rec.addedNodes[i]
+                    if (!n.classList || !n.classList.contains('nhe-dialog-overlay')) continue
+                    NHE.fitDialog(n)
+                    // a card that grows later (another assignment type, a field shown)
+                    var d = n.querySelector(DIALOG)
+                    if (d && window.ResizeObserver) new ResizeObserver(function () { if (!touch()) NHE.fitDialog(n) }).observe(d)
+                }
+            })
+        }).observe(document.body, { childList: true })
+        window.addEventListener('resize', function (e) { if (e.target === window) fitAll() })
+        window.addEventListener('orientationchange', function () { setTimeout(fitAll, 300) })
+    }
+    if (window.MutationObserver && document.body) watch()
+})();

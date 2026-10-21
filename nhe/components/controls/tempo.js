@@ -3,8 +3,8 @@
 
 /*
  * Tempo and sync dialog: MOD's transport window (sync mode, beats per minute,
- * beats per bar, transport) in the addressing dialog's frame, centred on
- * tablet and desktop, full screen on a phone. Three columns of the plugin
+ * beats per bar, transport) in the addressing dialog's frame: centred, full
+ * screen on a touch screen (NHE.fitDialog). Three columns of the plugin
  * panel's controls: the sync mode list with the transport under it (stacked,
  * as the panel stacks lists and switches), then two sliders. Needs
  * controls.js, controls.css, slider.js, slider.css and icons.js
@@ -79,11 +79,9 @@
         var bind = function (symbol) { return (o.bindings && o.bindings[symbol]) || null }
         var call = function (name, arg) { if (typeof o[name] === 'function') o[name](arg) }
 
-        // MOD's page is laid out 980+ px wide everywhere, so a phone is told by
-        // NHE.zoom (upright: > 1), not by a media query
-        var full = NHE.zoom && NHE.zoom() > 1
-        var overlay = el('div', 'nhe-ctl nhe-dialog-overlay' + (full ? ' is-full' : ''), document.body)
-        var d = el('div', 'nhe-dialog nhe-tempo-dialog' + (full ? ' is-full' : ''), overlay)
+        // full screen on a touch screen, or when it wouldn't fit: NHE.fitDialog (controls.js)
+        var overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
+        var d = el('div', 'nhe-dialog nhe-tempo-dialog', overlay)
         d.setAttribute('role', 'dialog')
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', 'Tempo and sync')

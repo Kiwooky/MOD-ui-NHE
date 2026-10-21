@@ -146,8 +146,9 @@
             // features may share components: each file loads once
             f.files.forEach(function (file) { if (queue.indexOf(file) < 0) queue.push(file) })
         })
-        // design tokens and the adapter first, then features in order
-        queue.unshift('theme/tokens.css', 'adapter/mod.js')
+        // design tokens and the adapter first, NHE's settings from the MOD
+        // (before any feature reads them), then features in order
+        queue.unshift('theme/tokens.css', 'adapter/mod.js', 'components/config.js')
         var next = function () {
             if (!queue.length) {
                 NHE.mod.ready(function () {

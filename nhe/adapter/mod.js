@@ -1126,6 +1126,18 @@
         if (t.setPlaybackState) t.setPlaybackState(!!on, true, true)
     }
 
+    // which MOD this is: GET /system/info { hwname, model, release, ... }
+    // (it may not answer: MOD Desktop through the dev proxy hung), else
+    // index.html's USING_MOD_DESKTOP / PLATFORM
+    mod.systemInfo = function (cb) {
+        var fallback = function () { return { hwname: window.USING_MOD_DESKTOP ? 'MOD Desktop' : (window.PLATFORM && PLATFORM !== 'Unknown' ? 'MOD ' + PLATFORM : 'MOD') } }
+        $.ajax({
+            url: '/system/info', cache: false, dataType: 'json', timeout: 3000,
+            success: function (r) { cb(r && r.hwname && r.hwname !== 'Unknown' ? r : $.extend({}, r, fallback())) },
+            error: function () { cb(fallback()) }
+        })
+    }
+
     // a message in MOD's own notification bar (notification.js: the global
     // Notification(type, message, timeout), which shadows the browser's)
     mod.notify = function (type, text, ms) {

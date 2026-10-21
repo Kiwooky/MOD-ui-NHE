@@ -657,6 +657,10 @@
     .nhe-dialog-overlay { padding: 0; }
     .nhe-dialog { width: 100%; height: 100%; border-radius: 0; }
 }
+/* full screen (controls.js NHE.fitDialog: touch screens, or a card that
+   would spill): its width and height set in px there */
+.nhe-dialog-overlay.is-full { padding: 0; }
+.nhe-dialog.is-full { max-width: none; max-height: none; border-radius: 0; }
 
 /* dialogs with their content in groups (SET, plugin colour): one column as
    usual; on a short, wide screen (a phone held sideways) the groups go side
@@ -864,9 +868,7 @@
 /* three columns: the sync mode list over the transport, then two sliders as
    tall as that stack (tempo.js sets --nhe-slider-height) */
 .nhe-tempo-dialog { width: auto; }
-/* a phone (NHE.zoom, tempo.js): full screen, the controls in the middle */
-.nhe-dialog-overlay.is-full { padding: 0; }
-.nhe-tempo-dialog.is-full { width: 100%; height: 100%; max-width: none; max-height: none; border-radius: 0; }
+/* full screen (controls.js NHE.fitDialog): the controls in the middle */
 .nhe-tempo-dialog.is-full .nhe-tempo__body { margin: auto 0; }
 .nhe-tempo-dialog.is-full .nhe-dialog__buttons { margin-top: 0; }
 .nhe-tempo__body { display: flex; justify-content: center; margin-top: var(--nhe-space-16); flex: none; }

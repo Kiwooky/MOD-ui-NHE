@@ -312,7 +312,7 @@ NHE.register('settings', function (mod) {
             // always shows NHE's screen
             for (var k in windows) if (windows[k].host.is(':visible')) apply(windows[k])
         } })
-        $('<div class="nhe-dialog__note">').text("What a plugin's gear opens: NHE's screen, or MOD's own settings panel. Remembered in this browser.").appendTo(d)
+        $('<div class="nhe-dialog__note">').text("What a plugin's gear opens: NHE's screen, or MOD's own settings panel. Kept on this MOD.").appendTo(d)
 
         // the builder: MOD's or NHE's (features/constructor)
         if (NHE.builder) {
@@ -323,7 +323,7 @@ NHE.register('settings', function (mod) {
             new NHE.Segmented(bseg[0], { options: ['NHE', 'MOD'], value: NHE.builder.current() === 'nhe' ? 0 : 1, onChange: function (i) {
                 NHE.builder.set(i ? 'mod' : 'nhe')
             } })
-            $('<div class="nhe-dialog__note">').text("The pedalboard builder: NHE's grid with automatic wiring, or MOD's own. Remembered in this browser.").appendTo(d)
+            $('<div class="nhe-dialog__note">').text("The pedalboard builder: NHE's grid with automatic wiring, or MOD's own. Kept on this MOD.").appendTo(d)
         }
 
         // the menu bars: NHE's or MOD's (features/bars)
@@ -334,7 +334,7 @@ NHE.register('settings', function (mod) {
             new NHE.Segmented(mseg[0], { options: ['NHE', 'MOD'], value: NHE.menus.current() === 'nhe' ? 0 : 1, onChange: function (i) {
                 NHE.menus.set(i ? 'mod' : 'nhe')
             } })
-            $('<div class="nhe-dialog__note">').text("The top and bottom bars: NHE's, or MOD's own. Remembered in this browser.").appendTo(d)
+            $('<div class="nhe-dialog__note">').text("The top and bottom bars: NHE's, or MOD's own. Kept on this MOD.").appendTo(d)
         }
 
         // the work surface: the builder's background (features/background)
@@ -355,6 +355,47 @@ NHE.register('settings', function (mod) {
                 if (file === NHE.backgroundMod) NHE.background(null)
                 else NHE.background(file, found && found.height)
             })
+        }
+        // NHE's settings: kept on this MOD (components/config.js); a file to
+        // keep them, or to give them to another MOD
+        if (NHE.config) {
+            d = $('<div class="nhe-dialog__group">').appendTo(body)
+            $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.file + '<span>Settings file</span>').appendTo(d)
+            var row = $('<div class="nhe-dialog__setting nhe-set-dialog__files">').appendTo(d)
+            row.append(NHE.textButton('Export', 'secondary', function () {
+                NHE.config.exportFile(function (f) {
+                    var url = URL.createObjectURL(new Blob([f.text], { type: 'application/json' }))
+                    var a = $('<a>').attr({ href: url, download: f.name }).appendTo('body')
+                    a[0].click()
+                    a.remove()
+                    setTimeout(function () { URL.revokeObjectURL(url) }, 10000)
+                })
+            }))
+            var picker = $('<input type="file" accept=".json,application/json">').css('display', 'none').appendTo(d)   // MOD's styles show [hidden] inputs
+            row.append(NHE.textButton('Import', 'secondary', function () { picker.val(''); picker[0].click() }))
+            picker.on('change', function () {
+                var file = this.files && this.files[0]
+                if (!file) return
+                var reader = new FileReader()
+                reader.onload = function () {
+                    var got = NHE.config.parseFile(String(reader.result || ''))
+                    if (!got) { mod.notify('error', "That isn't an NHE settings file.", 4000); return }
+                    NHE.ConfirmDialog({
+                        plugin: got.from || 'Settings file', pill: 'Import',
+                        title: "Use this file's settings?", icon: 'file',
+                        text: "They replace NHE's settings on this MOD (plugin colours, editor, builder, menus, work surface, performance view), for every browser that opens it. The page reloads.",
+                        yes: 'Import', no: 'Cancel',
+                        onYes: function () {
+                            NHE.config.replace(got.values, function (ok) {
+                                if (!ok) { mod.notify('error', "Couldn't save the settings on the MOD.", 5000); return }
+                                window.location.reload()
+                            })
+                        }
+                    })
+                }
+                reader.readAsText(file)
+            })
+            $('<div class="nhe-dialog__note">').text('Your NHE settings are kept on this MOD, for every browser that opens it. Export them to a file to keep, or import a file (from this MOD or another).').appendTo(d)
         }
         d = dlg
         var foot = $('<div class="nhe-dialog__buttons">').appendTo(d)
