@@ -189,7 +189,8 @@ NHE.register('settings', function (mod) {
                       onInfo: info.uri && NHE.PluginInfoDialog ? function () { showInfo(instance, info) } : null,
                       onDelete: NHE.ConfirmDialog ? function () { askDelete(st, info) } : null,
                       // the plugin's GUI; not on a short screen (a phone held sideways), where the presets need the room
-                      picture: info.uri && h >= 520 ? mod.pluginImage(info.uri, 'screenshot') : null },
+                      picture: info.uri && h >= 520 ? mod.pluginImage(info.uri, 'screenshot', info.gui) : null,
+                      onPicture: function (img) { mod.cleanPicture(img) } },
             controls: info.ports.filter(function (p) { return (p.properties || []).indexOf('notOnGUI') < 0 }).map(function (p) { return describe(instance, p) }),
             onInput: function (id, v) { send(instance, id, v) },
             onChange: function (id, v) { send(instance, id, v) },
@@ -221,7 +222,7 @@ NHE.register('settings', function (mod) {
             var entry = list.filter(function (p) { return p.uri === info.uri })[0] || {}
             NHE.PluginInfoDialog({
                 plugin: { uri: info.uri, name: info.name || info.label, brand: info.brand, categories: entry.category || [],
-                          thumb: mod.pluginImage(info.uri, 'thumbnail'), favourite: mod.isFavourite(info.uri) },
+                          thumb: mod.pluginImage(info.uri, 'thumbnail', info.gui), favourite: mod.isFavourite(info.uri) },
                 categories: CATEGORIES,
                 loadInfo: function (p, done) { mod.pluginDetails(p.uri, function (d) { if (d) { p.ports = d.ports; p.info = d.info } else p.info = {}; done() }) },
                 onFavourite: function (p, on) { mod.setFavourite(p.uri, on) }
@@ -326,7 +327,7 @@ NHE.register('settings', function (mod) {
             NHE.backgroundList(function (list) {
                 var current = NHE.backgroundCurrent()
                 $('<option>').val(NHE.backgroundMod).text("MOD's wood").appendTo(select)
-                list.forEach(function (b) { $('<option>').val(b.file).text(b.file).appendTo(select) })
+                list.forEach(function (b) { $('<option>').val(b.file).text(b.name || b.file).appendTo(select) })
                 select.val(current)
                 select.data('list', list)
             })

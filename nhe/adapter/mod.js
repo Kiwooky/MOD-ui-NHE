@@ -170,13 +170,25 @@
             pb.pedalboard('fitToWindow')
         }
     }
-    // modgui's controls in an icon (anything with a mod-role but its
-    // background, the drag handle): a press there plays it
+    // modgui's controls in an icon: a press there plays it, everywhere else
+    // (the pedal's inactive surface) it pans or lifts the pedal. A control is
+    // anything inside an element with a mod-role other than the background
+    // (the drag handle) and the bypass light, a form field, or, for GUIs
+    // that wire up their own widgets in their javascript, any element
+    // (between the target and the drag handle) whose pointer says it can be
+    // clicked or dragged
+    var GRABBY = /^(pointer|grab|grabbing|move|ns-resize|ew-resize|n-resize|s-resize|e-resize|w-resize|row-resize|col-resize|all-scroll)$/
     mod.isIconControl = function (target) {
-        var r = $(target).closest('[mod-role], select, input, textarea')
-        if (!r.length) return false
+        var r = $(target).closest('[mod-role], select, input, textarea, button')
         var role = r.attr('mod-role')
-        return role !== 'drag-handle' && role !== 'bypass-light'
+        if (r.length && role !== 'drag-handle' && role !== 'bypass-light') return true
+        for (var n = target; n && n.nodeType === 1; n = n.parentNode) {
+            if (n.getAttribute('mod-role') === 'drag-handle' || (n.classList && (n.classList.contains('mod-drag-handle') || n.classList.contains('mod-pedal')))) return false
+            // its own cursor, not one inherited from the pedal around it
+            var c = getComputedStyle(n).cursor, up = n.parentNode && n.parentNode.nodeType === 1 ? getComputedStyle(n.parentNode).cursor : ''
+            if (GRABBY.test(c) && c !== up) return true
+        }
+        return false
     }
     // modgui's own click on a drag handle zooms MOD's canvas to it (pedalboard.js
     // addPlugin's click option, .mod-drag-handle): not wanted from elsewhere
@@ -254,6 +266,10 @@
         style.textContent = '#pedalboard-dashboard, #performance-view { background-image: url("' + u + '") !important;' + size + ' }'
     }
 
+    // MOD's own wood (css/dashboard.css: img/background.jpg, tiled 1200 px
+    // tall), for NHE's builder when SET → Work surface is MOD's
+    mod.builderWood = function () { return { url: '/img/background.jpg', height: 1200 } }
+
     mod.closeSettings = function (instance) {
         var icon = mod.plugins()[instance]
         var s = icon && icon.data('settings')
@@ -276,6 +292,7 @@
             // LV2 parameters (files, strings): not handled by the NHE panel yet
             parameters: (e.parameters || []).filter(function (p) { return p.writable }),
             customTemplate: !!(e.gui && e.gui.settingsTemplate),
+            gui: e.gui || {},
         }
     }
 
@@ -774,7 +791,7 @@
                 }
             })
             out.pedals.push({
-                instance: instance, uri: e.uri,
+                instance: instance, uri: e.uri, gui: e.gui || {},
                 name: icon.data('label') || e.label || e.name || instance, brand: e.brand || '',
                 // borrowed: where it is on MOD's canvas, not where it's shown
                 x: borrowed[instance] && !onCanvas(icon) ? borrowed[instance].x : parseFloat(icon.css('left')) || 0,
@@ -953,7 +970,23 @@
     }
 
     // MOD's pictures of a plugin: 'thumbnail' or 'screenshot'
-    mod.pluginImage = function (uri, kind) { return '/effect/image/' + (kind || 'thumbnail') + '.png?uri=' + encodeURIComponent(uri) }
+    // MOD's pictures of a plugin: 'thumbnail' or 'screenshot'. gui (optional):
+    // the plugin's gui data (effect.gui, or a /effect/list entry's gui); one
+    // without that picture gets MOD's plain can (resources/pedals/default.png,
+    // its default icon's background) instead of MOD's own fallback, which
+    // has "No interface available" written across it
+    var PLAIN = '/resources/pedals/default.png'
+    mod.pluginImage = function (uri, kind, gui) {
+        kind = kind || 'thumbnail'
+        if (gui && !gui[kind]) return PLAIN
+        return '/effect/image/' + kind + '.png?uri=' + encodeURIComponent(uri)
+    }
+    // a picture that came back as MOD's fallback after all (the device can
+    // list a gui whose files are missing): swap it for the plain can. MOD's
+    // fallback (resources/pedals/default-screenshot.png) is 282 x 433
+    mod.cleanPicture = function (img) {
+        if (img && img.naturalWidth === 282 && img.naturalHeight === 433 && img.src.indexOf(PLAIN) < 0) img.src = PLAIN
+    }
 
     // MOD's plugin page online (cloudplugin.js: PLUGINS_URL + '/' + btoa(uri))
     mod.pluginOnline = function (uri) {

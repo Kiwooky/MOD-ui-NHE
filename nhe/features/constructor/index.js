@@ -94,7 +94,7 @@ NHE.register('constructor', function (mod) {
             delete pending[p.instance]
             out.push({
                 id: p.instance, uri: p.uri, name: p.name, brand: p.brand, kind: 'pedal',
-                thumb: mod.pluginImage(p.uri, 'thumbnail'), face: mod.pluginImage(p.uri, 'screenshot'),
+                thumb: mod.pluginImage(p.uri, 'thumbnail', p.gui), face: mod.pluginImage(p.uri, 'screenshot', p.gui),
                 ports: p.ports, cell: cell, span: s, faceSize: { w: p.w, h: p.h },
                 jacks: p.jacks || undefined         // where MOD's face has them; else spread down its sides
             })
@@ -144,6 +144,8 @@ NHE.register('constructor', function (mod) {
             nodes: nodes, connections: connections, cols: cache.cols, rows: cache.rows,
             wireColours: cache.colours, wireRoutes: cache.routes,
             onAdd: function (cell) { openAdd(cell) },
+            // MOD's "No interface available" picture: the plain can instead
+            onFaceLoad: function (img) { mod.cleanPicture(img) },
             // a cable's +: both ends ticked, only pedals that fit in it
             onInsert: function (r) { openAdd(r.cell, { inputs: [r.from.id], outputs: [r.to.id], only: r.kind }) },
             // cards (phones): the pedal's settings screen
@@ -212,7 +214,7 @@ NHE.register('constructor', function (mod) {
         var img = new Image()
         img.onload = function () { plugin.span = spanOfSize(img.naturalWidth, img.naturalHeight); done() }
         img.onerror = function () { plugin.span = { w: 1, h: 1 }; done() }
-        img.src = mod.pluginImage(plugin.uri, 'screenshot')
+        img.src = mod.pluginImage(plugin.uri, 'screenshot', plugin.gui)
     }
 
     var withPlugins = function (cb) {
@@ -223,7 +225,7 @@ NHE.register('constructor', function (mod) {
         }
         mod.pluginList(function (list) {
             plugins = list.map(function (p) {
-                return { uri: p.uri, name: p.name, brand: p.brand, categories: p.category || [], thumb: mod.pluginImage(p.uri, 'thumbnail'), iotype: p.iotype, favourite: mod.isFavourite(p.uri) }
+                return { uri: p.uri, name: p.name, brand: p.brand, categories: p.category || [], thumb: mod.pluginImage(p.uri, 'thumbnail', p.gui), gui: p.gui, iotype: p.iotype, favourite: mod.isFavourite(p.uri) }
             })
             var seen = {}
             plugins.forEach(function (p) { p.categories.forEach(function (c) { seen[c] = true }) })
@@ -275,7 +277,7 @@ NHE.register('constructor', function (mod) {
         })
         if (!instance) return
         // shown at once, without ports, until MOD draws it
-        pending[instance] = { id: instance, uri: r.plugin.uri, name: r.plugin.name, brand: r.plugin.brand, kind: 'pedal', thumb: r.plugin.thumb, face: mod.pluginImage(r.plugin.uri, 'screenshot'), ports: {}, cell: cell, span: r.plugin.span }
+        pending[instance] = { id: instance, uri: r.plugin.uri, name: r.plugin.name, brand: r.plugin.brand, kind: 'pedal', thumb: r.plugin.thumb, face: mod.pluginImage(r.plugin.uri, 'screenshot', r.plugin.gui), ports: {}, cell: cell, span: r.plugin.span }
         refresh()
     }
 
@@ -341,6 +343,9 @@ NHE.register('constructor', function (mod) {
         onChange: function (i) { NHE.builder.set(i ? 'nhe' : 'mod') }
     })
     sw.attr('title', 'Builder: MOD\'s or NHE\'s')
+
+    // SET → Work surface changed (features/background): the surface's image
+    window.addEventListener('nhe-background', function () { if (surface) { surface.texture(); surface.apply() } })
 
     mod.onBoardChange(function (reloaded) {
         if (reloaded) {

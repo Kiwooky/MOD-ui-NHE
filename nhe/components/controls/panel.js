@@ -19,7 +19,7 @@
  *       height: 646,                                // the slider height
  *       plugin: { name, on, binding, presets: { factory, user, selected },
  *                 onColour, onInfo, onDelete,
- *                 picture },                              // optional left column; picture: the
+ *                 picture, onPicture: fn(img) },                              // optional left column; picture: the
  *                                                         // plugin's GUI, under the header
  *       controls: [{ id, type: 'slider'|'toggle'|'trigger'|'list',
  *                    group: null | { id, name, color },
@@ -138,6 +138,7 @@
                 img.draggable = false
                 img.src = o.plugin.picture
                 img.onerror = function () { if (pic.parentNode) pic.parentNode.removeChild(pic) }
+                if (typeof o.plugin.onPicture === 'function') img.onload = function () { o.plugin.onPicture(img) }
             }
             var pd = el('div', null, pc)
             pd.style.flex = '1 1 auto'

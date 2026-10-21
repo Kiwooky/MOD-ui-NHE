@@ -168,6 +168,9 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   at both ends. Drag a plug to another jack (or a MOD port tile) to move
   that end, or into nothing to pull the cable out, as on MOD; drag from a
   free socket to plug in a new cable; the jacks that take it light up.
+  MOD's port tiles start cables too: drag from a tile, or tap it (or a
+  free jack) and the cable follows the pointer until the next tap puts
+  its end down (Escape lets go).
   Several cables on one jack: tap its plug and they spread apart, to
   grab the right one (as on MOD); tap again or elsewhere to gather them.
   **Press and hold a cable**, then drag, to move that stretch of it
@@ -249,6 +252,14 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   on a pair (stereo) the first one's sits above its plug, so the two keep
   clear of each other.
 - The free cells' + circles are at 50% until hovered.
+- **SET → Work surface** applies to NHE's builder too: "NHE constructor
+  grid" (`calm-dark.jpg`, its holes lined up with the cells) by default,
+  or another image from `nhe/backgrounds/`, or MOD's wood.
+- **Touch:** a long press on the surface is the surface's: no iOS image
+  menu or magnifier (`-webkit-touch-callout`), no Android context menu.
+- A plugin without a picture of its own (MOD shows "No interface
+  available") shows MOD's plain can (`resources/pedals/default.png`).
+- A zoomed-in, live pedal keeps its picture's drop shadow.
 - **Zooming in:** the pedals' names and makers, the connectors and the
   jacks' nuts don't grow past their own size: zoomed out they shrink with
   the pedals; zoomed in they stay put (a connector at most 44 px tall on

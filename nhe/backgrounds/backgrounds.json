@@ -1,8 +1,8 @@
 [
-    { "file": "perforated.jpg",       "height": 300 },
-    { "file": "perforated-dark.jpg",  "height": 300 },
-    { "file": "perforated-small.jpg", "height": 355 },
-    { "file": "staggered-dark.jpg",   "height": 300 },
-    { "file": "staggered-small.jpg",  "height": 390 },
-    { "file": "calm-dark.jpg",        "height": 125 }
+    { "file": "calm-dark.jpg",        "height": 125, "name": "NHE constructor grid" },
+    { "file": "perforated.jpg",       "height": 300, "name": "Perforated" },
+    { "file": "perforated-dark.jpg",  "height": 300, "name": "Perforated, dark" },
+    { "file": "perforated-small.jpg", "height": 355, "name": "Perforated, small" },
+    { "file": "staggered-dark.jpg",   "height": 300, "name": "Staggered, dark" },
+    { "file": "staggered-small.jpg",  "height": 390, "name": "Staggered, small" }
 ]

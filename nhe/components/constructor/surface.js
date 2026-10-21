@@ -26,6 +26,7 @@
  *       onSettings: fn(node),               // a face's gear, just outside its top right
  *                                           // corner (as on MOD's builder): its settings
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
+ *       onFaceLoad: fn(img, node),          // a pedal's picture came in (may swap its src)
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
  *                                           // in `layer` (over its picture, the picture's size),
  *                                           // return true if it did; called again after a redraw
@@ -116,8 +117,7 @@
         // zooms in to play them); a phone: cards, a tap opens the settings
         this.faces = this.o.faces != null ? !!this.o.faces : Math.min(screen.width, screen.height) >= 600
         root.classList.toggle('is-faces', this.faces)
-        var hole = (parseFloat(getComputedStyle(root).getPropertyValue('--nhe-texture-hole')) || 0) * TILE
-        this.bg = { x: mod(EDGE + CELL / 2 - hole, TILE / 2), y: mod(CELL / 2 - hole, TILE / 2) }
+        this.texture()
         var n = this.n = {}
         n.plane = el('div', 'nhe-surface__plane', root)
         n.cells = el('div', 'nhe-surface__cells', n.plane)
@@ -162,6 +162,8 @@
 
         this.pointers()
         root.addEventListener('wheel', function (e) { self.wheel(e) }, { passive: false })
+        // a long press on a phone or tablet: no context menu (Android), it lifts a pedal
+        root.addEventListener('contextmenu', function (e) { if (!self.onLive(e.target)) e.preventDefault() })
         this.render()
 
         // the surface's own size changed (a window resize, a rotated tablet):
@@ -250,8 +252,24 @@
 
     Surface.prototype.update = function (options) { this.o = mix(this.o, options || {}); this.render() }
 
+    // The surface's image: NHE's grid texture (--nhe-texture, its holes lined
+    // up with the cells: one under every +), or another one chosen in SET
+    // (--nhe-surface-texture, tiled --nhe-surface-tile px tall at zoom 1)
+    Surface.prototype.texture = function () {
+        var cs = getComputedStyle(this.root), other = parseFloat(cs.getPropertyValue('--nhe-surface-tile'))
+        if (other > 0 && cs.getPropertyValue('--nhe-surface-texture').replace(/\s/g, '')) {
+            this.tile = other
+            this.bg = { x: 0, y: 0 }
+            return
+        }
+        var hole = (parseFloat(cs.getPropertyValue('--nhe-texture-hole')) || 0) * TILE
+        this.tile = TILE
+        this.bg = { x: mod(EDGE + CELL / 2 - hole, TILE / 2), y: mod(CELL / 2 - hole, TILE / 2) }
+    }
+
     Surface.prototype.render = function () {
         var self = this, n = this.n
+        this.texture()
         this.size()
         var W = 2 * EDGE + this.cols * CELL, Hh = this.rows * CELL
         n.plane.style.width = W + 'px'
@@ -325,7 +343,10 @@
                     img.alt = ''
                     img.draggable = false
                     // the jacks are measured on the picture: draw the wires again once it's in
-                    if (self.faces) img.onload = function () { self.renderWires(); self.placeGear(nd) }
+                    img.onload = function () {
+                        if (typeof self.o.onFaceLoad === 'function') self.o.onFaceLoad(img, nd)
+                        if (self.faces) { self.renderWires(); self.placeGear(nd) }
+                    }
                     img.src = (self.faces && nd.face) || nd.thumb
                 } else {
                     face.classList.add('is-blank')
@@ -782,6 +803,15 @@
             d.fixedPort = moveTo ? c[0] : c[1]
             d.fixed = moveTo ? pts[0] : pts[pts.length - 1]
             d.moveTo = moveTo
+        } else if (hit.classList.contains('is-port')) {
+            // one of MOD's port tiles: its In is a cable's source, its Out an end
+            var tn = this.node(hit.getAttribute('data-id')), b = this.box(tn), src = tn.kind === 'input'
+            var tp = null
+            ;['audio', 'midi', 'cv'].forEach(function (t) { var l = ((tn.ports && tn.ports[t]) || {})[src ? 'out' : 'in'] || []; if (!tp && l.length) tp = l[0] })
+            if (!tp) return false
+            d.fixedPort = tp
+            d.fixed = [src ? b.x + b.w : b.x, b.y + b.h / 2]
+            d.moveTo = src
         } else {
             var port = hit.getAttribute('data-port'), dir = hit.getAttribute('data-dir')
             d.fixedPort = port
@@ -796,6 +826,7 @@
         this.dragging = d
         this.root.classList.add('is-wiring')
         this.renderWires()
+        return true
     }
 
     Surface.prototype.dragWire = function (q) {
@@ -1009,7 +1040,7 @@
         this.n.plane.style.transform = 'translate(' + v.x + 'px,' + v.y + 'px) scale(' + v.z + ')'
         // the board's surface moves and zooms with it
         this.root.style.backgroundPosition = (v.x + this.bg.x * v.z) + 'px ' + (v.y + this.bg.y * v.z) + 'px'
-        this.root.style.backgroundSize = 'auto ' + (TILE * v.z) + 'px'
+        this.root.style.backgroundSize = 'auto ' + (this.tile * v.z) + 'px'
         // for what stays screen-sized on the plane (a card's plug button)
         this.root.style.setProperty('--nhe-surface-z', v.z)
         this.placePorts()
@@ -1224,8 +1255,18 @@
                 return
             }
             if (p.length > 2) return
-            // a plug or a socket (faces): hand wiring
-            var hit = self.faces && e.target.closest('.nhe-surface__plug, .nhe-surface__socket')
+            // a cable started by a tap on a port tile: this press puts its end down
+            if (self.sticky) {
+                delete down[e.pointerId]
+                self.sticky = false
+                self.dragWire(local(e))
+                self.dropWire(false)
+                self.moved = true
+                setTimeout(function () { self.moved = false }, 0)
+                return
+            }
+            // a plug, a socket or one of MOD's port tiles (faces): hand wiring
+            var hit = self.faces && e.target.closest('.nhe-surface__plug, .nhe-surface__socket, .nhe-surface__item.is-port')
             if (hit) {
                 g = { mode: 'wire', start: local(e), hit: hit, moved: false }
                 self.moved = false
@@ -1254,6 +1295,7 @@
         // moves and releases are followed on the window (no pointer capture:
         // it would take the click away from a + under the finger)
         window.addEventListener('pointermove', function (e) {
+            if (self.sticky && !down[e.pointerId]) { self.dragWire(local(e)); return }
             if (!down[e.pointerId] || !g) return
             down[e.pointerId] = local(e)
             var p = pts()
@@ -1266,7 +1308,7 @@
             if (g.mode === 'lifted') { self.drag(g, q); return }
             if (g.mode === 'bend') { self.bend(g, q); return }
             if (g.mode === 'wire') {
-                if (!g.moved && Math.max(Math.abs(dx), Math.abs(dy)) > SLOP) { g.moved = self.moved = true; self.beginWire(g) }
+                if (!g.moved && Math.max(Math.abs(dx), Math.abs(dy)) > SLOP) { g.moved = self.moved = true; if (self.beginWire(g) === false) { g = null; return } }
                 if (g.moved) self.dragWire(q)
                 return
             }
@@ -1294,6 +1336,12 @@
             if (g.mode === 'wire') {
                 if (g.moved) self.dropWire(e.type === 'pointercancel')
                 else if (g.hit && g.hit.hasAttribute('data-ci') && e.type === 'pointerup') self.tapPlug(g.hit)
+                // a tap on a port tile (or a free jack): a cable follows the pointer
+                // until the next press puts its end down (Escape lets go)
+                else if (g.hit && !g.hit.hasAttribute('data-ci') && e.type === 'pointerup' && self.beginWire(g) !== false) {
+                    self.sticky = true
+                    self.dragWire(local(e))
+                }
                 g = null
                 if (self.moved) setTimeout(function () { self.moved = false }, 0)
                 return
@@ -1313,6 +1361,9 @@
         }
         window.addEventListener('pointerup', end)
         window.addEventListener('pointercancel', end)
+        window.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && self.sticky) { self.sticky = false; self.dropWire(true) }
+        })
 
         // a double click on the surface itself (not a pedal, a +, a cable…): the whole grid
         root.addEventListener('dblclick', function (e) {

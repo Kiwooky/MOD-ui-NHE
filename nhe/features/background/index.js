@@ -18,8 +18,11 @@
  *
  * Until something is chosen, NHE's texture shows (tokens.css: --nhe-texture,
  * tiled --nhe-texture-height tall), the same image as the constructor's.
- * The choice is remembered in this browser. It shows on the builder and in
- * the performance view.
+ * The choice is remembered in this browser. It shows on MOD's builder, in
+ * the performance view and on NHE's builder (the constructor's surface:
+ * --nhe-surface-texture / --nhe-surface-tile on the page, and an
+ * 'nhe-background' event on window so it redraws). NHE's own texture there
+ * keeps its holes lined up with the grid ("NHE constructor grid").
  */
 NHE.register('background', function (mod) {
     var KEY = 'nhe-background'
@@ -56,6 +59,7 @@ NHE.register('background', function (mod) {
             else localStorage.removeItem(HEIGHT_KEY)
         } catch (e) {}
         mod.setBackground(resolve(name), savedHeight())
+        setSurface()
         return name ? resolve(name) : "MOD's own"
     }
 
@@ -80,11 +84,28 @@ NHE.register('background', function (mod) {
     NHE.backgroundCurrent = function () { return saved() }
     NHE.backgroundMod = MOD
 
+    // NHE's builder: another image than its own grid (whose holes line up
+    // with the cells, so the surface places that one itself)
+    var setSurface = function () {
+        var root = document.documentElement.style, name = saved(), url = null, height = null
+        if (name === MOD) { var w = mod.builderWood(); url = w.url; height = w.height }
+        else if (name && name !== DEFAULT) { url = resolve(name); height = savedHeight() || 300 }
+        if (url) {
+            root.setProperty('--nhe-surface-texture', 'url("' + String(url).replace(/["\\\n]/g, '') + '")')
+            root.setProperty('--nhe-surface-tile', height + 'px')
+        } else {
+            root.removeProperty('--nhe-surface-texture')
+            root.removeProperty('--nhe-surface-tile')
+        }
+        try { window.dispatchEvent(new Event('nhe-background')) } catch (e) {}
+    }
+
     // tokens.css loads alongside (stylesheets don't block): wait for it
     var tries = 0
     var go = function () {
         if (!readDefault() && ++tries < 100) { setTimeout(go, 50); return }
         mod.setBackground(resolve(saved()), savedHeight())
+        setSurface()
     }
     go()
 })
