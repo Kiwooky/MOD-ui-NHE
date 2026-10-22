@@ -280,7 +280,8 @@ NHE.register('bars', function (mod) {
         { id: 'midiPorts', icon: M.midi, label: 'MIDI ports' },
         { id: 'cv', icon: M.cv, label: 'Manage CV ports' },
         { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() } },
-        { id: 'performance', icon: I.bolt, label: 'Performance view' },
+        // with NHE's builder it's the bolt beside a zoomed-in pedal's gear instead
+        { id: 'performance', icon: I.bolt, label: 'Performance view', only: function () { return !NHE.builder || NHE.builder.current() !== 'nhe' } },
         { id: 'report', icon: M.report, label: 'Report a problem' },
         { id: 'devices', icon: I.device, label: 'Devices' },
         { id: 'settings', icon: I.cpu, label: 'System settings' },
@@ -304,7 +305,7 @@ NHE.register('bars', function (mod) {
     var menuRows = function (box, list, close) {
         list.forEach(function (m) {
             var it = m.id === 'tempo' ? { shown: true } : mod.menuItem(m.id)
-            if (!it.shown || (deviceOnly(m.id) && !deviceShows(m.id))) return
+            if (!it.shown || (deviceOnly(m.id) && !deviceShows(m.id)) || (m.only && !m.only())) return
             var lit = /^bypass/.test(m.id) ? !it.on : !!it.selected
             var r = $('<button type="button" class="nhe-menupanel__item" role="menuitem">').html(m.icon + '<span></span>').appendTo(box)
             r.find('span').text(typeof m.label === 'function' ? m.label(it) : m.label)

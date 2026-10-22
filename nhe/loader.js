@@ -31,6 +31,7 @@
         {
             id: 'performance',
             files: [
+                'components/icons.js',
                 'features/performance/performance.css',
                 'features/performance/performance.js',
                 'features/performance/index.js'

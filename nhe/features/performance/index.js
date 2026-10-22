@@ -24,6 +24,8 @@ NHE.register('performance', function (mod) {
         view: view,
         trigger: trigger,
         exitTrigger: mod.constructorIcon(),
+        // back to the builder from the centred pedal: the puzzle, "Constructor view"
+        exitButton: { label: 'Constructor view', icon: NHE.icons.puzzle },
         // the back of a flipped pedal is NHE's settings screen (the settings
         // feature); without it, the view shows MOD's settings panel there
         renderBack: function (instance, container, api) {

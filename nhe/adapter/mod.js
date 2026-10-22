@@ -842,6 +842,10 @@
 
     // which board: its bundle path ('' for an unsaved one) and title
     mod.boardId = function () { return (window.desktop && desktop.pedalboardBundle) || '' }
+    // NHE's performance view (features/performance: desktop.performanceView),
+    // opened on a pedal; false when that feature is off
+    mod.canPerform = function () { return !!(window.desktop && desktop.performanceView) }
+    mod.openPerformance = function (instance) { if (mod.canPerform()) desktop.performanceView.open(instance) }
     mod.boardTitle = function () { return (window.desktop && desktop.title) || '' }
 
     // MOD's own ports, as NHE names them: Audio In / Out (L) / (R) for the

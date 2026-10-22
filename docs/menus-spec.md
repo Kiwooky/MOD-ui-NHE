@@ -111,7 +111,8 @@ items click them). 45 px tall, as MOD's.
   right the CPU / RAM meters and xruns (as tall as the bar), tempo, Play /
   Stop, Bypass 1 and 2 (a device only; framed in orange while true bypass
   is on) and the sliders button. That opens a menu up from the bar: MIDI
-  ports, Manage CV ports, Global tempo & sync, Performance view, Report a
+  ports, Manage CV ports, Global tempo & sync, Performance view (only with
+  MOD's builder: NHE's has the bolt beside a zoomed-in pedal's gear), Report a
   problem, Devices, System settings, and System is up to date / Update
   available (an orange dot on the button while one waits), each when MOD
   shows it (MIDI ports, Devices, Settings and Update on a device only). The

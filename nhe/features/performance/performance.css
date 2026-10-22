@@ -169,8 +169,15 @@ body.performance-mode #js-cv-addressing-toggle {
     display: flex;
     gap: 8px;
 }
+/* the optional way out (options.exitButton): the top-right corner */
+#performance-view .performance-tools-exit {
+    left: auto;
+    right: -22px;
+}
+#performance-view .performance-exit svg { width: 22px; height: 22px; }
 #performance-view .performance-flip,
-#performance-view .performance-hide {
+#performance-view .performance-hide,
+#performance-view .performance-exit {
     height: 44px;
     padding: 0 18px 0 12px;
     gap: 8px;
@@ -189,6 +196,8 @@ body.performance-mode #js-cv-addressing-toggle {
     cursor: pointer;
     transition: background 0.15s;
 }
+#performance-view .performance-exit:hover,
+#performance-view .performance-exit:active,
 #performance-view .performance-flip:hover,
 #performance-view .performance-flip:active,
 #performance-view .performance-hide:hover,

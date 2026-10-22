@@ -40,6 +40,10 @@ function PerformanceView(options) {
         // true if it did; api = { flipBack(), flipTo(instance) }. When it
         // returns false (or isn't given), the back shows MOD's settings panel.
         renderBack: null,
+        // an optional way out on the centred pedal, at its top-right corner
+        // (mirroring Flip and Hide): { label, icon (svg markup) }; it closes
+        // the view as the exitTrigger does
+        exitButton: null,
     }, options)
 
     var MAX_SCALE   = 2.0
@@ -84,6 +88,14 @@ function PerformanceView(options) {
     var tools = $('<div class="performance-tools">')
     var flipButton = $('<button type="button" class="performance-flip" title="Flip the pedal: its settings are on the back" aria-label="Flip">' + FLIP + '<span>Flip</span></button>').appendTo(tools)
     var hideButton = $('<button type="button" class="performance-hide" title="Hide this pedal from the performance view" aria-label="Hide">' + EYE_OFF + '<span>Hide</span></button>').appendTo(tools)
+    var exitTools = null
+    if (options.exitButton) {
+        exitTools = $('<div class="performance-tools performance-tools-exit">')
+        $('<button type="button" class="performance-exit">').attr({ title: options.exitButton.label, 'aria-label': options.exitButton.label })
+            .html((options.exitButton.icon || '') + '<span></span>').appendTo(exitTools)
+            .click(function () { options.exitTrigger.click(); return false })
+            .find('span').text(options.exitButton.label)
+    }
     var tile = null  // the "N hidden" slide at the end, created on demand
     var TILE_ITEM_W = 120, TILE_ITEM_H = 104, TILE_HEAD = 56, TILE_PAD = 16
     // the back of a flipped pedal, opened out over the whole view
@@ -248,6 +260,10 @@ function PerformanceView(options) {
     var showStrip = function (s) {
         if (s && !s.tile) tools.appendTo(s.slide)
         else tools.detach()
+        if (exitTools) {
+            if (s && !s.tile) exitTools.appendTo(s.slide)
+            else exitTools.detach()
+        }
     }
 
     var thumbnailUrl = function (icon) {
@@ -391,9 +407,10 @@ function PerformanceView(options) {
 
     var rebuild = function (opts) {
         opts = opts || {}
-        // Flip and Hide ride on a slide: lift them off first, or removing that
-        // slide (jQuery's remove) would take their click handlers with it
+        // Flip and Hide (and the way out) ride on a slide: lift them off first,
+        // or removing that slide (jQuery's remove) would take their click handlers with it
         tools.detach()
+        if (exitTools) exitTools.detach()
         var all = self.signalOrder()
         var hidden = {}
         hiddenList().forEach(function (i) { hidden[i] = true })
@@ -762,8 +779,12 @@ function PerformanceView(options) {
     // ------------------------------------------------------------------
     // enter / exit
 
-    this.open = function () {
-        if (isOpen) return
+    // instance (optional): open on that pedal
+    this.open = function (instance) {
+        if (isOpen) {
+            if (instance) rebuild({ focus: instance })
+            return
+        }
         isOpen = true
         pb.data('performanceMode', true)
         $('body').addClass('performance-mode')
@@ -775,7 +796,7 @@ function PerformanceView(options) {
         active = -1
         builtFor = null
         signature = currentSignature()
-        rebuild()
+        rebuild(instance ? { focus: instance } : undefined)
 
         pollTimer = setInterval(function () {
             syncFooter()

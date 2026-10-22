@@ -27,6 +27,8 @@
  *       onSettings: fn(node),               // a face's gear, just outside its top right
  *                                           // corner (as on MOD's builder): its settings
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
+ *       onPerformance: fn(node),            // a focused face's bolt, left of its gear: the
+ *                                           // performance view, on this pedal
  *       onFaceLoad: fn(img, node),          // a pedal's picture came in (may swap its src)
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
  *                                           // in `layer` (over its picture, the picture's size),
@@ -405,6 +407,14 @@
                     gear.setAttribute('aria-label', 'Settings of ' + nd.name)
                     gear.title = 'Settings'
                     gear.addEventListener('click', function () { if (!self.moved) self.o.onSettings(nd) })
+                }
+                // zoomed in on it (focused): the performance view's bolt left of the gear, the last step to full screen
+                if (self.faces && typeof self.o.onPerformance === 'function') {
+                    var perf = el('button', 'nhe-surface__perf', d, icon('bolt'))
+                    perf.type = 'button'
+                    perf.setAttribute('aria-label', 'Performance view')
+                    perf.title = 'Performance view'
+                    perf.addEventListener('click', function () { if (!self.moved) self.o.onPerformance(nd) })
                 }
             }
             self.els[nd.id] = d
@@ -1226,18 +1236,19 @@
     // the name and maker right under its bottom edge
     Surface.prototype.placeGear = function (nd) {
         var d = this.els && this.els[nd.id]
-        var gear = d && d.querySelector('.nhe-surface__gear'), lab = d && d.querySelector('.nhe-surface__caption')
+        var gear = d && d.querySelector('.nhe-surface__gear'), lab = d && d.querySelector('.nhe-surface__caption'), perf = d && d.querySelector('.nhe-surface__perf')
         var img = d && d.querySelector('.nhe-surface__face img')
         if (!gear && !lab) return
         if (!img || !img.complete || !img.offsetWidth) {
-            if (gear) { gear.style.left = '100%'; gear.style.top = '0' }
+            ;[gear, perf].forEach(function (b) { if (b) { b.style.left = '100%'; b.style.top = '0' } })
             return
         }
         var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
-        if (gear) {
-            gear.style.left = (img.offsetLeft + a.x + a.w) + 'px'
-            gear.style.top = (img.offsetTop + a.y) + 'px'
-        }
+        ;[gear, perf].forEach(function (b) {
+            if (!b) return
+            b.style.left = (img.offsetLeft + a.x + a.w) + 'px'
+            b.style.top = (img.offsetTop + a.y) + 'px'
+        })
         if (lab) lab.style.top = (img.offsetTop + a.y + a.h) + 'px'
     }
 
@@ -1246,6 +1257,7 @@
         var f = this.focused, d = f && this.els[f.id], nd = f && this.node(f.id)
         if (!f) return
         if (!d || !nd) { this.focused = null; return }
+        d.classList.add('is-focused')       // its gear larger, the performance view's bolt beside it
         var img = d.querySelector('.nhe-surface__face img'), self = this
         if (!img || typeof this.o.liveFace !== 'function') return
         // a redrawn face's picture may not be in yet: it has no size until it is
@@ -1268,7 +1280,7 @@
         var d = this.els[f.id], nd = this.node(f.id)
         if (typeof this.o.onBlur === 'function' && nd) this.o.onBlur(nd)
         if (d) {
-            d.classList.remove('is-live')
+            d.classList.remove('is-live', 'is-focused')
             var layer = d.querySelector('.nhe-surface__live')
             if (layer) layer.parentNode.removeChild(layer)
         }

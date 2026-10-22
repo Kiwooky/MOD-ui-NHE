@@ -52,6 +52,16 @@ Status: being worked out with Niels; open points are marked **Open**.
   control. **Phone:** no hand wiring (a finger isn't precise enough); the
   + dialog and the settings screen do it.
 
+### Zoomed in on a pedal
+
+- A tapped face zooms in and plays; its gear grows to the bars' icon size
+  (32 px), and a bolt left of it opens the performance view on that
+  pedal: the last step from zoomed in to full screen. In the performance
+  view, **Constructor view** (the puzzle, top right of the centred pedal)
+  comes back.
+- Free cells show only their + for now (no circle); a cable's + is half
+  see-through.
+
 ### Kept per board
 
 - A board's cable colours, hand-laid cables and grid size are kept by its
