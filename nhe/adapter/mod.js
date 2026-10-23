@@ -230,12 +230,16 @@
     // an NHE screen shows, ask for viewport-fit=cover (its content keeps clear
     // of the notch with env(safe-area-inset-*)); when none shows, MOD's page
     // goes back to how it was. width=980 is the layout width phones use for a
-    // page without the tag, so MOD's layout doesn't change.
+    // page without the tag, so MOD's layout doesn't change. Phones only: a
+    // tablet lays the page out at its window's width (1133 px and up on an
+    // iPad), so width=980 narrowed it, and Safari kept its scale until the
+    // next resize (black strip at the right). Tablets have no notch anyway.
     var bleeders = {}
+    var phone = Math.min(screen.width, screen.height) < 600
     mod.fullBleed = function (owner, on) {
         if (on) bleeders[owner] = true
         else delete bleeders[owner]
-        var want = Object.keys(bleeders).length > 0
+        var want = phone && Object.keys(bleeders).length > 0
         var meta = document.querySelector('meta[name=viewport][data-nhe]')
         if (want && !meta && !document.querySelector('meta[name=viewport]')) {
             meta = document.createElement('meta')
