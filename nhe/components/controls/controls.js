@@ -603,26 +603,35 @@
  * very tall and their sliders long and thin. Upright, the screens and
  * dialogs are scaled up (CSS transform, which every browser measures the
  * same way) so about ZOOM_TARGET px fill the width: the system bar, the
- * presets column and one slider. Sideways and on a computer: 1.
+ * presets column and one slider; on a phone, PHONE_TARGET (the design's
+ * width). Sideways and on a computer: 1.
  *
  *   NHE.zoom()   // the current factor; CSS reads it as var(--nhe-zoom)
  */
 (function () {
     var NHE = window.NHE = window.NHE || {}
     var ZOOM_TARGET = 540, ZOOM_MAX = 3      // 540: bar, presets, one slider, and room for the NHE / MOD switch
+    // a phone: the design's own width, Figma's iPhone 13 canvas, so its px
+    // are the design's (as the phone's bars, features/bars)
+    var PHONE_TARGET = 390
+    var phone = Math.min(screen.width, screen.height) < 600
 
     NHE.zoom = function () {
         var w = window.innerWidth, h = window.innerHeight
         if (h <= w) return 1
-        return Math.max(1, Math.min(ZOOM_MAX, w / ZOOM_TARGET))
+        return Math.max(1, Math.min(ZOOM_MAX, w / (phone ? PHONE_TARGET : ZOOM_TARGET)))
     }
     // the plugin settings screen: a little larger again everywhere (its text
-    // and icons were on the small side); CSS: var(--nhe-settings-zoom)
+    // and icons were on the small side); CSS: var(--nhe-settings-zoom). Not
+    // on a phone upright: there the design's sizes are already the phone's
     var SETTINGS_SCALE = 1.15
-    NHE.settingsZoom = function () { return NHE.zoom() * SETTINGS_SCALE }
+    var phoneUpright = function () { return phone && NHE.zoom() > 1 }
+    NHE.settingsZoom = function () { return NHE.zoom() * (phoneUpright() ? 1 : SETTINGS_SCALE) }
+    // html.nhe-phone-upright: for layouts the design draws differently there
     var apply = function () {
         document.documentElement.style.setProperty('--nhe-zoom', NHE.zoom())
         document.documentElement.style.setProperty('--nhe-settings-zoom', NHE.settingsZoom())
+        document.documentElement.classList.toggle('nhe-phone-upright', phoneUpright())
     }
     apply()
     window.addEventListener('resize', function (e) { if (e.target === window) apply() })

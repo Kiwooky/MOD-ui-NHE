@@ -89,3 +89,12 @@
     z-index: 7;
 }
 #nhe-constructor .nhe-surface__zoom button { width: 36px; height: 36px; font-size: 20px; }
+
+/* upright on a phone the snapshot chips (features/bars) take the top row
+   across the screen (Figma "Snapshot switch bar"): the switch and the zoom
+   buttons go to the bottom, still left of MOD's output tiles */
+.nhe-phone-upright #nhe-constructor .nhe-constructor__switch,
+.nhe-phone-upright #nhe-constructor .nhe-surface__zoom {
+    top: auto;
+    bottom: calc(12px / var(--nhe-zoom, 1));
+}
