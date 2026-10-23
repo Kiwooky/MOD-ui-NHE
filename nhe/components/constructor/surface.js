@@ -22,7 +22,8 @@
  *       faces: true | false,                // pedals as their faces, a tap zooms in (default:
  *                                           // a desktop or large tablet); else cards, a tap is onTap
  *       onTap: fn(node),                    // a pedal card was tapped (phones: its settings screen)
- *       onRewire: fn(node),                 // a card's plug button (phones: no hand wiring)
+ *       onRewire: fn(node),                 // a pedal's plug button: a card's (phones: no hand
+ *                                           // wiring), or left of a face's gear
  *       onPortTap: fn(node, connected),     // cards: one of MOD's port tiles was tapped
  *       onSettings: fn(node),               // a face's gear, just outside its top right
  *                                           // corner (as on MOD's builder): its settings
@@ -408,7 +409,15 @@
                     gear.title = 'Settings'
                     gear.addEventListener('click', function () { if (!self.moved) self.o.onSettings(nd) })
                 }
-                // zoomed in on it (focused): the performance view's bolt left of the gear, the last step to full screen
+                // faces: the plug left of the gear, as on a card: its wiring (replace it, other ins and outs)
+                if (self.faces && typeof self.o.onRewire === 'function') {
+                    var pl = el('button', 'nhe-surface__plugbtn', d, icon('plug'))
+                    pl.type = 'button'
+                    pl.setAttribute('aria-label', 'Wiring of ' + nd.name)
+                    pl.title = 'Wiring'
+                    pl.addEventListener('click', function () { if (!self.moved) self.o.onRewire(nd) })
+                }
+                // zoomed in on it (focused): the performance view's bolt left of those, the last step to full screen
                 if (self.faces && typeof self.o.onPerformance === 'function') {
                     var perf = el('button', 'nhe-surface__perf', d, icon('bolt'))
                     perf.type = 'button'
@@ -1236,15 +1245,15 @@
     // the name and maker right under its bottom edge
     Surface.prototype.placeGear = function (nd) {
         var d = this.els && this.els[nd.id]
-        var gear = d && d.querySelector('.nhe-surface__gear'), lab = d && d.querySelector('.nhe-surface__caption'), perf = d && d.querySelector('.nhe-surface__perf')
+        var gear = d && d.querySelector('.nhe-surface__gear'), lab = d && d.querySelector('.nhe-surface__caption'), perf = d && d.querySelector('.nhe-surface__perf'), plug = d && d.querySelector('.nhe-surface__plugbtn')
         var img = d && d.querySelector('.nhe-surface__face img')
         if (!gear && !lab) return
         if (!img || !img.complete || !img.offsetWidth) {
-            ;[gear, perf].forEach(function (b) { if (b) { b.style.left = '100%'; b.style.top = '0' } })
+            ;[gear, perf, plug].forEach(function (b) { if (b) { b.style.left = '100%'; b.style.top = '0' } })
             return
         }
         var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
-        ;[gear, perf].forEach(function (b) {
+        ;[gear, perf, plug].forEach(function (b) {
             if (!b) return
             b.style.left = (img.offsetLeft + a.x + a.w) + 'px'
             b.style.top = (img.offsetTop + a.y) + 'px'
@@ -1375,7 +1384,7 @@
                 return
             }
             // a card's plug button is a button, not the card (no tap, no long-press)
-            var item = !e.target.closest('.nhe-surface__rewire, .nhe-surface__gear') && e.target.closest('.nhe-surface__item.is-pedal')
+            var item = !e.target.closest('.nhe-surface__rewire, .nhe-surface__gear, .nhe-surface__plugbtn, .nhe-surface__perf') && e.target.closest('.nhe-surface__item.is-pedal')
             var cable = self.faces && e.target.closest('.nhe-surface__wire-hit')
             // cards (phones): a tap on one of MOD's port tiles is reported (onPortTap)
             var tile = !self.faces && e.target.closest('.nhe-surface__item.is-port')

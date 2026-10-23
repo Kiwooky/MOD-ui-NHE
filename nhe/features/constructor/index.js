@@ -344,9 +344,10 @@ NHE.register('constructor', function (mod) {
         refresh()
     }
 
-    // a card's plug button (phones): the + dialog with the pedal picked and
-    // its wiring ticked; Rewire then disconnects what it had and connects
-    // what's ticked now (the spec's "delete and reconnect", to be tried)
+    // a pedal's plug button (a card's, or beside a face's gear): the + dialog
+    // with the pedal picked and its wiring ticked; Rewire then disconnects
+    // what it had and connects what's ticked now, or, with another plugin
+    // picked, swaps the pedal for it
     var rewire = function (node) {
         var owner = function (port) { return nodes.filter(function (n) { return ['audio', 'midi', 'cv'].some(function (t) { var p = n.ports[t] || {}; return (p.in || []).concat(p.out || []).indexOf(port) >= 0 }) })[0] }
         var ins = {}, outs = {}, mine = []
@@ -361,6 +362,20 @@ NHE.register('constructor', function (mod) {
             openAdd(node.cell, {
                 plugin: plugin, exclude: [node.id], inputs: Object.keys(ins), outputs: Object.keys(outs), placeLabel: 'Rewire',
                 onPlace: function (r) {
+                    // another plugin picked: it takes this one's place. MOD removes
+                    // the old one (its cables go with it), then the new one goes
+                    // into the same cell, wired as ticked (as the + dialog's Place)
+                    if (r.plugin.uri !== node.uri) {
+                        var gone = function (p) { return p.indexOf(node.id + '/') === 0 }
+                        r.plan.disconnect = r.plan.disconnect.filter(function (c) { return !gone(c[0]) && !gone(c[1]) })
+                        mod.removePlugin(node.id, function () {
+                            nodes = nodes.filter(function (n) { return n.id !== node.id })
+                            connections = connections.filter(function (c) { return !gone(c[0]) && !gone(c[1]) })
+                            if (surface) surface.update({ nodes: nodes, connections: connections })
+                            spanOf(r.plugin, function () { place(r, node.cell) })
+                        })
+                        return
+                    }
                     var want = fixPorts(r.plan.connect, node.id), key = function (c) { return c[0] + '>' + c[1] }
                     var keep = {}
                     want.forEach(function (c) { keep[key(c)] = true })

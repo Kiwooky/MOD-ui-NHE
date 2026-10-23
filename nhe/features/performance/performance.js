@@ -76,7 +76,6 @@ function PerformanceView(options) {
     var settling     = 0      // timestamp until which the start pedal is re-picked
     var pollTimer    = null
     var settleTimer  = null
-    var wheelLock    = false
     var scrollRaf    = null
     var spacerL      = $('<div class="performance-spacer">')
     var spacerR      = $('<div class="performance-spacer">')
@@ -667,19 +666,14 @@ function PerformanceView(options) {
         })
     })
 
-    // vertical mouse wheel moves one pedal per notch; horizontal trackpad
-    // scrolling is left to the browser (scroll-snap does the centring)
+    // only horizontal scrolling moves the carousel (the browser's own, with
+    // scroll-snap centring); a vertical wheel is left to the pedals, whose
+    // GUIs turn knobs with it. Arrow keys and the neighbours still step.
     // any hands-on scrolling ends the "new board" re-picking
     stage[0].addEventListener('touchstart', function () { settling = 0 }, { passive: true })
     stage[0].addEventListener('wheel', function (e) {
-        settling = 0
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
-        e.preventDefault()
-        if (wheelLock || Math.abs(e.deltaY) < 4) return
-        wheelLock = true
-        setTimeout(function () { wheelLock = false }, 320)
-        self.goTo(active + (e.deltaY > 0 ? 1 : -1))
-    }, { passive: false })
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) settling = 0
+    }, { passive: true })
 
     // a pointer that lands on a neighbouring pedal selects it instead of
     // touching its controls
