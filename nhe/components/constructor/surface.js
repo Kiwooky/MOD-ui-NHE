@@ -31,8 +31,8 @@
  *       onPerformance: fn(node),            // a focused face's bolt, left of its gear: the
  *                                           // performance view, on this pedal
  *       onFaceLoad: fn(img, node),          // a pedal's picture came in (may swap its src)
- *       liveAll: true | false,              // faces: every face live (MOD's builder shows them all
- *                                           // working; a desktop), only the focused one plays
+ *       liveAll: true | false,              // faces: every face live and playing, as on MOD's
+ *                                           // builder (a desktop); else only the focused one
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
  *                                           // in `layer` (over its picture, the picture's size),
  *                                           // return true if it did; called again after a redraw
@@ -1271,8 +1271,7 @@
     }
 
     // the working GUIs over the pictures (again after a redraw): the
-    // focused face's, or with liveAll every face's (only the focused one
-    // takes presses: CSS). Not while released.
+    // focused face's, or with liveAll every face's. Not while released.
     Surface.prototype.mountLive = function () {
         var self = this, f = this.focused
         if (f && (!this.els[f.id] || !this.node(f.id))) f = this.focused = null
@@ -1340,12 +1339,16 @@
         if (d) d.classList.toggle('is-on', !!on)
     }
 
-    // a press on the live face's controls is the GUI's, not the surface's
+    // a press on a live face's controls is the GUI's, not the surface's: the
+    // focused face's, or with liveAll any face's (as on MOD's builder). On the
+    // rest of a face a press pans, lifts, or (a tap) zooms in on it
     Surface.prototype.onLive = function (target) {
         var f = this.focused
-        if (!f || typeof this.o.isControl !== 'function') return false
+        if (typeof this.o.isControl !== 'function') return false
         var layer = target.closest && target.closest('.nhe-surface__live')
-        return !!layer && layer.parentNode === this.els[f.id] && this.o.isControl(target)
+        if (!layer) return false
+        if (!(this.o.liveAll && this.faces) && (!f || layer.parentNode !== this.els[f.id])) return false
+        return this.o.isControl(target)
     }
 
     // zoom out until the whole grid shows (a double click on the surface)
