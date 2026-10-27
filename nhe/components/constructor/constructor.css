@@ -415,9 +415,14 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .is-faces .nhe-surface__face img, .is-faces .nhe-surface__face.is-blank, .is-faces .nhe-surface__name, .is-faces .nhe-surface__brand { pointer-events: auto; }
 .is-faces .nhe-surface__face img { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); }
 .is-faces .nhe-surface__name, .is-faces .nhe-surface__brand { text-shadow: 0 1px 3px #000; }
-/* a focused face, live: the pedal's working GUI over its picture (liveFace) */
+/* a live face: the pedal's working GUI over its picture (liveFace). With
+   liveAll (a desktop) every face is live, but only the focused one plays:
+   elsewhere a shield over it takes the press, which pans, lifts or focuses
+   as on a picture, and the GUI's controls never see it */
 .nhe-surface__live { position: absolute; pointer-events: auto; }
+.nhe-surface__item:not(.is-focused) .nhe-surface__live::after { content: ""; position: absolute; inset: 0; z-index: 10; }
 .nhe-surface__item.is-live { z-index: 3; }
+.nhe-surface__item.is-focused { z-index: 4; }
 .nhe-surface__item.is-live .nhe-surface__face img { visibility: hidden; }
 /* the live GUI keeps the picture's shadow */
 .nhe-surface__item.is-live .nhe-surface__live { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); }
@@ -543,3 +548,7 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 }
 .nhe-surface__cvtag.is-on .nhe-surface__cvtag-name { display: block; }
 .nhe-surface__cvtag-name:focus { outline: none; border-color: var(--nhe-accent-default, #883996); }
+
+/* cards: a red dot at the top left while the plugin is on (surface.js setOn) */
+.nhe-surface__led { position: absolute; top: calc(6px / min(1, var(--nhe-surface-z, 1))); left: calc(6px / min(1, var(--nhe-surface-z, 1))); display: none; width: calc(10px / min(1, var(--nhe-surface-z, 1))); height: calc(10px / min(1, var(--nhe-surface-z, 1))); border-radius: 50%; background: #ff2a2a; box-shadow: 0 0 6px 1px rgba(255, 42, 42, .7); pointer-events: none; z-index: 1; }
+.nhe-surface__item.is-on .nhe-surface__led { display: block; }

@@ -503,6 +503,14 @@
         var gui = mod.gui(instance)
         return gui ? !(gui.controls[':bypass'] && gui.controls[':bypass'].value) : true
     }
+    // cb(instance, on) when the plugin goes on or off (its ':bypass', from
+    // anywhere); once per GUI, however often it's asked
+    mod.onPluginOn = function (instance, cb) {
+        var gui = mod.gui(instance)
+        if (!gui || gui.__nheOnWatched) return
+        gui.__nheOnWatched = true
+        hook(instance, 'setPortWidgetsValue', function (symbol, value) { if (symbol === ':bypass') cb(instance, !value) })
+    }
     mod.setPluginOn = function (instance, on) { mod.setPortValue(instance, ':bypass', on ? 0 : 1) }
 
     // presets, read from MOD's own preset elements (they follow saves,
@@ -850,6 +858,19 @@
     // opened on a pedal; false when that feature is off
     mod.canPerform = function () { return !!(window.desktop && desktop.performanceView) }
     mod.openPerformance = function (instance) { if (mod.canPerform()) desktop.performanceView.open(instance) }
+    mod.performing = function () { return mod.canPerform() && desktop.performanceView.isOpen() }
+    // before it opens, however it's opened (it moves MOD's icons in)
+    mod.onPerformanceOpen = function (cb) {
+        if (!mod.canPerform()) return
+        var pv = desktop.performanceView, original = pv.open
+        pv.open = function () { if (!pv.isOpen()) cb(); return original.apply(this, arguments) }
+    }
+    // after it closes (it has put MOD's icons back on the canvas by then)
+    mod.onPerformanceClose = function (cb) {
+        if (!mod.canPerform()) return
+        var pv = desktop.performanceView, original = pv.close
+        pv.close = function () { var was = pv.isOpen(), r = original.apply(this, arguments); if (was) cb(); return r }
+    }
     mod.boardTitle = function () { return (window.desktop && desktop.title) || '' }
 
     // MOD's own ports, as NHE names them: Audio In / Out (L) / (R) for the

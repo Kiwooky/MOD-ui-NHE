@@ -132,6 +132,7 @@ NHE.register('constructor', function (mod) {
                 id: p.instance, uri: p.uri, name: p.name, brand: p.brand, kind: 'pedal',
                 thumb: mod.pluginImage(p.uri, 'thumbnail', p.gui), face: mod.pluginImage(p.uri, 'screenshot', p.gui),
                 ports: p.ports, cell: cell, span: s, faceSize: { w: p.w, h: p.h },
+                on: mod.pluginOn(p.instance),      // cards: the red dot
                 jacks: p.jacks || undefined         // where MOD's face has them; else spread down its sides
             })
         })
@@ -152,7 +153,11 @@ NHE.register('constructor', function (mod) {
         })
         nodes = out
         connections = b.connections
+        // cards' red dots follow the plugins' on / off from MOD
+        b.pedals.forEach(function (p) { mod.onPluginOn(p.instance, pluginOn) })
     }
+
+    var pluginOn = function (instance, on) { if (surface) surface.setOn(instance, on) }
 
     var busy = function () {
         return surface && (surface.dragging || surface.root.classList.contains('is-moving') || surface.root.classList.contains('is-wiring'))
@@ -181,6 +186,9 @@ NHE.register('constructor', function (mod) {
         surface = new NHE.Surface(host.children()[0], {
             nodes: nodes, connections: connections, cols: cache.cols, rows: cache.rows,
             wireColours: cache.colours, wireRoutes: cache.routes, cvOutputs: cvOutputs(),
+            // a desktop (mouse): every face shows its working GUI, live, as on
+            // MOD's builder; a touch screen: only the one zoomed in on
+            liveAll: !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches),
             // MOD's own handlers register the port; the tags follow its state again
             onCvOutput: function (port, on, name) {
                 mod.setCvOutput(port, on, name)
@@ -203,10 +211,11 @@ NHE.register('constructor', function (mod) {
             // faces: the gear at the pedal's top right, as on MOD's builder (NHE's settings screen, or MOD's)
             onSettings: function (node) { if (!pending[node.id]) mod.openSettings(node.id) },
             // zoomed in on a face: the bolt left of its gear, full screen on this pedal
-            // (MOD's icon back first: the performance view moves the same icon in)
+            // (MOD's icons back first: the performance view moves the same icons
+            // in; the live faces take them again when it closes)
             onPerformance: mod.canPerform() ? function (node) {
                 if (pending[node.id]) return
-                surface.blur()
+                surface.release()
                 mod.openPerformance(node.id)
             } : null,
             // faces: zoomed to 100%, MOD's working icon in the picture's place
@@ -246,7 +255,7 @@ NHE.register('constructor', function (mod) {
 
     // a fresh surface (another board: its own grid size)
     var drop = function () {
-        if (surface) surface.blur()        // MOD's icon back first: remove() would clear its data
+        if (surface) surface.release()     // MOD's icons back first: remove() would clear their data
         if (host) host.remove()
         host = surface = null
     }
@@ -395,12 +404,13 @@ NHE.register('constructor', function (mod) {
 
     var apply = function () {
         var on = shown()
-        if (!on && surface) surface.blur()  // MOD's builder gets its icon back
+        if (!on && surface) surface.release()  // MOD's builder gets its icons back
         view.toggle(on)
         mod.coverBuilder(on)
         if (switcher) switcher.update({ value: on ? 0 : 1 })
         if (on) {
             cache = cache || boardCache()
+            if (surface && !mod.performing()) surface.resume()
             refresh()
         }
     }
@@ -437,6 +447,9 @@ NHE.register('constructor', function (mod) {
     })
     // MOD's title changes when a board is saved: under a new bundle, the layout follows
     mod.onBoardName(function () { setTimeout(followSave, 300) })   // the bundle may be set just after the title
+    // the performance view gives MOD's icons back as it closes: the live faces take them again
+    mod.onPerformanceOpen(function () { if (surface) surface.release() })
+    mod.onPerformanceClose(function () { if (surface && shown()) surface.resume() })
     // MOD's Manage CV ports switched on or off: the tags come or go
     mod.onCvManaging(function () { if (surface) surface.update({ cvOutputs: cvOutputs() }) })
     // a board loaded before NHE started (or while it was MOD's builder)

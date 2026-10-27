@@ -31,6 +31,8 @@
  *       onPerformance: fn(node),            // a focused face's bolt, left of its gear: the
  *                                           // performance view, on this pedal
  *       onFaceLoad: fn(img, node),          // a pedal's picture came in (may swap its src)
+ *       liveAll: true | false,              // faces: every face live (MOD's builder shows them all
+ *                                           // working; a desktop), only the focused one plays
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
  *                                           // in `layer` (over its picture, the picture's size),
  *                                           // return true if it did; called again after a redraw
@@ -52,6 +54,8 @@
  *       onCvOutput: fn(portId, on, name)    // a tick or a name changed there
  *   })
  *   s.update({ nodes, connections })
+ *   s.release() / s.resume()   // every live face's GUI given back (onBlur), and taken again
+ *   s.setOn(id, on)            // a card's red dot: the plugin is on
  *
  * A pedal node may carry `face`: its full-size picture (MOD's screenshot),
  * shown instead of `thumb` in faces mode, `faceSize`: { w, h }, the
@@ -425,6 +429,11 @@
                     perf.title = 'Performance view'
                     perf.addEventListener('click', function () { if (!self.moved) self.o.onPerformance(nd) })
                 }
+            }
+            // cards: a red dot at the top left while the plugin is on (a face shows its own light)
+            if (!self.faces) {
+                el('span', 'nhe-surface__led', d).setAttribute('aria-hidden', 'true')
+                d.classList.toggle('is-on', !!nd.on)
             }
             self.els[nd.id] = d
             self.placeGear(nd)
@@ -1261,16 +1270,27 @@
         if (lab) lab.style.top = (img.offsetTop + a.y + a.h) + 'px'
     }
 
-    // the focused face's working GUI, over its picture (again after a redraw)
+    // the working GUIs over the pictures (again after a redraw): the
+    // focused face's, or with liveAll every face's (only the focused one
+    // takes presses: CSS). Not while released.
     Surface.prototype.mountLive = function () {
-        var f = this.focused, d = f && this.els[f.id], nd = f && this.node(f.id)
-        if (!f) return
-        if (!d || !nd) { this.focused = null; return }
-        d.classList.add('is-focused')       // its gear larger, the performance view's bolt beside it
-        var img = d.querySelector('.nhe-surface__face img'), self = this
+        var self = this, f = this.focused
+        if (f && (!this.els[f.id] || !this.node(f.id))) f = this.focused = null
+        if (f) this.els[f.id].classList.add('is-focused')       // its gear larger, the performance view's bolt beside it
+        if (this.released) return
+        if (this.o.liveAll && this.faces) this.o.nodes.forEach(function (nd) { if (nd.kind === 'pedal' && nd.cell && self.els[nd.id]) self.mountFace(nd) })
+        else if (f) this.mountFace(this.node(f.id))
+    }
+    Surface.prototype.mountFace = function (nd) {
+        var d = this.els[nd.id], self = this
+        var img = d && d.querySelector('.nhe-surface__face img')
         if (!img || typeof this.o.liveFace !== 'function') return
         // a redrawn face's picture may not be in yet: it has no size until it is
-        if (!img.complete || !img.offsetWidth) { img.addEventListener('load', function () { if (self.els[f.id] === d) self.mountLive() }); return }
+        if (!img.complete || !img.offsetWidth) {
+            if (!img.__nheWaiting) { img.__nheWaiting = true; img.addEventListener('load', function () { if (self.els[nd.id] === d) self.mountLive() }) }
+            return
+        }
+        if (d.classList.contains('is-live')) return              // showing it already
         // over the pedal within the picture
         var layer = d.querySelector('.nhe-surface__live') || el('div', 'nhe-surface__live', d)
         var a = this.inner(nd, img, img.offsetWidth, img.offsetHeight)
@@ -1280,19 +1300,44 @@
         layer.style.height = a.h + 'px'
         d.classList.toggle('is-live', !!this.o.liveFace(nd, layer))
     }
+    // a face lets go of its working GUI (onBlur takes it back)
+    Surface.prototype.unmount = function (nd) {
+        var d = nd && this.els[nd.id]
+        if (typeof this.o.onBlur === 'function' && nd) this.o.onBlur(nd)
+        if (!d) return
+        d.classList.remove('is-live')
+        var layer = d.querySelector('.nhe-surface__live')
+        if (layer) layer.parentNode.removeChild(layer)
+    }
 
-    // the focused face lets go of its working GUI
+    // the focused face stops playing; without liveAll it shows its picture again
     Surface.prototype.blur = function () {
         var f = this.focused
         if (!f) return
         this.focused = null
         var d = this.els[f.id], nd = this.node(f.id)
-        if (typeof this.o.onBlur === 'function' && nd) this.o.onBlur(nd)
-        if (d) {
-            d.classList.remove('is-live', 'is-focused')
-            var layer = d.querySelector('.nhe-surface__live')
-            if (layer) layer.parentNode.removeChild(layer)
-        }
+        if (d) d.classList.remove('is-focused')
+        if (!(this.o.liveAll && this.faces)) this.unmount(nd)
+    }
+
+    // every working GUI given back (the performance view, MOD's builder or
+    // a new board takes them), until resume()
+    Surface.prototype.release = function () {
+        var self = this
+        this.blur()
+        this.released = true
+        this.o.nodes.forEach(function (nd) { var d = self.els[nd.id]; if (d && d.classList.contains('is-live')) self.unmount(nd) })
+    }
+    Surface.prototype.resume = function () {
+        this.released = false
+        this.mountLive()
+    }
+
+    // a card's red dot (top left): the plugin is on
+    Surface.prototype.setOn = function (id, on) {
+        var nd = this.node(id), d = this.els[id]
+        if (nd) nd.on = on
+        if (d) d.classList.toggle('is-on', !!on)
     }
 
     // a press on the live face's controls is the GUI's, not the surface's

@@ -52,6 +52,16 @@ Status: being worked out with Niels; open points are marked **Open**.
   control. **Phone:** no hand wiring (a finger isn't precise enough); the
   + dialog and the settings screen do it.
 
+### Live faces
+
+- On a desktop (a mouse) every face shows the pedal's working GUI, as MOD's
+  builder does: MOD's own icons, lent to the faces and kept up to date by
+  MOD, one copy each. Only the zoomed-in face plays; on the others a
+  shield takes the press, which pans, lifts or zooms in as on a picture.
+  The performance view and MOD's builder get the icons back while they
+  show. A touch screen keeps the pictures, the zoomed-in face live.
+- Phones (cards): a red dot at the card's top left while the plugin is on.
+
 ### Zoomed in on a pedal
 
 - Above each face: the gear (its settings) and, left of it, the plug: the
