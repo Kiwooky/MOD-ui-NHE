@@ -461,6 +461,11 @@ NHE.register('bars', function (mod) {
         if (saved() === 'nhe') renderChips()
         if (refreshPanel) refreshPanel()
     })
+    // a plugin's settings window open: no snapshot chips over it (bars.css)
+    var editing = {}
+    var markEditing = function () { $('body').toggleClass('nhe-editing', Object.keys(editing).length > 0) }
+    mod.onSettingsOpen(function (instance) { editing[instance] = true; markEditing() })
+    mod.onSettingsClose(function (instance) { delete editing[instance]; markEditing() })
     mod.onStats(function (st) { if (saved() === 'nhe') renderStats(st) })
     mod.onTempo(function () {
         if (saved() === 'nhe') renderTempo()

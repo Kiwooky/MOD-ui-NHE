@@ -103,6 +103,8 @@ default): NHE's top bar inside MOD's `#pedalboard-actions` and its bottom
 bar inside `#main-menu`, MOD's own contents hidden (they still run: NHE's
 items click them). 45 px tall, as MOD's.
 
+- **Snapshot chips:** centred under the top bar; hidden while a plugin's
+  settings show (its window, or a flipped pedal's back).
 - **Top:** MOD's logo, the board's name and snapshot, New (with its label),
   Snapshots, Save (an orange dot while there are unsaved changes), Share
   (when MOD offers it). Save and Snapshots drop a panel down: Save / Save as, Save snapshot / Save snapshot as; picking an *as* shows a field for the new name (the current one suggested), and NHE answers MOD's own name window with it, so MOD saves as usual. Under the Snapshots choices, Load / manage snapshots lists them (the current one highlighted): a tap loads one, the pencil renames it in place, the bin deletes it after a yes.
