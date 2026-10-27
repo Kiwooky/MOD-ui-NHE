@@ -449,7 +449,13 @@ NHE.register('constructor', function (mod) {
     mod.onBoardName(function () { setTimeout(followSave, 300) })   // the bundle may be set just after the title
     // the performance view gives MOD's icons back as it closes: the live faces take them again
     mod.onPerformanceOpen(function () { if (surface) surface.release() })
-    mod.onPerformanceClose(function () { if (surface && shown()) surface.resume() })
+    // and back in the builder, zoomed in on the pedal the carousel was showing
+    mod.onPerformanceClose(function (instance) {
+        if (!surface || !shown()) return
+        surface.resume()
+        var nd = instance && surface.node(instance)
+        if (nd && nd.cell && surface.faces) surface.focus(nd)
+    })
     // MOD's Manage CV ports switched on or off: the tags come or go
     mod.onCvManaging(function () { if (surface) surface.update({ cvOutputs: cvOutputs() }) })
     // a board loaded before NHE started (or while it was MOD's builder)

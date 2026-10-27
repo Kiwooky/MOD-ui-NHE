@@ -112,6 +112,12 @@ function PerformanceView(options) {
         return isOpen
     }
 
+    // the centred pedal's instance (null: none, or the hidden tile)
+    this.current = function () {
+        var s = slides[active]
+        return isOpen && s && !s.tile ? s.instance : null
+    }
+
     // ------------------------------------------------------------------
     // state (AC: re-enter on last pedal, reset when the pedalboard changes)
 

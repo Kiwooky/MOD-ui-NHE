@@ -72,7 +72,7 @@ Status: being worked out with Niels; open points are marked **Open**.
   icon size (32 px), and a bolt left of them opens the performance view on that
   pedal: the last step from zoomed in to full screen. In the performance
   view, **Constructor view** (the puzzle, top right of the centred pedal)
-  comes back.
+  comes back, zoomed in on the pedal the carousel was showing.
 - Free cells show only their + for now (no circle); a cable's + is half
   see-through.
 

@@ -865,11 +865,17 @@
         var pv = desktop.performanceView, original = pv.open
         pv.open = function () { if (!pv.isOpen()) cb(); return original.apply(this, arguments) }
     }
-    // after it closes (it has put MOD's icons back on the canvas by then)
+    // after it closes (it has put MOD's icons back on the canvas by then):
+    // cb(instance), the pedal that was centred in its carousel (or null)
     mod.onPerformanceClose = function (cb) {
         if (!mod.canPerform()) return
         var pv = desktop.performanceView, original = pv.close
-        pv.close = function () { var was = pv.isOpen(), r = original.apply(this, arguments); if (was) cb(); return r }
+        pv.close = function () {
+            var was = pv.isOpen(), at = was && pv.current ? pv.current() : null
+            var r = original.apply(this, arguments)
+            if (was) cb(at)
+            return r
+        }
     }
     mod.boardTitle = function () { return (window.desktop && desktop.title) || '' }
 
