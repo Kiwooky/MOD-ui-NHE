@@ -82,7 +82,7 @@ of NHE does (the adapter). MOD's own bars stay in the page, hidden.
 
 MOD's footer also has, on a device: the **Bypass 1 / 2** buttons, **MIDI
 ports**, the **device settings** gear, the **update** and **devices**
-status icons, and NHE's own **Performance view** (bolt). Decided: on
+status icons, and NHE's own **Gallery view** (the performance view; Figma's Gallery icon). Decided: on
 desktop / tablet they're small icons in the bottom bar's right group; on a
 phone, extra rows in the Menu list.
 
@@ -114,8 +114,8 @@ items click them). 45 px tall, as MOD's.
   right the CPU / RAM meters and xruns (as tall as the bar), tempo, Play /
   Stop, Bypass 1 and 2 (a device only; framed in orange while true bypass
   is on) and the sliders button. That opens a menu up from the bar: MIDI
-  ports, Manage CV ports, Global tempo & sync, Performance view (only with
-  MOD's builder: NHE's has the bolt beside a zoomed-in pedal's gear), Report a
+  ports, Manage CV ports, Global tempo & sync, Gallery view (only with
+  MOD's builder: NHE's has its icon beside a zoomed-in pedal's gear), Report a
   problem, Devices, System settings, and System is up to date / Update
   available (an orange dot on the button while one waits), each when MOD
   shows it (MIDI ports, Devices, Settings and Update on a device only). The
@@ -144,7 +144,7 @@ builder keeps clear of them (`--nhe-bars-top` / `--nhe-bars-bottom`).
   bar, full width; the orange dot for unsaved changes).
 - **Menu:** a list from the top bar down to the bottom one (× closes it):
   Constructor, Plug-in store, Library, Banks, File manager, Manage CV ports,
-  Global tempo & sync, Performance view, Share your setup, Report a
+  Global tempo & sync, Gallery view, Share your setup, Report a
   problem, and on a device MIDI ports, Bypass 1 / 2, Devices, System
   settings and the update state. The current screen's icon is lit; MOD
   Desktop's locked screens greyed.

@@ -69,7 +69,7 @@ Status: being worked out with Niels; open points are marked **Open**.
   another plugin picked there takes its place (the old one is removed, the
   new one goes into its cell, wired as ticked).
 - A tapped face zooms in and plays; its gear and plug grow to the bars'
-  icon size (32 px), and a bolt left of them opens the performance view on that
+  icon size (32 px), and the gallery icon left of them opens the gallery view on that
   pedal: the last step from zoomed in to full screen. In the performance
   view, **Constructor view** (the puzzle, top right of the centred pedal)
   comes back, zoomed in on the pedal the carousel was showing.

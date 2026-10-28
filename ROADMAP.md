@@ -12,7 +12,7 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 - **Preset Save as / Rename** in NHE's name dialog.
 - **Settings screen tools** under the plugin's name: user presets to / from a file, colour, info page, delete (with a yes / no; the signal path is healed as if the plugin were bypassed). Under them the plugin's GUI picture (180 px at most; not on short screens), the presets taking the rest.
 - **Phones**: held upright, NHE's screens and dialogs are scaled up so the system bar, the presets and one slider fill the width (MOD lays its page out 980 px wide); held sideways, NHE's screens use the full width, past the notch areas, while they show.
-- **Performance view**: the pedal carousel; Flip and Hide on the centred pedal; the back of a flipped pedal is its settings screen; the chain jumps between backs; hidden pedals in a grid tile.
+- **Gallery view** (the performance view; renamed, with Figma's Gallery icon in place of the bolt): the pedal carousel; Flip and Hide on the centred pedal; the back of a flipped pedal is its settings screen; the chain jumps between backs; hidden pedals in a grid tile.
 
 - **NHE's builder (first step)**: SET → Builder: NHE shows the constructor surface over MOD's builder on the real pedalboard. Checked in MOD Desktop: wiring by hand, moving a pedal, adding one with the + dialog and inserting one with a cable's + all change MOD's board, and survive a reload. A tapped face zooms to 100% and plays (MOD's own GUI); tall pedals take one cell; a double click zooms out to the whole grid.
 

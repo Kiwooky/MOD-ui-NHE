@@ -10,7 +10,7 @@ Extensions for the [MOD](https://mod.audio) web UI (MOD Duo, Duo X, Dwarf, MOD D
 - **A clearer assignment dialog.** A control's settings icon opens one screen for assigning it to a footswitch, knob, MIDI, Control Chain or CV, with its label, range and options.
 - **Plugin colours.** Give each plugin one of MOD's colours in place of the purple.
 - **A live surface.** In a control's assignment dialog, **Add to surface** puts it on one screen with the controls you picked from other plugins, each plugin's under its name in its colour. The star at the left of the bottom bar opens it.
-- **A performance view.** The bolt icon in the footer shows your pedals one at a time, as big as the screen allows. **Flip** a pedal to get to its settings on the back; **Hide** the ones you don't need while playing.
+- **A gallery view** (the performance view). The gallery icon in the footer shows your pedals one at a time, as big as the screen allows. **Flip** a pedal to get to its settings on the back; **Hide** the ones you don't need while playing.
 
 Values, presets and assignments all go through MOD's own code, so everything stays in step with MOD's editor, the device and other browsers. On the device NHE adds its own folder and two small hooks into MOD's page, and nothing else (see "How it fits into MOD").
 

@@ -28,7 +28,7 @@
  *       onSettings: fn(node),               // a face's gear, just outside its top right
  *                                           // corner (as on MOD's builder): its settings
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
- *       onPerformance: fn(node),            // a focused face's bolt, left of its gear: the
+ *       onPerformance: fn(node),            // a focused face's gallery icon, left of its gear: the
  *                                           // performance view, on this pedal
  *       onFaceLoad: fn(img, node),          // a pedal's picture came in (may swap its src)
  *       zoomRight: true | false,          // the zoom buttons stacked at the right edge, + on top,
@@ -429,12 +429,12 @@
                     pl.title = 'Wiring'
                     pl.addEventListener('click', function () { if (!self.moved) self.o.onRewire(nd) })
                 }
-                // zoomed in on it (focused): the performance view's bolt left of those, the last step to full screen
+                // zoomed in on it (focused): the gallery view's icon left of those, the last step to full screen
                 if (self.faces && typeof self.o.onPerformance === 'function') {
-                    var perf = el('button', 'nhe-surface__perf', d, icon('bolt'))
+                    var perf = el('button', 'nhe-surface__perf', d, icon('gallery'))
                     perf.type = 'button'
-                    perf.setAttribute('aria-label', 'Performance view')
-                    perf.title = 'Performance view'
+                    perf.setAttribute('aria-label', 'Gallery view')
+                    perf.title = 'Gallery view'
                     perf.addEventListener('click', function () { if (!self.moved) self.o.onPerformance(nd) })
                 }
             }
@@ -1302,7 +1302,7 @@
     Surface.prototype.mountLive = function () {
         var self = this, f = this.focused
         if (f && (!this.els[f.id] || !this.node(f.id))) f = this.focused = null
-        if (f) this.els[f.id].classList.add('is-focused')       // its gear larger, the performance view's bolt beside it
+        if (f) this.els[f.id].classList.add('is-focused')       // its gear larger, the gallery view's icon beside it
         if (this.released) return
         if (this.o.liveAll && this.faces) this.o.nodes.forEach(function (nd) { if (nd.kind === 'pedal' && nd.cell && self.els[nd.id]) self.mountFace(nd) })
         else if (f) this.mountFace(this.node(f.id))

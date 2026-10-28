@@ -10,7 +10,7 @@
 NHE.register('performance', function (mod) {
     mod.guardPedalboard()
 
-    var trigger = mod.addFooterIcon('mod-performance', 'Performance view')
+    var trigger = mod.addFooterIcon('mod-performance', 'Gallery view')
     var view = mod.addView('performance-view',
         '<div style="display:none">' +
             '<div class="performance-stage">' +

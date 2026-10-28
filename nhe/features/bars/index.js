@@ -285,8 +285,8 @@ NHE.register('bars', function (mod) {
         { id: 'midiPorts', icon: M.midi, label: 'MIDI ports' },
         { id: 'cv', icon: M.cv, label: 'Manage CV ports' },
         { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() } },
-        // with NHE's builder it's the bolt beside a zoomed-in pedal's gear instead
-        { id: 'performance', icon: I.bolt, label: 'Performance view', only: function () { return !NHE.builder || NHE.builder.current() !== 'nhe' } },
+        // with NHE's builder it's the gallery icon beside a zoomed-in pedal's gear instead
+        { id: 'performance', icon: I.gallery, label: 'Gallery view', only: function () { return !NHE.builder || NHE.builder.current() !== 'nhe' } },
         { id: 'report', icon: M.report, label: 'Report a problem' },
         { id: 'devices', icon: I.device, label: 'Devices' },
         { id: 'settings', icon: I.cpu, label: 'System settings' },
@@ -350,7 +350,7 @@ NHE.register('bars', function (mod) {
         { id: 'files', icon: M.filemanager, label: 'File manager' },
         { id: 'cv', icon: M.cv, label: 'Manage CV ports' },
         { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() } },
-        { id: 'performance', icon: I.bolt, label: 'Performance view' },
+        { id: 'performance', icon: I.gallery, label: 'Gallery view' },
         { id: 'share', icon: M.share, label: 'Share your setup' },
         { id: 'report', icon: M.report, label: 'Report a problem' },
         // on a device only (not in the designs)

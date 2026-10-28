@@ -220,7 +220,7 @@ NHE.register('constructor', function (mod) {
             },
             // faces: the gear at the pedal's top right, as on MOD's builder (NHE's settings screen, or MOD's)
             onSettings: function (node) { if (!pending[node.id]) mod.openSettings(node.id) },
-            // zoomed in on a face: the bolt left of its gear, full screen on this pedal
+            // zoomed in on a face: the gallery icon left of its gear, full screen on this pedal
             // (MOD's icons back first: the performance view moves the same icons
             // in; the live faces take them again when it closes)
             onPerformance: mod.canPerform() ? function (node) {

@@ -34,7 +34,7 @@ function PerformanceView(options) {
     options = $.extend({
         pedalboard: null,   // #pedalboard-dashboard
         view: null,         // #performance-view
-        trigger: null,      // footer bolt icon
+        trigger: null,      // footer icon
         exitTrigger: null,  // footer puzzle (Constructor) icon
         // fills the back of a flipped pedal: fn(instance, container, api) ->
         // true if it did; api = { flipBack(), flipTo(instance) }. When it
@@ -86,7 +86,7 @@ function PerformanceView(options) {
     var EYE_OFF = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 3l18 18M10.6 5.1A10.4 10.4 0 0 1 12 5c5.5 0 9 5.5 9.5 7-.3.8-1.3 2.6-3 4.2M6.6 6.6C4.4 8 3 10.2 2.5 12c.6 1.7 4 7 9.5 7 1.6 0 3-.4 4.3-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>'
     var tools = $('<div class="performance-tools">')
     var flipButton = $('<button type="button" class="performance-flip" title="Flip the pedal: its settings are on the back" aria-label="Flip">' + FLIP + '<span>Flip</span></button>').appendTo(tools)
-    var hideButton = $('<button type="button" class="performance-hide" title="Hide this pedal from the performance view" aria-label="Hide">' + EYE_OFF + '<span>Hide</span></button>').appendTo(tools)
+    var hideButton = $('<button type="button" class="performance-hide" title="Hide this pedal from the gallery view" aria-label="Hide">' + EYE_OFF + '<span>Hide</span></button>').appendTo(tools)
     var exitTools = null
     if (options.exitButton) {
         exitTools = $('<div class="performance-tools performance-tools-exit">')
@@ -297,7 +297,7 @@ function PerformanceView(options) {
         var row = $('<div class="performance-shelf-row">').appendTo(shelf)
         ids.forEach(function (instance) {
             var icon = plugins[instance]
-            var item = $('<button type="button" class="performance-shelf-item">').attr('title', 'Show in the performance view')
+            var item = $('<button type="button" class="performance-shelf-item">').attr('title', 'Show in the gallery view')
             $('<span class="performance-shelf-thumb">').append($('<img alt="">').attr('src', thumbnailUrl(icon))).appendTo(item)
             $('<span class="performance-shelf-label">').text(icon.data('label') || instance.split('/').pop()).appendTo(item)
             item.click(function () {
@@ -757,7 +757,7 @@ function PerformanceView(options) {
     // footer icon state while other windows open on top of us
 
     // Other main windows (pedalboards, banks, files, store) open on top of
-    // the view and leave it running underneath; show the bolt as selected
+    // the view and leave it running underneath; show its icon as selected
     // only while nothing covers it.
     var coveringWindow = function () {
         var wins = (typeof WINDOWMANAGER !== 'undefined' && WINDOWMANAGER) ? WINDOWMANAGER.windows : []

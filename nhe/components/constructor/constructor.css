@@ -417,14 +417,14 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__gear svg { width: 100%; height: 100%; }
 .nhe-surface__gear:hover { color: #ff8d28; }     /* orange, as the bars' */
 /* zoomed in on the pedal (focused): the gear as large as the bars' icons
-   (32 px on the screen), the performance view's bolt left of it */
+   (32 px on the screen), the gallery view's icon left of it */
 .nhe-surface__item.is-focused .nhe-surface__gear { width: min(calc(32px / var(--nhe-surface-z, 1)), 44px); height: min(calc(32px / var(--nhe-surface-z, 1)), 44px); }
 /* faces: the plug (its wiring) left of the gear, the gear's size */
 .nhe-surface__plugbtn { position: absolute; z-index: 2; display: flex; width: min(calc(26px / var(--nhe-surface-z, 1)), 44px); height: min(calc(26px / var(--nhe-surface-z, 1)), 44px); padding: 0; border: 0; background: none; color: #fff; transform: translate(calc(-200% - 8px / var(--nhe-surface-z, 1)), calc(-100% - 4px / var(--nhe-surface-z, 1))); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; pointer-events: auto; }
 .nhe-surface__item.is-focused .nhe-surface__plugbtn { width: min(calc(32px / var(--nhe-surface-z, 1)), 44px); height: min(calc(32px / var(--nhe-surface-z, 1)), 44px); }
 .nhe-surface__plugbtn svg { width: 100%; height: 100%; }
 .nhe-surface__plugbtn:hover { color: #ff8d28; }
-/* zoomed in: the performance view's bolt, left of the plug (or of the gear) */
+/* zoomed in: the gallery view's icon, left of the plug (or of the gear) */
 .nhe-surface__perf { position: absolute; z-index: 2; display: none; width: min(calc(32px / var(--nhe-surface-z, 1)), 44px); height: min(calc(32px / var(--nhe-surface-z, 1)), 44px); padding: 0; border: 0; background: none; color: #fff; transform: translate(calc(-200% - 8px / var(--nhe-surface-z, 1)), calc(-100% - 4px / var(--nhe-surface-z, 1))); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8)); cursor: pointer; pointer-events: auto; }
 .nhe-surface__plugbtn ~ .nhe-surface__perf { transform: translate(calc(-300% - 16px / var(--nhe-surface-z, 1)), calc(-100% - 4px / var(--nhe-surface-z, 1))); }
 .nhe-surface__item.is-focused .nhe-surface__perf { display: flex; }
