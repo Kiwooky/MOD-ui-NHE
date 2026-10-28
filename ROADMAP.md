@@ -17,6 +17,7 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 - **NHE's builder (first step)**: SET → Builder: NHE shows the constructor surface over MOD's builder on the real pedalboard. Checked in MOD Desktop: wiring by hand, moving a pedal, adding one with the + dialog and inserting one with a cable's + all change MOD's board, and survive a reload. A tapped face zooms to 100% and plays (MOD's own GUI); tall pedals take one cell; a double click zooms out to the whole grid.
 
 - **Menu bars**: NHE's top and bottom bars in place of MOD's (SET → Menus), desktop / tablet and phone (held upright): name and snapshot, New, Snapshots (load / manage), Save panels, snapshot chips; screens, meters, tempo and sync dialog, play, bypass, and a menu for the rest (docs/menus-spec.md). Manage CV ports shows its ticks on NHE's builder.
+- **Live surface**: Add to surface in a control's addressing dialog puts it on one screen with the controls picked from other plugins, each plugin's under a band in its colour with its name (where a settings screen shows port groups). The bottom bar's star (left of Constructor) and the phone Menu open it; it has the meters and SET but no Exit or Chain tab. Kept per board on the MOD; a removed plugin's controls go with it. Checked in MOD Desktop (desktop and the phone layout).
 - **Dialogs fit the screen**: on a touch screen (phone or tablet) every NHE dialog runs full screen; elsewhere a card that would spill goes full screen too.
 - **Settings kept on the MOD**: NHE's settings (colours, editor, builder, menus, work surface, performance view) are stored on the MOD itself, shared by every browser that opens it; SET → Settings file exports / imports them.
 
@@ -28,6 +29,7 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
 - On a tablet with touch (an iPad: dialogs ran off screen before they went full screen on touch).
 - Settings kept on a Duo (only MOD Desktop so far).
 - Saving a real preset through the name dialog.
+- Live surface: on an iPad and a phone (only the browser pane's emulation so far); removing a plugin that has controls on it; a board saved as another; with MOD's menu bars (SET → Menus → MOD) it has no button.
 - The browser tests in `test/` after the performance view's flip (see test/README.md).
 
 ## Next
@@ -43,6 +45,5 @@ Tested with MOD Desktop (MOD 1.14) in Chrome, with a mouse.
   - When pedals are shown below a certain size, all plugin editing goes to the settings screen rather than the pedal's own controls.
   - Bigger icons above each pedal (in proportion), so they are easy to hit on tablets, phones and small screens.
 - Run it on a Duo and a tablet; fix what turns up.
-- **Add to surface**: a performance surface that gathers starred controls from every plugin on the pedalboard on one screen. The star is in the addressing dialog, switched off for now.
 - Text parameters (e.g. Button to CV's labels), not handled by the NHE screen yet: use the MOD view.
 - Offer the performance view (`nhe/features/performance/performance.js` and `.css`) back to mod-ui: they are written to work without the rest of NHE, with MOD's own settings panel on a pedal's back.

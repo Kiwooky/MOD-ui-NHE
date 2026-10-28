@@ -25,7 +25,8 @@ Status: desktop / tablet bars and the phone's (held upright) built.
 
 **Bottom bar** (dark, one row):
 
-- Left, the main screens: **Constructor** (puzzle), **Library** (book),
+- Left, the main screens: **Live surface** (star: NHE's, the controls
+  picked with Add to surface; any other screen leaves it), **Constructor** (puzzle), **Library** (book),
   **Banks** (four dots), **File manager** (folder), **Store** (cart). The
   current one shows its label (CONSTRUCTOR, LIBRARY) and an orange icon;
   the others are icons only.

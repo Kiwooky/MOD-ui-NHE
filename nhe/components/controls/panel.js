@@ -22,7 +22,7 @@
  *                 picture, onPicture: fn(img) },                              // optional left column; picture: the
  *                                                         // plugin's GUI, under the header
  *       controls: [{ id, type: 'slider'|'toggle'|'trigger'|'list',
- *                    group: null | { id, name, color },
+ *                    group: null | { id, name, color },   // color: MOD's group colour index, or a CSS colour
  *                    options: { ...the component's options } }],
  *       files: [{ uri, title, items: [{ kind: 'up'|'folder'|'file', name, value, selected }], t3k }],
  *       onChange: fn(id, value), onSettings: fn(id), onBlocked: fn(id), onTrigger: fn(id), onPreset: fn(action, preset),
@@ -171,7 +171,7 @@
             }
             var st = el('div', 'nhe-stack', root)
             st.setAttribute('data-group', col.groupKind)
-            st.style.setProperty('--nhe-slider-group-color', 'var(--nhe-group-' + color + ')')
+            st.style.setProperty('--nhe-slider-group-color', typeof color === 'string' ? color : 'var(--nhe-group-' + color + ')')
             st.style.setProperty('--nhe-slider-group-width', col.groupWidth + 'px')
             var band = el('div', 'nhe-stack__band', st)
             el('div', 'nhe-stack__bar', band)

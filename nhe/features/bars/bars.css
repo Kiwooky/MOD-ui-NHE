@@ -88,8 +88,9 @@
 
 /* the snapshots as chips, centred under the bar; not while a plugin's
    settings show (a settings window: body.nhe-editing, index.js; the back
-   of a flipped pedal in the performance view) */
+   of a flipped pedal in the performance view) or the live surface */
 body.nhe-editing :is(#pedalboard-actions, #main-menu) .nhe-snapchips,
+body:has(#nhe-live:not([style*="none"])) :is(#pedalboard-actions, #main-menu) .nhe-snapchips,
 body:has(#performance-view.performance-flipped) :is(#pedalboard-actions, #main-menu) .nhe-snapchips { display: none; }
 :is(#pedalboard-actions, #main-menu) .nhe-snapchips {
     position: absolute;

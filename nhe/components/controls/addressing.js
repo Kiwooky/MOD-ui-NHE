@@ -27,8 +27,10 @@
  *           cancel()
  *       },
  *       minimised: null | bool,     // null: not a slider, no Minimise item
+ *       surface: null | bool,       // on the live surface; null: no Add to surface item
  *       accent: null | '#rrggbb',   // the plugin's colour (colour.js)
  *       onMinimise: fn(bool),       // on Save, when it changed
+ *       onSurface: fn(bool),        // on Save, when it changed
  *       onClose: fn(saved)
  *   })
  *   dlg.close()
@@ -51,8 +53,9 @@
 
     var Dialog = function (options) {
         var self = this
-        this.o = mix({ plugin: '', control: '', model: null, minimised: null }, options || {})
+        this.o = mix({ plugin: '', control: '', model: null, minimised: null, surface: null }, options || {})
         this.minimised = this.o.minimised
+        this.surface = this.o.surface
         var m = this.o.model, st = m.state()
 
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
@@ -105,9 +108,9 @@
         n.minimise = el('button', 'nhe-dialog__extra', n.extras)
         n.minimise.type = 'button'
         n.minimise.addEventListener('click', function () { self.minimised = !self.minimised; self.renderExtras() })
-        n.surface = el('button', 'nhe-dialog__extra', n.extras, icon('star') + '<span>Add to surface</span>')
+        n.surface = el('button', 'nhe-dialog__extra', n.extras)
         n.surface.type = 'button'
-        n.surface.disabled = true        // the performance surface is still to come
+        n.surface.addEventListener('click', function () { self.surface = !self.surface; self.renderExtras() })
 
         n.error = el('div', 'nhe-dialog__error', d)
 
@@ -200,13 +203,18 @@
         var n = this.n
         n.minimise.style.display = this.minimised === null ? 'none' : ''
         n.minimise.innerHTML = this.minimised ? icon('expand') + '<span>Expand control</span>' : icon('minimise') + '<span>Minimise control</span>'
+        // the live surface (features/live)
+        n.surface.style.display = this.surface === null ? 'none' : ''
+        n.surface.innerHTML = icon('star') + '<span>' + (this.surface ? 'Remove from surface' : 'Add to surface') + '</span>'
+        n.surface.classList.toggle('is-on', !!this.surface)
+        n.extras.style.display = this.minimised === null && this.surface === null ? 'none' : ''
         this.renderSave()
     }
 
-    // Save works when the model can save, or when only the minimised state changed
+    // Save works when the model can save, or when only the minimised or surface state changed
     Dialog.prototype.renderSave = function () {
         if (!this.st) return
-        this.n.save.disabled = !(this.st.canSave || this.minimised !== this.o.minimised)
+        this.n.save.disabled = !(this.st.canSave || this.minimised !== this.o.minimised || this.surface !== this.o.surface)
     }
 
     Dialog.prototype.save = function () {
@@ -230,6 +238,7 @@
             this.o.model.cancel()
         }
         if (mini && typeof this.o.onMinimise === 'function') this.o.onMinimise(this.minimised)
+        if (this.surface !== this.o.surface && typeof this.o.onSurface === 'function') this.o.onSurface(this.surface)
         this.close(true)
     }
 

@@ -13,6 +13,8 @@
  *       chain: { inputs:  [{ port: 'In',      items: [{ id, brand, name } | { device: true }] }],
  *                outputs: [{ port: 'Out (L)', items: [...] }] },
  *       exitIcon: 'exit', exitLabel: 'Exit',   // the top-left button
+ *       exit: false,     // no top-left button (the live surface: left by another screen)
+ *       tabs: false,     // the meters only, no Chain tab (the live surface)
  *       onExit, onSet, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab)
  *   })
  *   bar.setStats({ cpu, xruns })   // MOD websocket "stats"
@@ -38,9 +40,11 @@
 
         // EXIT closes the settings; on a pedal's back in the performance view
         // it is Flip (options.exitIcon / exitLabel)
-        var exit = el('button', 'nhe-system-bar__exit', root, icon(this.o.exitIcon || 'exit') + '<span>' + (this.o.exitLabel || 'Exit') + '</span>')
-        exit.type = 'button'
-        exit.addEventListener('click', function () { self.emit('onExit') })
+        if (this.o.exit !== false) {
+            var exit = el('button', 'nhe-system-bar__exit', root, icon(this.o.exitIcon || 'exit') + '<span>' + (this.o.exitLabel || 'Exit') + '</span>')
+            exit.type = 'button'
+            exit.addEventListener('click', function () { self.emit('onExit') })
+        }
 
         // SET: NHE's own settings (shown when the host gives onSet); the
         // meters below give up its height
@@ -78,6 +82,7 @@
 
         // tabs
         var tabs = el('div', 'nhe-tabs', root)
+        if (this.o.tabs === false) { tabs.style.display = 'none'; this.o.tab = 'meters' }
         n.tabs = {}
         ;[['meters', 'meters', 'Meters'], ['chain', 'chainView', 'Chain']].forEach(function (d) {
             var b = el('button', null, tabs, icon(d[1]))

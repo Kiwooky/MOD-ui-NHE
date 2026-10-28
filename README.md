@@ -9,6 +9,7 @@ Extensions for the [MOD](https://mod.audio) web UI (MOD Duo, Duo X, Dwarf, MOD D
 - **A new plugin settings screen.** A pedal's gear opens big, touch-friendly controls in place of MOD's knobs: sliders, toggles, triggers, option lists, presets and file lists (NAM models, IRs), stacked into columns that fit the screen and scroll sideways. A system bar on the left shows tempo, CPU / RAM and the signal chain; tap a neighbouring plugin to jump to it. The **NHE / MOD** switch at the top right brings back MOD's own panel.
 - **A clearer assignment dialog.** A control's settings icon opens one screen for assigning it to a footswitch, knob, MIDI, Control Chain or CV, with its label, range and options.
 - **Plugin colours.** Give each plugin one of MOD's colours in place of the purple.
+- **A live surface.** In a control's assignment dialog, **Add to surface** puts it on one screen with the controls you picked from other plugins, each plugin's under its name in its colour. The star at the left of the bottom bar opens it.
 - **A performance view.** The bolt icon in the footer shows your pedals one at a time, as big as the screen allows. **Flip** a pedal to get to its settings on the back; **Hide** the ones you don't need while playing.
 
 Values, presets and assignments all go through MOD's own code, so everything stays in step with MOD's editor, the device and other browsers. On the device NHE adds its own folder and two small hooks into MOD's page, and nothing else (see "How it fits into MOD").
@@ -89,7 +90,7 @@ Turn it off with `NHE.mod.setPreference('nhe-settings', 'false')`.
 
 ## Your settings
 
-NHE's settings (plugin colours, which editor, builder and menus, the work surface, the performance view's layout, and each board's cable colours, hand-laid cables and grid size in NHE's builder) are kept on the MOD itself, in MOD's own preferences (`nhe-config`): every browser that opens that MOD gets them, and two MODs keep their own. SET → **Settings file** exports them to a `.json` file, labelled with the MOD it came from, and imports one (into this MOD or another). `nhe/components/config.js` does it: it mirrors NHE's keys in the browser's localStorage, so features keep using localStorage as before.
+NHE's settings (plugin colours, which editor, builder and menus, the work surface, the performance view's layout, each board's cable colours, hand-laid cables and grid size in NHE's builder, and each board's live surface) are kept on the MOD itself, in MOD's own preferences (`nhe-config`): every browser that opens that MOD gets them, and two MODs keep their own. SET → **Settings file** exports them to a `.json` file, labelled with the MOD it came from, and imports one (into this MOD or another). `nhe/components/config.js` does it: it mirrors NHE's keys in the browser's localStorage, so features keep using localStorage as before.
 
 ## Try components on their own
 

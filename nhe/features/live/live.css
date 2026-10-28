@@ -1,0 +1,41 @@
+/* SPDX-FileCopyrightText: 2026 New Horizon Electronics */
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+/* The live surface (index.js): between the bars, as NHE's builder, over it */
+#nhe-live {
+    position: absolute;
+    top: var(--nhe-bars-top, 45px);
+    bottom: var(--nhe-bars-bottom, 45px);
+    left: 0;
+    right: 0;
+    z-index: 6;    /* over NHE's builder (5) */
+    background: var(--nhe-surface-base);
+    overflow: hidden;
+}
+/* a settings screen's layout (features/settings/settings.css) */
+#nhe-live > .nhe-settings {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--nhe-surface-base);
+}
+
+/* nothing on it yet: what to do, beside the system bar */
+.nhe-live__empty {
+    align-self: center;
+    max-width: 420px;
+    padding: 0 var(--nhe-space-32);
+    color: var(--nhe-text-primary);
+}
+.nhe-live__empty-title {
+    display: flex;
+    align-items: center;
+    gap: var(--nhe-space-8);
+    margin-bottom: var(--nhe-space-8);
+    font-size: var(--nhe-font-size-md);
+    font-weight: var(--nhe-font-weight-semibold);
+    color: var(--nhe-text-primary);
+}
+.nhe-live__empty-title svg { width: 32px; height: 32px; flex: none; color: var(--nhe-accent-default); }
+.nhe-live__empty-note { font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-normal); opacity: .7; }

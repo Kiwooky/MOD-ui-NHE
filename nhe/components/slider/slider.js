@@ -11,7 +11,7 @@
  *       integer: false, logarithmic: false, rangeSteps: 0,
  *       decimals: 'auto',   // or a number: the plugin's own precision (%.1f, %d)
  *       minimised: false,
- *       group: { kind: 'none'|'single'|'start'|'middle'|'end', name: '', color: 0, width: 360 },
+ *       group: { kind: 'none'|'single'|'start'|'middle'|'end', name: '', color: 0 | '#rrggbb', width: 360 },
  *       binding: null | { type: 'midi'|'cv'|'device'|'chain', kind: 'MIDI', label: 'CC 7 · Ch 1',
  *                         locked: false },   // locked: the source takes no feedback (MOD: CV)
  *       onInput: fn(value),     // while dragging, typing, wheel, keys
@@ -232,7 +232,7 @@
         var g = o.group || { kind: 'none' }
         r.setAttribute('data-group', g.kind || 'none')
         n.groupName.textContent = g.name || ''
-        r.style.setProperty('--nhe-slider-group-color', 'var(--nhe-group-' + (g.color || 0) + ')')
+        r.style.setProperty('--nhe-slider-group-color', typeof g.color === 'string' ? g.color : 'var(--nhe-group-' + (g.color || 0) + ')')
         if (g.width) r.style.setProperty('--nhe-slider-group-width', g.width + 'px')
         else r.style.removeProperty('--nhe-slider-group-width')
 

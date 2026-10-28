@@ -65,6 +65,12 @@
             ]
         },
         {
+            // the live surface: controls picked from any plugin, on one screen
+            // (before the bars, which give it its button)
+            id: 'live',
+            files: ['features/live/live.css', 'features/live/index.js']
+        },
+        {
             // NHE's top and bottom bars in place of MOD's (SET → Menus)
             id: 'bars',
             files: [

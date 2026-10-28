@@ -789,6 +789,7 @@
     cursor: pointer;
 }
 .nhe-dialog__extra:disabled { opacity: .35; cursor: default; }
+.nhe-dialog__extra.is-on svg { color: var(--nhe-accent-default); }   /* on the live surface */
 
 .nhe-dialog__error { min-height: 0; color: var(--nhe-status-warn); font-size: var(--nhe-font-size-sm); }
 .nhe-dialog__error:not(:empty) { margin-top: var(--nhe-space-8); }

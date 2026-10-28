@@ -60,9 +60,14 @@ A row of two icon-and-label items under the settings, above Cancel / Save:
   the Slider "Narrow" design). On a minimised slider the same item reads
   **Expand control** (ArrowsOut) and switches it back. Other control types
   don't show the item.
-- **Add to surface** (Star), shown disabled for now. Later: a separate
-  performance surface that gathers the starred controls from every plugin
-  on the pedalboard on one screen.
+- **Add to surface** (Star): puts the control on the **live surface**
+  (features/live), the screen that gathers the picked controls from every
+  plugin on the pedalboard. On a control that is there the item reads
+  **Remove from surface**, its star in the plugin's colour. Not shown for a
+  plugin's on / off or presets, nor in the dialogs of the menu bars.
+
+The live surface is kept per board on the MOD (with NHE's other settings);
+it takes effect on Save, like Minimise.
 
 Minimised is NHE's own state, kept per browser (like the NHE / MOD view),
 per plugin instance and control. Like the rest of the dialog it takes effect

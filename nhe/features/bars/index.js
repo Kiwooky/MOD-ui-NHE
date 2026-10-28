@@ -241,8 +241,13 @@ NHE.register('bars', function (mod) {
         ['files', M.filemanager, 'File manager'], ['store', M.store, 'Store']
     ]
     var navBtns = {}
+    // the live surface (features/live), left of the screens; any of them leaves it
+    var live = NHE.liveSurface || null
+    var closeLive = function () { if (live) live.close() }
+    var bLive = live ? btn('nhe-menus__btn nhe-bottombar__screen', I.star, 'Live surface', 'Live surface').appendTo(nav).on('click', function () { live.open() }) : $()
+    if (live) live.onToggle(function () { renderMenus() })
     NAV.forEach(function (n) {
-        navBtns[n[0]] = btn('nhe-menus__btn nhe-bottombar__screen', n[1], n[2], n[2]).appendTo(nav).on('click', function () { mod.menuAction(n[0]) })
+        navBtns[n[0]] = btn('nhe-menus__btn nhe-bottombar__screen', n[1], n[2], n[2]).appendTo(nav).on('click', function () { closeLive(); mod.menuAction(n[0]) })
     })
 
     var right = $('<div class="nhe-bottombar__right">').appendTo(bottom)
@@ -287,6 +292,8 @@ NHE.register('bars', function (mod) {
         { id: 'settings', icon: I.cpu, label: 'System settings' },
         { id: 'update', icon: I.checkSquare, label: function (it) { return it.available ? 'Update available' : 'System is up to date' } }
     ]
+    // these show a screen or the builder: the live surface makes way
+    var SCREENS = { constructor: true, store: true, library: true, banks: true, files: true, cv: true, performance: true }
     var more = null
     var closeMore = function () {
         if (more) more.remove()
@@ -304,7 +311,9 @@ NHE.register('bars', function (mod) {
     // ports while on, a bypass while bypassed) lit, an update orange
     var menuRows = function (box, list, close) {
         list.forEach(function (m) {
-            var it = m.id === 'tempo' ? { shown: true } : mod.menuItem(m.id)
+            var it = m.id === 'tempo' ? { shown: true } : m.id === 'live' ? { shown: !!live, selected: !!live && live.isOpen() } : mod.menuItem(m.id)
+            // the live surface over the builder: the builder isn't the screen then
+            if (m.id === 'constructor' && live && live.isOpen()) it.selected = false
             if (!it.shown || (deviceOnly(m.id) && !deviceShows(m.id)) || (m.only && !m.only())) return
             var lit = /^bypass/.test(m.id) ? !it.on : !!it.selected
             var r = $('<button type="button" class="nhe-menupanel__item" role="menuitem">').html(m.icon + '<span></span>').appendTo(box)
@@ -312,7 +321,8 @@ NHE.register('bars', function (mod) {
             r.toggleClass('is-selected', lit).toggleClass('is-alert', !!it.available).toggleClass('is-greyed', !!it.greyed)
             r.on('click', function () {
                 close()
-                if (m.run) m.run(); else mod.menuAction(m.id)
+                if (m.run) m.run()
+                else { if (SCREENS[m.id]) closeLive(); mod.menuAction(m.id) }
             })
         })
     }
@@ -332,6 +342,7 @@ NHE.register('bars', function (mod) {
 
     // the screens and everything else, down from the top bar to the bottom one
     var PHONE_MENU = [
+        { id: 'live', icon: I.star, label: 'Live surface', run: function () { if (live) live.open() } },
         { id: 'constructor', icon: M.constructor, label: 'Constructor' },
         { id: 'store', icon: M.store, label: 'Plug-in store' },
         { id: 'library', icon: M.library, label: 'Library' },
@@ -396,9 +407,11 @@ NHE.register('bars', function (mod) {
         var share = mod.menuItem('share'), save = mod.menuItem('save')
         bShare.toggle(!!share.shown)
         bSave.add(pSave).toggleClass('is-modified', !!save.modified)
+        var liveOn = !!live && live.isOpen()
+        bLive.toggleClass('is-selected', liveOn)
         NAV.forEach(function (n) {
             var it = mod.menuItem(n[0]), b = navBtns[n[0]]
-            b.toggle(!!it.shown).toggleClass('is-selected', !!it.selected).toggleClass('is-greyed', !!it.greyed)
+            b.toggle(!!it.shown).toggleClass('is-selected', !!it.selected && !liveOn).toggleClass('is-greyed', !!it.greyed)
         })
         // Bypass 1 / 2: on a device only (MOD shows them there, never on MOD Desktop)
         ;[['bypass1', 'mod-bypassLeft'], ['bypass2', 'mod-bypassRight']].forEach(function (x) {

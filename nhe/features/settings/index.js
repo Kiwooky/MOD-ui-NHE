@@ -52,8 +52,13 @@ NHE.register('settings', function (mod) {
     var screens = []
     var screensOf = function (instance) { return screens.filter(function (s) { return s.instance === instance }) }
     var shown = function (st) { return st.root.is(':visible') && (st.kind !== 'window' || st.host.hasClass('nhe-settings-on')) }
-    // rebuild every visible screen of a plugin (minimised sliders change the layout)
-    var rebuildAll = function (instance) { screensOf(instance).forEach(function (st) { if (st.panel && shown(st)) build(st) }) }
+    // rebuild every visible screen of a plugin (minimised sliders change the
+    // layout), and tell the others that show its controls (the live surface)
+    var changed = []
+    var rebuildAll = function (instance) {
+        screensOf(instance).forEach(function (st) { if (st.panel && shown(st)) build(st) })
+        changed.forEach(function (fn) { fn(instance) })
+    }
 
     // plugin colours (colour.js), per plugin type
     var colours = function () {
@@ -70,20 +75,23 @@ NHE.register('settings', function (mod) {
         try { localStorage.setItem(COLOUR_KEY, JSON.stringify(all)) } catch (e) {}
         // every screen of that plugin follows
         screens.forEach(function (st) { if (st.info && st.info.uri === uri) NHE.accent.apply(st.root[0], hex) })
+        changed.forEach(function (fn) { fn(null) })
     }
 
-    // the addressing dialog, over MOD's own (hidden) addressing form
-    var openAddressing = function (st, symbol) {
-        var instance = st.instance
+    // the addressing dialog, over MOD's own (hidden) addressing form; c: the
+    // control's component (a slider can be minimised)
+    var openAddressing = function (instance, symbol, c) {
         var a = mod.addressing(instance, symbol)
         if (!a) { mod.openAddressing(instance, symbol); return }
-        var c = st.panel && st.panel.control(symbol)
         var slider = !!(c && NHE.Slider && c instanceof NHE.Slider)
+        var live = NHE.liveSurface && symbol.charAt(0) !== ':'      // a port: it can go on the live surface
         NHE.AddressingDialog({
             plugin: a.plugin, control: a.control, model: a.model,
             minimised: slider ? isMinimised(instance, symbol) : null,
+            surface: live ? NHE.liveSurface.has(instance, symbol) : null,
             accent: colourOf(instance),
-            onMinimise: function (on) { setMinimised(instance, symbol, on); rebuildAll(instance) }
+            onMinimise: function (on) { setMinimised(instance, symbol, on); rebuildAll(instance) },
+            onSurface: function (on) { NHE.liveSurface.set(instance, symbol, on) }
         })
     }
 
@@ -196,7 +204,7 @@ NHE.register('settings', function (mod) {
             onInput: function (id, v) { send(instance, id, v) },
             onChange: function (id, v) { send(instance, id, v) },
             onTrigger: function (id) { var p = mod.gui(instance).controls[id]; if (p) mod.setPortValue(instance, id, p.ranges.maximum) },
-            onSettings: function (id) { openAddressing(st, id) },
+            onSettings: function (id) { openAddressing(instance, id, st.panel && st.panel.control(id)) },
             onPreset: function (action, p) {
                 // Save as / Rename ask for the name in NHE's dialog
                 mod.presetAction(instance, action, p && p.id, function (ask, done) {
@@ -374,7 +382,7 @@ NHE.register('settings', function (mod) {
     var openSet = function (st) {
         var overlay = $('<div class="nhe-ctl nhe-dialog-overlay">').appendTo('body')
         var dlg = $('<div class="nhe-dialog nhe-dialog--columns nhe-set-dialog" role="dialog" aria-modal="true" aria-label="NHE settings" tabindex="-1">').appendTo(overlay)
-        NHE.accent.apply(overlay[0], colourOf(st.instance))
+        NHE.accent.apply(overlay[0], st ? colourOf(st.instance) : null)
         var head = $('<div class="nhe-dialog__header">').appendTo(dlg)
         $('<span class="nhe-dialog__plugin">').text('NHE').appendTo(head)
         $('<span class="nhe-dialog__pill">').text('Settings').appendTo(head)
@@ -543,7 +551,14 @@ NHE.register('settings', function (mod) {
             st.host = host
             build(st)
             return st.root
-        }
+        },
+        // for screens of their own (the live surface: features/live)
+        describe: describe,                 // (instance, port) -> a panel control
+        colourOf: colourOf,                 // (instance) -> '#rrggbb' | null
+        openAddressing: openAddressing,     // (instance, symbol, component)
+        openSet: function () { openSet(null) },
+        send: send,                         // (instance, symbol, value): a panel value to MOD
+        onChange: function (fn) { changed.push(fn) }   // fn(instance | null): minimised or colours changed
     }
 
     // Rebuild only when the window really changes size. MOD's page fires
