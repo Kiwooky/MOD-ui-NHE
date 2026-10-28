@@ -65,8 +65,8 @@ A row of two icon-and-label items under the settings, above Cancel / Save:
   plugin on the pedalboard. On a control that is there the item reads
   **Remove from surface**, its star in the plugin's colour. Not shown for a
   plugin's on / off or presets, nor in the dialogs of the menu bars: a
-  plugin's on / off is on the surface, first under its name, as soon as one
-  of its controls is.
+  plugin's on / off is on the surface, under its name as on top of its
+  settings screen, as soon as one of its controls is.
   On the plugin's settings screen a control that is on the surface shows a
   star next to its settings icon, as a MIDI-bound one shows the MIDI icon
   (not on a minimised slider, nor on the live surface itself).

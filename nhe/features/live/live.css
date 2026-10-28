@@ -24,34 +24,22 @@
     background: var(--nhe-surface-base);
 }
 
-/* each plugin's name in a bar over its controls, as on top of its settings
-   screen (controls.css: .nhe-plugin-header__name), in its colour: the
-   group band (slider.css, panel.js's stacks) filled to its full height */
-#nhe-live .nhe-slider__bar,
-#nhe-live .nhe-stack__bar { height: var(--nhe-slider-band, 44px); }
-#nhe-live .nhe-slider[data-group="start"] .nhe-slider__bar,
-#nhe-live .nhe-stack[data-group="start"] .nhe-stack__bar { left: var(--nhe-space-8); border-bottom-left-radius: var(--nhe-radius-md); }
-#nhe-live .nhe-slider[data-group="end"] .nhe-slider__bar,
-#nhe-live .nhe-stack[data-group="end"] .nhe-stack__bar { border-bottom-right-radius: var(--nhe-radius-md); }
-#nhe-live .nhe-slider[data-group="single"] .nhe-slider__bar,
-#nhe-live .nhe-stack[data-group="single"] .nhe-stack__bar { left: var(--nhe-space-8); border-radius: 0 0 var(--nhe-radius-md) var(--nhe-radius-md); }
-#nhe-live .nhe-slider__group-name,
-#nhe-live .nhe-stack__name {
-    top: 0;
-    left: var(--nhe-space-16);
-    width: calc(var(--nhe-slider-group-width, 120px) - 32px);
-    height: var(--nhe-slider-band, 44px);
-    line-height: var(--nhe-slider-band, 44px);
-    color: #fff;
-    font-size: var(--nhe-font-size-lg);
-    text-align: center;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-#nhe-live .nhe-slider[data-group="start"] .nhe-slider__group-name,
-#nhe-live .nhe-slider[data-group="single"] .nhe-slider__group-name,
-#nhe-live .nhe-stack[data-group="start"] .nhe-stack__name,
-#nhe-live .nhe-stack[data-group="single"] .nhe-stack__name { display: block; }
+/* each plugin: its name across its controls and its on / off as on top of
+   its settings screen (NHE.PluginHeader); at least two columns wide */
+.nhe-live__plugins { display: flex; align-items: flex-start; }
+.nhe-live__plugin { flex: none; min-width: 240px; }
+#nhe-live .nhe-plugin-header { width: auto; }
+/* the on / off two columns wide, whatever the plugin's width */
+#nhe-live .nhe-plugin-header__row { width: 240px; box-sizing: border-box; }
+#nhe-live .nhe-plugin-header__switch { flex: 1 1 auto; width: auto; }
+#nhe-live .nhe-plugin-header .nhe-footer { flex: none; }
+/* the name keeps its colour when the plugin is off (the switch says so): it's
+   how the plugin is told apart here */
+#nhe-live .nhe-plugin-header:not(.is-on) .nhe-plugin-header__name { background: var(--nhe-accent-default); }
+/* no group bands under it */
+#nhe-live .nhe-slider { --nhe-slider-band: 0px; }
+#nhe-live .nhe-slider__band,
+#nhe-live .nhe-stack__band { display: none; }
 
 /* nothing on it yet: what to do, beside the system bar */
 .nhe-live__empty {

@@ -668,9 +668,9 @@
         if (this.faces) {
             this.renderSockets()
             wires.forEach(function (w) {
-                var a = w.pts[0], b = w.pts[w.pts.length - 1], colour = self.colourOf(w.c)
-                self.plug(a, 1, w, 'from', colour, self.ownerOf(w.c[0]).kind !== 'pedal')
-                self.plug(b, -1, w, 'to', colour, self.ownerOf(w.c[1]).kind !== 'pedal')
+                var a = w.pts[0], b = w.pts[w.pts.length - 1]
+                self.plug(a, 1, w, 'from', self.ownerOf(w.c[0]).kind !== 'pedal')
+                self.plug(b, -1, w, 'to', self.ownerOf(w.c[1]).kind !== 'pedal')
             })
             ;(this.hints || []).forEach(function (h) { top.appendChild(h) })
         }
@@ -715,10 +715,12 @@
             // that covers it hides it)
             var g = svgEl('g', 'nhe-surface__insert is-' + w.kind, self.n.wires)
             svgEl('circle', 'nhe-surface__insert-hit', g, { cx: best[0], cy: best[1], r: 22 })
-            var ring = svgEl('circle', 'nhe-surface__insert-ring', g, { cx: best[0], cy: best[1], r: 10.5 })
+            // a white + with an edge in the cable's colour
+            var d = 'M' + (best[0] - 7) + ' ' + best[1] + 'h14M' + best[0] + ' ' + (best[1] - 7) + 'v14'
+            var edge = svgEl('path', 'nhe-surface__insert-edge', g, { d: d })
             var colour = self.colourOf(w.c)
-            if (colour) ring.style.fill = colour
-            svgEl('path', 'nhe-surface__insert-plus', g, { d: 'M' + (best[0] - 4.9) + ' ' + best[1] + 'h9.8M' + best[0] + ' ' + (best[1] - 4.9) + 'v9.8' })
+            if (colour) edge.style.stroke = colour
+            svgEl('path', 'nhe-surface__insert-plus', g, { d: d })
             g.appendChild(document.createElementNS(SVG, 'title')).textContent = 'Add a pedal between ' + from.name + ' and ' + to.name
             g.addEventListener('click', function () {
                 if (self.moved || typeof self.o.onInsert !== 'function') return
@@ -765,7 +767,7 @@
     }
 
     // tile: the end is at one of MOD's port tiles (no nut: the connector touches it)
-    Surface.prototype.plug = function (pt, dir, w, end, colour, tile) {
+    Surface.prototype.plug = function (pt, dir, w, end, tile) {
         plugDefs()
         var g = svgEl('g', 'nhe-surface__plug is-' + w.kind, this.n.plugs, { 'data-ci': w.ci, 'data-end': end })
         var pw = this.plugLen(), ph = pw * PLUG_H / PLUG_W, nut = tile ? 0 : this.nutW()
@@ -775,9 +777,6 @@
         svgEl('rect', 'nhe-surface__plug-hit', g, { x: x - 6, y: pt[1] - hh / 2, width: pw + 12, height: hh })
         var use = svgEl('use', 'nhe-surface__plug-body', g, { x: x, y: pt[1] - ph / 2, width: pw, height: ph })
         use.setAttribute('href', dir > 0 ? '#nhe-plug-out' : '#nhe-plug-in')
-        // the cable's own colour (or its type's), as a band where the cable leaves
-        var bw = pw / 6, band = svgEl('rect', 'nhe-surface__plug-band', g, { x: dir > 0 ? x + pw - bw : x, y: pt[1] - ph / 2 + ph / 8, width: bw, height: ph * 3 / 4, rx: bw / 3 })
-        if (colour) band.style.fill = colour
         g.appendChild(document.createElementNS(SVG, 'title')).textContent = 'Drag to move this end' + (this.shared(w.c, end) ? '; tap to spread the cables on this jack' : '')
     }
 

@@ -3,11 +3,10 @@
 
 /*
  * Live surface: one screen with the controls picked from any plugin (a
- * control's settings → Add to surface). Each plugin's controls, after its
- * on / off (there as soon as one of them is), sit under its name in a bar as
- * on top of its settings screen, in its colour (live.css; where a settings
- * screen shows a port group's band); the controls play as on the plugin's
- * own settings screen. Above
+ * control's settings → Add to surface). Each plugin's controls sit under its
+ * name and on / off as on top of its settings screen (NHE.PluginHeader), in
+ * its colour, at least two columns wide; the controls play as on the
+ * plugin's own settings screen. Above
  * them, across the screen, the board's snapshots (80 px tall, the labels
  * as big as fits); the bar's chips don't show over it. The
  * system bar has the meters and SET, no Exit and no Chain tab: another
@@ -73,7 +72,7 @@ NHE.register('live', function (mod) {
     var sizer = $('<div class="nhe-settings__sizer">').appendTo(scroller)
     var stage = $('<div class="nhe-settings__stage">').appendTo(sizer)
     var barEl = $('<div>').appendTo(stage)
-    var panelEl = $('<div>').appendTo(stage)
+    var panelEl = $('<div class="nhe-live__plugins">').appendTo(stage)
     var empty = $('<div class="nhe-ctl nhe-live__empty">').appendTo(stage)
     $('<div class="nhe-live__empty-title">').html(NHE.icons.star + '<span>Nothing on the live surface yet</span>').appendTo(empty)
     $('<div class="nhe-live__empty-note">').text("Open a control's settings (the gear by its name) and choose Add to surface. It shows here with the others you add, under its plugin's name.").appendTo(empty)
@@ -90,29 +89,31 @@ NHE.register('live', function (mod) {
     mod.onTempo(function (x) { bar.setTempo(x.bpm, x.locked, x.sync) })
     var hint = NHE.scrollHint(scroller[0])
 
-    var panel = null
+    var panels = {}, headers = {}   // per plugin: its controls, its name and on / off
+    var control = function (instance, symbol) {
+        return symbol === ':bypass' ? headers[instance] : panels[instance] && panels[instance].control(instance + '/' + symbol)
+    }
     var hooked = []            // the plugin GUIs followed (a reloaded board brings new ones)
     var follow = function (instance) {
         var gui = mod.gui(instance)
         if (!gui || hooked.indexOf(gui) >= 0) return
         hooked.push(gui)
         mod.onPortValue(instance, function (symbol, value) {
-            var c = panel && panel.control(instance + '/' + symbol), p = (mod.gui(instance).controls || {})[symbol]
+            var c = control(instance, symbol), p = (mod.gui(instance).controls || {})[symbol]
             if (!c || !p || !isOpen()) return
-            if (symbol === ':bypass') c.setValue(!value)      // MOD's bypass: 1 = off
+            if (symbol === ':bypass') c.update({ on: !value })      // MOD's bypass: 1 = off
             else if (c instanceof NHE.Toggle) c.setValue(value !== p.ranges.minimum)
             else if (c.setValue) c.setValue(value)
         })
         mod.onBindingChange(instance, function (symbol) {
-            var c = panel && panel.control(instance + '/' + symbol)
+            var c = control(instance, symbol)
             if (c) c.update({ binding: mod.binding(instance, symbol) })
         })
     }
 
-    // the controls, plugin by plugin in the order they were first added; a
-    // plugin's on / off, then its own in its port order. A plugin not on the
-    // board (yet) is left out.
-    var controls = function () {
+    // the plugins in the order their first control was added, each with its
+    // controls in its port order. A plugin not on the board (yet) is left out.
+    var plugins = function () {
         var order = [], picked = {}
         list().forEach(function (k) {
             var i = k.lastIndexOf('/'), instance = k.slice(0, i)
@@ -124,22 +125,16 @@ NHE.register('live', function (mod) {
             var info = mod.pluginInfo(instance)
             if (!info) return
             follow(instance)
-            // the band: the plugin's name bar as on its settings screen, in its
-            // colour (the colour picker's), else the accent as there
-            var hex = S.colourOf(instance)
-            var group = { id: instance, name: info.label, color: hex || 'var(--nhe-accent-default)', hex: hex }
-            // first, the plugin's on / off (on the surface with any of its controls)
-            out.push({ id: instance + '/:bypass', type: 'toggle', group: group, options: {
-                title: 'On / off', value: mod.pluginOn(instance), binding: mod.binding(instance, ':bypass')
-            } })
+            var cs = []
             info.ports.forEach(function (p) {
                 if (!picked[instance][p.symbol]) return
                 var c = S.describe(instance, p)
                 c.id = instance + '/' + p.symbol
                 c.options.surface = false      // all of them are: no star here
-                c.group = group
-                out.push(c)
+                c.group = null                 // no port groups here (yet)
+                cs.push(c)
             })
+            out.push({ instance: instance, name: info.label, hex: S.colourOf(instance), controls: cs })
         })
         return out
     }
@@ -149,25 +144,38 @@ NHE.register('live', function (mod) {
         var z = NHE.settingsZoom ? NHE.settingsZoom() : 1
         var h = Math.max(MIN_HEIGHT, Math.floor(((root.innerHeight() || view.innerHeight()) - 8) / z))
         barEl.css('height', h + 'px')
-        var cs = controls()
-        // (not toggle(): that sets display: block on the panel, a flex row)
-        empty.css('display', cs.length ? 'none' : '')
-        panelEl.css('display', cs.length ? '' : 'none')
-        panel = new NHE.Panel(panelEl[0], {
-            height: h,
-            controls: cs,
-            onInput: function (id, v) { var x = split(id); S.send(x.instance, x.symbol, v) },
-            onChange: function (id, v) { var x = split(id); S.send(x.instance, x.symbol, v) },
-            onTrigger: function (id) {
-                var x = split(id), p = (mod.gui(x.instance).controls || {})[x.symbol]
-                if (p) mod.setPortValue(x.instance, x.symbol, p.ranges.maximum)
-            },
-            onSettings: function (id) { var x = split(id); S.openAddressing(x.instance, x.symbol, panel.control(id)) }
-        })
-        // each plugin's controls in its colour (a slider's fill, a toggle's on)
-        cs.forEach(function (c) {
-            var hex = c.group.hex
-            if (hex) panelEl.find('[data-id="' + c.id + '"]').each(function () { NHE.accent.apply(this, hex) })
+        var ps = plugins()
+        // (not toggle(): that sets display: block on the row, a flex row)
+        empty.css('display', ps.length ? 'none' : '')
+        panelEl.css('display', ps.length ? '' : 'none')
+        panelEl.empty()
+        panels = {}
+        headers = {}
+        var send = function (id, v) { var x = split(id); S.send(x.instance, x.symbol, v) }
+        ps.forEach(function (pl) {
+            var instance = pl.instance
+            // the plugin's name and on / off as on top of its settings screen, in
+            // its colour (the colour picker's, else the accent as there), across
+            // its controls
+            var block = $('<div class="nhe-live__plugin">').appendTo(panelEl)
+            NHE.accent.apply(block[0], pl.hex)
+            var head = $('<div>').appendTo(block)
+            headers[instance] = new NHE.PluginHeader(head[0], {
+                name: pl.name, on: mod.pluginOn(instance), binding: mod.binding(instance, ':bypass'),
+                onChange: function (on) { S.send(instance, ':bypass', on) },
+                onSettings: function () { S.openAddressing(instance, ':bypass', headers[instance]) }
+            })
+            panels[instance] = new NHE.Panel($('<div>').appendTo(block)[0], {
+                height: h - head[0].offsetHeight,
+                controls: pl.controls,
+                onInput: send,
+                onChange: send,
+                onTrigger: function (id) {
+                    var x = split(id), p = (mod.gui(x.instance).controls || {})[x.symbol]
+                    if (p) mod.setPortValue(x.instance, x.symbol, p.ranges.maximum)
+                },
+                onSettings: function (id) { var x = split(id); S.openAddressing(x.instance, x.symbol, panels[instance].control(id)) }
+            })
         })
         var sr = stage[0].getBoundingClientRect()
         sizer.css({ width: Math.ceil(sr.width) + 'px', height: Math.ceil(sr.height) + 'px' })
@@ -216,7 +224,8 @@ NHE.register('live', function (mod) {
         view.hide()
         mod.fullBleed('live', false)
         panelEl.empty()
-        panel = null
+        panels = {}
+        headers = {}
         toggles.forEach(function (fn) { fn(false) })
     }
 

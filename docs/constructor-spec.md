@@ -73,8 +73,9 @@ Status: being worked out with Niels; open points are marked **Open**.
   pedal: the last step from zoomed in to full screen. In the performance
   view, **Constructor view** (the puzzle, top right of the centred pedal)
   comes back, zoomed in on the pedal the carousel was showing.
-- Free cells show only their + for now (no circle); a cable's + is half
-  see-through.
+- A free cell's + is black on a faint white circle (on a desktop, while
+  the pointer is over the cell); a cable's + is white with a few pixels'
+  edge in the cable's colour, no circle.
 
 ### Kept per board
 
@@ -283,7 +284,8 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   Pedals without jack elements still get them spread down their sides.
 - **The cable connectors** are NHE's drawings (NHE-MOD-UI/SVG "coming
   out" and "going-in"): a ribbed metal barrel, flat against the jack and
-  rounded where the cable leaves, with a band in the cable's colour.
+  rounded where the cable leaves; plain metal (the cable beside it shows
+  its colour).
 - **Jacks as on MOD's builder:** every jack is a metal nut on the pedal's
   side (inputs left, outputs right); a cable's connector sits past it, and
   the cable runs straight out of the connector (`LEAD`) before it bends,
