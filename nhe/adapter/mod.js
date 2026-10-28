@@ -923,6 +923,7 @@
             var icon = plugins[instance], gui = icon && icon.data && icon.data('gui')
             if (!gui || !icon.position) return
             var e = gui.effect || {}, ports = {}
+            noteVersion(e)
             ;['audio', 'midi', 'cv'].forEach(function (t) {
                 var p = (e.ports && e.ports[t]) || {}
                 ports[t] = {
@@ -1289,7 +1290,7 @@
         if (listWaiting.length > 1) return
         $.ajax({
             url: '/effect/list', cache: false, dataType: 'json',
-            success: function (list) { pluginList = list || []; listWaiting.splice(0).forEach(function (fn) { fn(pluginList) }) },
+            success: function (list) { pluginList = list || []; pluginList.forEach(noteVersion); listWaiting.splice(0).forEach(function (fn) { fn(pluginList) }) },
             error: function () { listWaiting.splice(0).forEach(function (fn) { fn([]) }) }
         })
     }
@@ -1308,6 +1309,7 @@
     mod.pluginDetails = function (uri, cb) {
         mod.pluginData(uri, function (d) {
             if (!d) { cb(null); return }
+            noteVersion(d)
             var p = d.ports || {}, ports = {}
             ;['audio', 'midi', 'cv'].forEach(function (t) {
                 var x = p[t] || {}
@@ -1360,11 +1362,23 @@
     // without that picture gets MOD's plain can (resources/pedals/default.png,
     // its default icon's background) instead of MOD's own fallback, which
     // has "No interface available" written across it
+    // The picture's URL carries the plugin's version, as MOD's own does
+    // (effects.js: builder_micro_minor_release). MOD serves these images
+    // with a year-long cache, so without it a browser keeps the first picture
+    // it saw: a plugin installed once without a face stayed a tuna can
+    // after its face arrived. Versions come from /effect/list, the board's
+    // pedals and /effect/get as they pass through here
     var PLAIN = '/resources/pedals/default.png'
+    var versions = {}
+    function noteVersion(e) {         // a declaration: mod.board and pluginList, above, use it
+        if (!e || !e.uri || e.microVersion === undefined) return
+        versions[e.uri] = [e.builder || 0, e.microVersion || 0, e.minorVersion || 0, e.release || 0].join('_')
+    }
     mod.pluginImage = function (uri, kind, gui) {
         kind = kind || 'thumbnail'
         if (gui && !gui[kind]) return PLAIN
-        return '/effect/image/' + kind + '.png?uri=' + encodeURIComponent(uri)
+        var v = versions[uri]
+        return '/effect/image/' + kind + '.png?uri=' + encodeURIComponent(uri) + (v ? '&v=' + v : '')
     }
     // a picture that came back as MOD's fallback after all (the device can
     // list a gui whose files are missing): swap it for the plain can. MOD's
