@@ -99,7 +99,7 @@
         this.o = mix({ plugin: '', value: null }, options || {})
         this.value = this.o.value
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
-        var d = el('div', 'nhe-dialog nhe-dialog--columns nhe-colour-dialog', overlay)
+        var d = el('div', 'nhe-dialog nhe-dialog--card nhe-dialog--columns nhe-colour-dialog', overlay)
         d.setAttribute('role', 'dialog')
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', this.o.plugin + ' colour')

@@ -647,7 +647,8 @@
  * Dialogs that fit the screen. Every NHE dialog is a .nhe-dialog-overlay
  * put straight into <body>; this watches for them. On a touch screen (a
  * phone or a tablet: no hover, a coarse pointer) each one runs full screen,
- * except a short one (.nhe-dialog--card: a yes / no, tempo and sync), which
+ * except a short one (.nhe-dialog--card: a yes / no, tempo and sync, a control's
+ * settings, the plugin colour, its presets file), which
  * stays a card there too; elsewhere it stays a centred card unless it would
  * spill over the window,
  * then it goes full screen too (also when it grows, or the window shrinks).

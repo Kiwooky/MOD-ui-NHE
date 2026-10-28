@@ -59,7 +59,7 @@
         var m = this.o.model, st = m.state()
 
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
-        var d = this.root = el('div', 'nhe-dialog', overlay)
+        var d = this.root = el('div', 'nhe-dialog nhe-dialog--card', overlay)
         if (this.o.accent && NHE.accent) NHE.accent.apply(overlay, this.o.accent)   // the plugin's colour
         d.setAttribute('role', 'dialog')
         d.setAttribute('aria-modal', 'true')

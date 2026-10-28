@@ -21,7 +21,7 @@
     NHE.PresetFileDialog = function (options) {
         var o = mix({ plugin: '', accent: null, count: function () { return 0 } }, options || {})
         var overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
-        var d = el('div', 'nhe-dialog nhe-presetfile-dialog', overlay)
+        var d = el('div', 'nhe-dialog nhe-dialog--card nhe-presetfile-dialog', overlay)
         d.setAttribute('role', 'dialog')
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', 'Presets file')
