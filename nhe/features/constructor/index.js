@@ -167,6 +167,9 @@ NHE.register('constructor', function (mod) {
         // mid-load the icons arrive one by one, sizes still settling: the
         // board is read once MOD is done
         if (!shown()) return
+        // the performance view holds MOD's icons: their places there aren't
+        // the board's, so the board is read again once it closes
+        if (mod.performing()) return
         // the surface sizes its grid from its element: wait for this
         // feature's stylesheet too (stylesheets load alongside, unblocked)
         var unstyled = !surface && getComputedStyle(view[0]).position !== 'absolute'
@@ -174,7 +177,14 @@ NHE.register('constructor', function (mod) {
         read()
         if (!surface) create()
         else surface.update({ nodes: nodes, connections: connections, wireColours: cache.colours, wireRoutes: cache.routes, cvOutputs: cvOutputs() })
+        // back from the performance view: zoomed in on its pedal, once the board is laid out again
+        if (landOn) {
+            var nd = surface.node(landOn)
+            landOn = null
+            if (nd && nd.cell && surface.faces) surface.focus(nd)
+        }
     }
+    var landOn = null
     // MOD's Manage CV ports: on, the CV outputs' ticks and names
     var cvOutputs = function () { return mod.cvManaging() ? mod.cvOutputs() : null }
 
@@ -417,6 +427,7 @@ NHE.register('constructor', function (mod) {
 
     NHE.builder = {
         current: saved,
+        surface: function () { return surface },     // for the console: the work surface (components/constructor/surface.js)
         set: function (v) {
             try { localStorage.setItem(KEY, v === 'nhe' ? 'nhe' : 'mod') } catch (e) {}
             apply()
@@ -452,9 +463,9 @@ NHE.register('constructor', function (mod) {
     // and back in the builder, zoomed in on the pedal the carousel was showing
     mod.onPerformanceClose(function (instance) {
         if (!surface || !shown()) return
+        landOn = instance
         surface.resume()
-        var nd = instance && surface.node(instance)
-        if (nd && nd.cell && surface.faces) surface.focus(nd)
+        refresh()
     })
     // MOD's Manage CV ports switched on or off: the tags come or go
     mod.onCvManaging(function () { if (surface) surface.update({ cvOutputs: cvOutputs() }) })
