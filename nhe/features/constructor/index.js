@@ -307,7 +307,7 @@ NHE.register('constructor', function (mod) {
         }
         mod.pluginList(function (list) {
             plugins = list.map(function (p) {
-                return { uri: p.uri, name: p.name, brand: p.brand, categories: p.category || [], thumb: mod.pluginImage(p.uri, 'thumbnail', p.gui), gui: p.gui, iotype: p.iotype, favourite: mod.isFavourite(p.uri) }
+                return { uri: p.uri, name: p.name, brand: p.brand, categories: p.category || [], thumb: mod.pluginImage(p.uri, 'thumbnail', p.gui), face: mod.pluginImage(p.uri, 'screenshot', p.gui), gui: p.gui, iotype: p.iotype, favourite: mod.isFavourite(p.uri) }
             })
             var seen = {}
             plugins.forEach(function (p) { p.categories.forEach(function (c) { seen[c] = true }) })

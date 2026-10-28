@@ -10,6 +10,8 @@
  *   NHE.AddPedalDialog({
  *       categories: [{ id, label }],          // the tabs after Favourites and All
  *       plugins: [{ uri, name, brand, categories: [id], favourite, thumb, ports,
+ *                   face,                     // optional: the pedal's full picture (MOD's
+ *                                             // screenshot), for the results on a large card
  *                   iotype }],                // MOD's kPluginIO*: 1 mono, 2 stereo audio,
  *                                             // 3 instrument, 4 MIDI, 0 other (see `only`)
  *       loadPorts: fn(plugin, done),          // when a plugin comes without ports:
@@ -77,6 +79,8 @@
         ;(this.o.exclude || []).forEach(function (id) { self.exclude[id] = true })
 
         var full = NHE.zoom && NHE.zoom() > 1
+        // a large card: the results grow with the screen, with the pedals' full pictures
+        this.big = !full
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay nhe-add-overlay' + (full ? ' is-full' : ''), document.body)
         var d = this.root = el('div', 'nhe-add' + (full ? ' is-full' : ''), overlay)
         d.setAttribute('role', 'dialog')
@@ -108,6 +112,7 @@
         }
         n.in = col('in')
         n.res = col('results')
+        n.res.list.classList.toggle('is-big', this.big)
         n.out = col('out')
         n.in.title.textContent = 'Input from'
         n.out.title.textContent = 'Output to'
@@ -211,13 +216,17 @@
         })
     }
 
-    var thumb = function (parent, item, cls) {
+    var thumb = function (parent, item, cls, big) {
         var t = el('div', 'nhe-add__thumb' + (cls ? ' ' + cls : ''), parent)
-        if (item.thumb) {
+        var src = (big && item.face) || item.thumb
+        if (src) {
             var img = el('img', null, t)
             img.alt = ''
-            img.src = item.thumb
+            if (big) img.loading = 'lazy'      // a few hundred pictures: those in view first
+            img.src = src
             img.draggable = false
+            // MOD's own fallback picture ("No interface available"): its thumbnail instead
+            if (big && item.face && item.thumb) img.onload = function () { if (img.naturalWidth === 282 && img.naturalHeight === 433) img.src = item.thumb }
         } else if (item.icon) {
             t.classList.add('is-port')
             t.innerHTML = icon(item.icon)
@@ -230,11 +239,11 @@
         return t
     }
 
-    var card = function (parent, item, picked, onTap, mark, onInfo) {
+    var card = function (parent, item, picked, onTap, mark, onInfo, big) {
         var b = el('button', 'nhe-add__card' + (picked ? ' is-picked' : ''), parent)
         b.type = 'button'
         b.setAttribute('aria-pressed', picked ? 'true' : 'false')
-        var t = thumb(b, item)
+        var t = thumb(b, item, null, big)
         if (mark === 'tick') el('span', 'nhe-add__tick', t, icon('tick'))
         // the pedal's info: where the tick sits on the side columns
         if (onInfo) {
@@ -258,7 +267,7 @@
         var found = this.matches()
         if (!found.length) el('div', 'nhe-add__empty', list).textContent = q ? 'No pedals match.' : 'Nothing here yet.'
         found.forEach(function (p) {
-            card(list, p, self.plugin === p, function () { self.pick(self.plugin === p ? null : p) }, 'ring', function () { self.showInfo(p) })
+            card(list, p, self.plugin === p, function () { self.pick(self.plugin === p ? null : p) }, 'ring', function () { self.showInfo(p) }, self.big)
         })
         list.scrollTop = 0
         this.renderArrows()

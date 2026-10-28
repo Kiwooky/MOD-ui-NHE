@@ -108,7 +108,11 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
     the new pedal, and MOD's inputs. Several can be picked; a picked one
     shows a tick.
   - **The pedal to add** (MOD's bottom bar of plugins today), narrowed by
-    the tabs and the search. The picked one has a ring. Each has an **info
+    the tabs and the search. The picked one has a ring. On a desktop or
+    tablet the dialog grows with the screen (up to 1600 x 1100), the side
+    columns stay 240 px and this one takes the rest: a grid of the pedals'
+    full pictures (MOD's screenshots), sized to the screen; on a phone,
+    one column of thumbnails. Each has an **info
     icon** where the side columns show their tick: it opens the pedal's
     info over the whole dialog, with **Back** at the top (Escape too) to
     return to the dialog as it was. The same information as MOD's plugin
