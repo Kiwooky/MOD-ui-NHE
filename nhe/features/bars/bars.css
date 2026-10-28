@@ -279,8 +279,13 @@ body:has(#performance-view.performance-flipped) :is(#pedalboard-actions, #main-m
 :is(#pedalboard-actions, #main-menu) .nhe-meters__value { width: 32px; text-align: right; }
 :is(#pedalboard-actions, #main-menu) .nhe-meters__track { position: relative; width: 120px; height: 12px; border-radius: 9999px; background: linear-gradient(90deg, #7b7b7b, #323232 55%); overflow: hidden; }
 :is(#pedalboard-actions, #main-menu) .nhe-meters__fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 9999px; }
-.is-cpu .nhe-meters__fill { background: linear-gradient(90deg, #da8e00, #8eab00); }
-.is-ram .nhe-meters__fill { background: linear-gradient(90deg, #8e00da, #40c9ff); }
+/* the colour says the level: the gradient spans the whole track (sized to
+   it, 120 px) and the fill uncovers it up to the load. CPU: green to 60 %,
+   orange by 75 %, red by 85 %; RAM: blue to 60 %, darker blue by 75 %,
+   purple by 85 % */
+:is(#pedalboard-actions, #main-menu) .nhe-meters__fill { background-size: 120px 100%; background-repeat: no-repeat; }
+:is(#pedalboard-actions, #main-menu) .is-cpu .nhe-meters__fill { background-image: linear-gradient(90deg, #8eab00 0%, #8eab00 60%, #e8890c 75%, #e5322d 85%, #e5322d 100%); }
+:is(#pedalboard-actions, #main-menu) .is-ram .nhe-meters__fill { background-image: linear-gradient(90deg, #40c9ff 0%, #40c9ff 60%, #2a62d8 75%, #8e00da 85%, #8e00da 100%); }
 :is(#pedalboard-actions, #main-menu) .nhe-meters__xruns { height: 33px; padding: 0 12px; border-radius: 9999px; background: #ff383c; font-size: 12px; line-height: 33px; text-transform: uppercase; white-space: nowrap; }
 
 /* MOD's header styles every button in it (header#pedalboard-actions button):
