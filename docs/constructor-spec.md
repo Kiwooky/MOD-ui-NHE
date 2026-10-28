@@ -173,7 +173,8 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   applying the plan to it. Not wired into MOD yet.
 - Built next: the **work surface** (`nhe/components/constructor/surface.js`),
   also in the playground. Cells of 200 px at zoom 1; MOD's ports in edge
-  columns; a + on every free cell; one empty column and row kept, with
+  columns; a + on every free cell (on a desktop only while the pointer is
+  over that cell); one empty column and row kept, with
   Expand buttons in a strip under the grid when none is left; drag (or the
   wheel) to pan, pinch / ctrl-scroll / the + − buttons (top right) to zoom,
   the surface's image moving with it; a long-press (450 ms) lifts a pedal,

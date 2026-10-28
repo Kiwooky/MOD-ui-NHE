@@ -323,11 +323,14 @@
         for (var r = 0; r < this.rows; r++) for (var c = 0; c < this.cols; c++) {
             if (this.occupant(c, r)) continue
             ;(function (c, r) {
-                var b = el('button', 'nhe-surface__plus', n.cells, icon('plus'))
+                // the free cell: on a desktop its + shows while the pointer is over it
+                var f = el('div', 'nhe-surface__free', n.cells)
+                f.style.left = self.cellX(c) + 'px'
+                f.style.top = self.cellY(r) + 'px'
+                f.style.width = f.style.height = CELL + 'px'
+                var b = el('button', 'nhe-surface__plus', f, icon('plus'))
                 b.type = 'button'
                 b.setAttribute('aria-label', 'Add a pedal here')
-                b.style.left = (self.cellX(c) + CELL / 2) + 'px'
-                b.style.top = (self.cellY(r) + CELL / 2) + 'px'
                 b.addEventListener('click', function () { if (!self.moved && typeof self.o.onAdd === 'function') self.o.onAdd({ col: c, row: r }) })
             })(c, r)
         }
