@@ -5,7 +5,9 @@
  * Live surface: one screen with the controls picked from any plugin (a
  * control's settings → Add to surface). Each plugin's controls sit under a
  * band in its colour with its name, where a settings screen shows a port
- * group; the controls play as on the plugin's own settings screen. The
+ * group; the controls play as on the plugin's own settings screen. Above
+ * them, across the screen, the board's snapshots (80 px tall, the labels
+ * as big as fits); the bar's chips don't show over it. The
  * system bar has the meters and SET, no Exit and no Chain tab: another
  * screen in the bottom bar leaves it (features/bars: Live, left of
  * Constructor).
@@ -63,6 +65,7 @@ NHE.register('live', function (mod) {
     // ---- the screen --------------------------------------------------------
 
     var view = mod.addView('nhe-live', '<div class="nhe-live" style="display:none"></div>')
+    var snaps = $('<div class="nhe-ctl nhe-live__snaps" role="group" aria-label="Snapshots">').appendTo(view)
     var root = $('<div class="nhe-settings">').appendTo(view)
     var scroller = $('<div class="nhe-settings__scroll">').appendTo(root)
     var sizer = $('<div class="nhe-settings__sizer">').appendTo(scroller)
@@ -160,6 +163,33 @@ NHE.register('live', function (mod) {
         hint.update()
     }
 
+    // ---- the snapshots ----------------------------------------------------
+
+    var SNAP_FONT = 28, SNAP_FONT_MIN = 12
+    var renderSnaps = function (done) {
+        mod.snapshots(function (list) {
+            var had = snaps.children().length > 0
+            snaps.empty()
+            var cur = mod.snapshotCurrent()
+            list.forEach(function (s) {
+                $('<button type="button" class="nhe-live__snap">').append($('<span>').text(s.name)).toggleClass('is-on', s.id === cur).appendTo(snaps)
+                    .on('click', function () { if (s.id !== mod.snapshotCurrent()) mod.loadSnapshot(s.id) })
+            })
+            snaps.toggle(list.length > 0)
+            fitSnaps()
+            // the controls' height changes with the bar
+            if (done) done()
+            else if (had !== list.length > 0) build()
+        })
+    }
+    // the labels at one size, the largest at which all of them fit
+    var fitSnaps = function () {
+        var labels = snaps.find('span'), fs = SNAP_FONT
+        var spills = function () { return labels.toArray().some(function (l) { return l.scrollWidth > l.clientWidth + 1 }) }
+        labels.css('font-size', fs + 'px')
+        while (fs > SNAP_FONT_MIN && spills()) labels.css('font-size', --fs + 'px')
+    }
+
     var toggles = []
     var isOpen = function () { return view.is(':visible') }
     var open = function () {
@@ -167,6 +197,7 @@ NHE.register('live', function (mod) {
         view.show()
         mod.fullBleed('live', true)
         build()
+        renderSnaps(build)
         toggles.forEach(function (fn) { fn(true) })
     }
     var close = function () {
@@ -195,6 +226,7 @@ NHE.register('live', function (mod) {
     })
     S.onChange(function () { if (isOpen()) build() })
     mod.onPerformanceOpen(close)
+    mod.onSnapshots(function () { if (isOpen()) renderSnaps() })
 
     var lastSize = window.innerWidth + 'x' + window.innerHeight, resizeTimer = null
     $(window).on('resize', function (e) {
@@ -203,7 +235,7 @@ NHE.register('live', function (mod) {
         if (size === lastSize) return
         lastSize = size
         clearTimeout(resizeTimer)
-        resizeTimer = setTimeout(function () { if (isOpen()) build() }, 200)
+        resizeTimer = setTimeout(function () { if (isOpen()) { fitSnaps(); build() } }, 200)
     })
 
     NHE.liveSurface = {
