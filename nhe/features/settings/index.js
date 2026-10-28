@@ -91,7 +91,7 @@ NHE.register('settings', function (mod) {
             surface: live ? NHE.liveSurface.has(instance, symbol) : null,
             accent: colourOf(instance),
             onMinimise: function (on) { setMinimised(instance, symbol, on); rebuildAll(instance) },
-            onSurface: function (on) { NHE.liveSurface.set(instance, symbol, on) }
+            onSurface: function (on) { NHE.liveSurface.set(instance, symbol, on); rebuildAll(instance) }
         })
     }
 
@@ -102,7 +102,8 @@ NHE.register('settings', function (mod) {
         var group = p.group ? { id: p.group.uri, name: p.group.name || p.group.label || p.group.symbol || '', color: p.groupCssIndex || 0 } : null
         var binding = mod.binding(instance, p.symbol)
         var title = p.shortName || p.name || p.symbol
-        var base = { title: title, comment: p.comment, binding: binding }
+        var base = { title: title, comment: p.comment, binding: binding,
+                     surface: !!(NHE.liveSurface && NHE.liveSurface.has(instance, p.symbol)) }
         if (has('trigger')) return { id: p.symbol, type: 'trigger', group: group, options: base }
         if (has('toggled')) return { id: p.symbol, type: 'toggle', group: group, options: mix(base, { value: p.value !== p.ranges.minimum }) }
         if (has('enumeration') && p.scalePoints && p.scalePoints.length >= 2) {

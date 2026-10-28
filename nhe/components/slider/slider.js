@@ -14,6 +14,7 @@
  *       group: { kind: 'none'|'single'|'start'|'middle'|'end', name: '', color: 0 | '#rrggbb', width: 360 },
  *       binding: null | { type: 'midi'|'cv'|'device'|'chain', kind: 'MIDI', label: 'CC 7 · Ch 1',
  *                         locked: false },   // locked: the source takes no feedback (MOD: CV)
+ *       surface: false,         // on the live surface (features/live): a star by the settings icon
  *       onInput: fn(value),     // while dragging, typing, wheel, keys
  *       onChange: fn(value),    // when a gesture ends
  *       onSettings: fn(),       // settings icon
@@ -110,6 +111,10 @@
         n.settings.innerHTML = NHE.icons.settings
         n.binding = el('button', 'nhe-slider__button nhe-slider__binding', footer)
         n.binding.type = 'button'
+        n.surface = el('span', 'nhe-slider__surface', footer)
+        n.surface.innerHTML = NHE.icons.star
+        n.surface.setAttribute('aria-label', 'On the live surface')
+        n.surface.title = 'On the live surface'
 
         n.overlay = el('div', 'nhe-slider__overlay', r)
         n.overlayKind = el('span', 'nhe-slider__overlay-kind', n.overlay)
@@ -236,6 +241,7 @@
         if (g.width) r.style.setProperty('--nhe-slider-group-width', g.width + 'px')
         else r.style.removeProperty('--nhe-slider-group-width')
 
+        this.state('surface', !!o.surface)
         var b = o.binding
         this.state('bound', !!b)
         this.state('locked', !!(b && b.locked))

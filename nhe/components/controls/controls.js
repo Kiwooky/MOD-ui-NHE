@@ -21,7 +21,8 @@
  * Every control has update(options). `binding` is null or
  * { type: 'midi'|'cv'|'device'|'chain', kind, label, locked }: shared bindings
  * show the icon next to the settings icon; locked ones grey the control, put
- * the icon on its face and refuse a touch (orange ring + overlay). Plain ES5.
+ * the icon on its face and refuse a touch (orange ring + overlay).
+ * `surface: true` (on the live surface, features/live) puts a star there too. Plain ES5.
  */
 (function () {
     var NHE = window.NHE = window.NHE || {}
@@ -88,6 +89,9 @@
         this.n.binding = NHE.iconButton('midi', { onClick: function () { self.info(!self.has('info')) } })
         this.n.binding.classList.add('nhe-binding-button')
         f.appendChild(this.n.binding)
+        this.n.surface = el('span', 'nhe-surface-badge', f, icon('star'))
+        this.n.surface.setAttribute('aria-label', 'On the live surface')
+        this.n.surface.title = 'On the live surface'
         return f
     }
 
@@ -106,6 +110,7 @@
 
     Base.prototype.renderBinding = function () {
         var b = this.o.binding
+        this.state('surface', !!this.o.surface)
         this.state('bound', !!b)
         this.state('locked', !!(b && b.locked))
         if (!b) { this.info(false); this.state('blocked', false); return }

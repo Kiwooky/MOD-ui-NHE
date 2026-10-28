@@ -90,6 +90,10 @@
 /* the binding-type icon next to the settings icon: only when bound and shared */
 .nhe-binding-button { display: none; width: 40px; height: 40px; border-radius: var(--nhe-radius-full); }
 .nhe-ctl.is-bound:not(.is-locked) .nhe-binding-button { display: flex; }
+/* a star there when the control is on the live surface (features/live) */
+.nhe-surface-badge { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--nhe-icon-default); }
+.nhe-surface-badge svg { display: block; width: 32px; height: 32px; }
+.nhe-ctl.is-surface .nhe-surface-badge { display: flex; }
 
 /* ---- binding overlay (as the slider) ------------------------------------ */
 

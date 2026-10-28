@@ -437,6 +437,11 @@
 
 .nhe-slider.is-bound .nhe-slider__binding { display: flex; }
 
+/* on the live surface (features/live): a star, as the binding icon but not a button */
+.nhe-slider__surface { display: none; padding: var(--nhe-space-4); color: var(--nhe-icon-default); }
+.nhe-slider__surface svg { display: block; width: 32px; height: 32px; }
+.nhe-slider.is-surface .nhe-slider__surface { display: flex; }
+
 /* bound and shared (the source takes feedback, e.g. MIDI): normal look and
    behaviour; only the binding icon next to the settings icon says so */
 
@@ -523,7 +528,8 @@
 .nhe-slider.is-minimised .nhe-slider__unit,
 .nhe-slider.is-minimised .nhe-slider__thumb,
 .nhe-slider.is-minimised .nhe-slider__ticks,
-.nhe-slider.is-minimised .nhe-slider__binding { display: none; }
+.nhe-slider.is-minimised .nhe-slider__binding,
+.nhe-slider.is-minimised .nhe-slider__surface { display: none; }
 .nhe-slider.is-minimised .nhe-slider__track { box-shadow: inset 4px 4px 4px rgba(0, 0, 0, .5); }
 .nhe-slider.is-minimised .nhe-slider__fill {
     height: calc(100% * var(--pos, 0));

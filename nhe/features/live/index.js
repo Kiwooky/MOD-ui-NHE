@@ -3,9 +3,11 @@
 
 /*
  * Live surface: one screen with the controls picked from any plugin (a
- * control's settings → Add to surface). Each plugin's controls sit under a
- * band in its colour with its name, where a settings screen shows a port
- * group; the controls play as on the plugin's own settings screen. Above
+ * control's settings → Add to surface). Each plugin's controls, after its
+ * on / off (there as soon as one of them is), sit under its name in a bar as
+ * on top of its settings screen, in its colour (live.css; where a settings
+ * screen shows a port group's band); the controls play as on the plugin's
+ * own settings screen. Above
  * them, across the screen, the board's snapshots (80 px tall, the labels
  * as big as fits); the bar's chips don't show over it. The
  * system bar has the meters and SET, no Exit and no Chain tab: another
@@ -97,7 +99,8 @@ NHE.register('live', function (mod) {
         mod.onPortValue(instance, function (symbol, value) {
             var c = panel && panel.control(instance + '/' + symbol), p = (mod.gui(instance).controls || {})[symbol]
             if (!c || !p || !isOpen()) return
-            if (c instanceof NHE.Toggle) c.setValue(value !== p.ranges.minimum)
+            if (symbol === ':bypass') c.setValue(!value)      // MOD's bypass: 1 = off
+            else if (c instanceof NHE.Toggle) c.setValue(value !== p.ranges.minimum)
             else if (c.setValue) c.setValue(value)
         })
         mod.onBindingChange(instance, function (symbol) {
@@ -107,7 +110,8 @@ NHE.register('live', function (mod) {
     }
 
     // the controls, plugin by plugin in the order they were first added; a
-    // plugin's own in its port order. A plugin not on the board (yet) is left out.
+    // plugin's on / off, then its own in its port order. A plugin not on the
+    // board (yet) is left out.
     var controls = function () {
         var order = [], picked = {}
         list().forEach(function (k) {
@@ -116,16 +120,23 @@ NHE.register('live', function (mod) {
             picked[instance][k.slice(i + 1)] = true
         })
         var out = []
-        order.forEach(function (instance, n) {
+        order.forEach(function (instance) {
             var info = mod.pluginInfo(instance)
             if (!info) return
             follow(instance)
-            // the band: the plugin's colour, else one of MOD's group colours in turn
-            var group = { id: instance, name: info.label, color: S.colourOf(instance) || n % 10 }
+            // the band: the plugin's name bar as on its settings screen, in its
+            // colour (the colour picker's), else the accent as there
+            var hex = S.colourOf(instance)
+            var group = { id: instance, name: info.label, color: hex || 'var(--nhe-accent-default)', hex: hex }
+            // first, the plugin's on / off (on the surface with any of its controls)
+            out.push({ id: instance + '/:bypass', type: 'toggle', group: group, options: {
+                title: 'On / off', value: mod.pluginOn(instance), binding: mod.binding(instance, ':bypass')
+            } })
             info.ports.forEach(function (p) {
                 if (!picked[instance][p.symbol]) return
                 var c = S.describe(instance, p)
                 c.id = instance + '/' + p.symbol
+                c.options.surface = false      // all of them are: no star here
                 c.group = group
                 out.push(c)
             })
@@ -155,7 +166,7 @@ NHE.register('live', function (mod) {
         })
         // each plugin's controls in its colour (a slider's fill, a toggle's on)
         cs.forEach(function (c) {
-            var hex = typeof c.group.color === 'string' ? c.group.color : null
+            var hex = c.group.hex
             if (hex) panelEl.find('[data-id="' + c.id + '"]').each(function () { NHE.accent.apply(this, hex) })
         })
         var sr = stage[0].getBoundingClientRect()
