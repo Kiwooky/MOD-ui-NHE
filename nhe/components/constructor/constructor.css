@@ -323,18 +323,16 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
     padding: 8px;
     border: 0;
     border-radius: 50%;
-    background: transparent;     /* for now: only the + marks a free cell */
-    color: #ddd;
-    opacity: .5;                 /* quiet until wanted */
+    background: rgba(255, 255, 255, .1);
     cursor: pointer;
 }
+.nhe-surface .nhe-surface__plus { color: #000; }   /* over .nhe-ctl button */
 .nhe-surface__plus svg { display: block; width: 100%; height: 100%; }
-.nhe-surface__plus:hover { color: #fff; opacity: 1; }
+.nhe-surface__plus:hover { background: rgba(255, 255, 255, .2); }
 /* a desktop: the + shows only while the pointer is over its free cell */
 @media (hover: hover) and (pointer: fine) {
     .nhe-surface__free .nhe-surface__plus { opacity: 0; transition: opacity .12s; }
-    .nhe-surface__free:hover .nhe-surface__plus { opacity: .5; }
-    .nhe-surface__free:hover .nhe-surface__plus:hover,
+    .nhe-surface__free:hover .nhe-surface__plus,
     .nhe-surface__plus:focus-visible { opacity: 1; }
 }
 
