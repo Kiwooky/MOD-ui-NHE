@@ -38,9 +38,7 @@
  *                                           // builder (a desktop); else only the focused one
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
  *                                           // in `layer` (over its picture, the picture's size),
- *                                           // return true if it did (or the scale it drew it at in
- *                                           // the layer: then it plays only when shown at PLAY_MIN
- *                                           // of its real size or more); called again after a redraw
+ *                                           // return true if it did; called again after a redraw
  *       onBlur: fn(node),                   // the focused face let go (zoomed out, another one
  *                                           // focused, lifted): take the working GUI back
  *       isControl: fn(target),              // a press there belongs to the live GUI (a knob,
@@ -107,7 +105,7 @@
     var LONG_MS = 450       // a press this long on a pedal lifts it
     var SLOP = 8            // px a pointer can move and still count as a tap / press
     var ZMIN = 0.35, ZMAX = 4.8  // room to show a large face at FOCUS x its full size
-    var PLAY_MIN = 0.9           // a live face's controls play from this much of its real size up (smaller: a slip goes unseen)
+    var PLAY_ZOOM = 1.5          // live faces' controls play from this much past the zoom that shows the whole grid (two + presses)
     var FOCUS = 1.2         // a tapped face zooms to 120% of its own size (easier to play)
     var FIT_ABOVE = 44, FIT_BELOW = 44   // screen px a focused pedal keeps free above (its gear) and below (its name)
     var MIN_COLS = 3, MIN_ROWS = 3
@@ -1329,22 +1327,19 @@
         layer.style.top = (img.offsetTop + a.y) + 'px'
         layer.style.width = a.w + 'px'
         layer.style.height = a.h + 'px'
-        var live = this.o.liveFace(nd, layer)
-        d.classList.toggle('is-live', !!live)
-        d.__nheLiveScale = typeof live === 'number' ? live : 0
+        d.classList.toggle('is-live', !!this.o.liveFace(nd, layer))
         this.markSmall()
     }
-    // live faces shown smaller than PLAY_MIN of their real size don't play
-    // (is-small): a press there pans, lifts or zooms in, as on a picture.
-    // The focused one always plays
+    // zoomed out (under PLAY_ZOOM x the zoom that shows the whole grid: a
+    // double click, or one + from there) live faces don't play (is-small):
+    // a slip on a small face would change a setting unseen. A press there
+    // pans, lifts or zooms in, as on a picture. The focused one always plays
     Surface.prototype.markSmall = function () {
-        var self = this, z = this.view.z, f = this.focused
+        var self = this, f = this.focused, small = this.view.z < this.fitZoom() * PLAY_ZOOM - 1e-6
         this.o.nodes.forEach(function (nd) {
             var d = self.els[nd.id]
             if (!d || !d.classList.contains('is-live')) return
-            // liveFace's scale in the layer, times the view's: its size on screen
-            var s = d.__nheLiveScale ? d.__nheLiveScale * z : 1
-            d.classList.toggle('is-small', s < PLAY_MIN && !(f && f.id === nd.id))
+            d.classList.toggle('is-small', small && !(f && f.id === nd.id))
         })
     }
     // a face lets go of its working GUI (onBlur takes it back)
@@ -1402,10 +1397,13 @@
     }
 
     // zoom out until the whole grid shows (a double click on the surface)
-    Surface.prototype.fit = function () {
+    Surface.prototype.fitZoom = function () {
         var W = this.root.clientWidth, Hh = this.root.clientHeight
         var z = Math.min((W - this.gapL() - this.gapR()) / (this.cols * CELL), (Hh - HEAD) / (this.rows * CELL + FOOT))
-        z = Math.max(ZMIN, Math.min(1, z))
+        return Math.max(ZMIN, Math.min(1, z)) || 1
+    }
+    Surface.prototype.fit = function () {
+        var z = this.fitZoom()
         this.blur()
         this.animate(this.clamp({ x: this.gapL() - EDGE * z, y: HEAD, z: z }))
     }

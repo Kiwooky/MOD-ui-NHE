@@ -56,9 +56,10 @@ Status: being worked out with Niels; open points are marked **Open**.
 
 - On a desktop (a mouse) every face shows the pedal's working GUI, as MOD's
   builder does: MOD's own icons, lent to the faces and kept up to date by
-  MOD, one copy each. Unlike there, a face's controls play only once
-  it's zoomed in on (or shown at 90% of its real size or more), so a slip
-  on a small face can't change a setting unseen; a click on a face that
+  MOD, one copy each. Unlike there, the faces' controls don't play
+  zoomed out (the whole grid, a double click, or one + from there: they
+  play from 1.5 x that zoom, or on a face zoomed in on), so a slip on a
+  small face can't change a setting unseen; a click on a face that
   doesn't play, or elsewhere on one that does, zooms in on it, a drag
   pans or lifts it.
   The performance view and MOD's builder get the icons back while they
