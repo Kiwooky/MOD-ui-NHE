@@ -5,8 +5,7 @@
  * NHE's builder (docs/constructor-spec.md): the constructor's work surface
  * (components/constructor/surface.js) over MOD's builder, on MOD's real
  * pedalboard. SET → Builder chooses MOD's or NHE's (remembered in this
- * browser; MOD's by default); the switch at the surface's top right does
- * the same. In the console:
+ * browser; MOD's by default). In the console:
  *
  *   NHE.builder.set('nhe')    // or 'mod'
  *
@@ -38,7 +37,7 @@ NHE.register('constructor', function (mod) {
     var saved = function () { try { return localStorage.getItem(KEY) === 'nhe' ? 'nhe' : 'mod' } catch (e) { return 'mod' } }
 
     var view = mod.addView('nhe-constructor', '<div class="nhe-constructor" style="display:none"></div>')
-    var host = null, surface = null, switcher = null
+    var host = null, surface = null
     var origin = null                       // { x, y }: cell 0 / 0 in canvas px
     var caches = {}, cache = null, cacheId = null   // per board: wire colours, laid routes, grid size
     var pending = {}                        // instance -> node: added, its icon not drawn yet
@@ -195,6 +194,7 @@ NHE.register('constructor', function (mod) {
         host = $('<div class="nhe-constructor__surface"><div></div></div>').prependTo(view)
         surface = new NHE.Surface(host.children()[0], {
             nodes: nodes, connections: connections, cols: cache.cols, rows: cache.rows,
+            zoomRight: true,      // the zoom buttons at the right edge, over MOD's output tiles
             wireColours: cache.colours, wireRoutes: cache.routes, cvOutputs: cvOutputs(),
             // a desktop (mouse): every face shows its working GUI, live, as on
             // MOD's builder; a touch screen: only the one zoomed in on
@@ -417,7 +417,6 @@ NHE.register('constructor', function (mod) {
         if (!on && surface) surface.release()  // MOD's builder gets its icons back
         view.toggle(on)
         mod.coverBuilder(on)
-        if (switcher) switcher.update({ value: on ? 0 : 1 })
         if (on) {
             cache = cache || boardCache()
             if (surface && !mod.performing()) surface.resume()
@@ -434,14 +433,6 @@ NHE.register('constructor', function (mod) {
             return saved()
         }
     }
-
-    // the switch at the top right: back to MOD's builder
-    var sw = $('<div class="nhe-ctl nhe-constructor__switch">').appendTo(view)
-    switcher = new NHE.Segmented($('<div>').appendTo(sw)[0], {
-        options: ['NHE', 'MOD'], value: shown() ? 0 : 1,
-        onChange: function (i) { NHE.builder.set(i ? 'mod' : 'nhe') }
-    })
-    sw.attr('title', 'Builder: NHE\'s or MOD\'s')
 
     // SET → Work surface changed (features/background): the surface's image
     window.addEventListener('nhe-background', function () { if (surface) { surface.texture(); surface.apply() } })

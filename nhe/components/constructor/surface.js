@@ -31,6 +31,9 @@
  *       onPerformance: fn(node),            // a focused face's bolt, left of its gear: the
  *                                           // performance view, on this pedal
  *       onFaceLoad: fn(img, node),          // a pedal's picture came in (may swap its src)
+ *       zoomRight: true | false,          // the zoom buttons stacked at the right edge, + on top,
+ *                                           // MOD's output tiles below (or above) them; with no room
+ *                                           // for that, left of the tiles (default: bottom left)
  *       liveAll: true | false,              // faces: every face live and playing, as on MOD's
  *                                           // builder (a desktop); else only the focused one
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
@@ -112,6 +115,7 @@
     var SIDE = 0            // (Figma: 48 x 48, rounded on the inner side only)
     var PORT_STEP = 84      // one port to the next, down the edge (tile, label, gap)
     var PORT_LABEL = 20     // the label under a tile
+    var ZOOM_GAP = 16       // zoomRight: between the zoom buttons and MOD's output tiles
     var NAME_H = 30         // a pedal's name and brand under its face
     // the work surface image (tokens.css: --nhe-texture, holes every half
     // tile, the first at --nhe-texture-hole): tiled so its holes come three
@@ -130,6 +134,7 @@
         // zooms in to play them); a phone: cards, a tap opens the settings
         this.faces = this.o.faces != null ? !!this.o.faces : Math.min(screen.width, screen.height) >= 600
         root.classList.toggle('is-faces', this.faces)
+        root.classList.toggle('is-zoom-right', !!this.o.zoomRight)
         this.texture()
         var n = this.n = {}
         n.plane = el('div', 'nhe-surface__plane', root)
@@ -147,7 +152,7 @@
         // MOD's ports don't pan sideways: they stay against the screen's edges
         n.edge = el('div', 'nhe-surface__edge', root)
         // zoom buttons (desktop); pinch does the same
-        var zoom = el('div', 'nhe-surface__zoom', root)
+        var zoom = n.zoom = el('div', 'nhe-surface__zoom', root)
         // − then +: zooming in at the right
         ;[['−', 0.8, 'Zoom out'], ['+', 1.25, 'Zoom in']].forEach(function (z) {
             var b = el('button', null, zoom)
@@ -1170,10 +1175,29 @@
         var side = this.o.nodes.filter(function (o) { return o.kind === nd.kind && o.cell })
             .sort(function (a, b) { return a.cell.row - b.cell.row })
         var tall = (side.length - 1) * PORT_STEP + PORT + PORT_LABEL
-        return Math.max(0, (this.root.clientHeight - tall) / 2) + side.indexOf(nd) * PORT_STEP
+        var top = Math.max(0, (this.root.clientHeight - tall) / 2)
+        if (nd.kind === 'output' && this.zoomClear) top = this.zoomClear(top, tall)
+        return top + side.indexOf(nd) * PORT_STEP
+    }
+    // zoomRight: the outputs keep clear of the zoom buttons at the right edge,
+    // below them (above, when they sit at the bottom); where there's no room
+    // for that, the buttons stand left of the tiles instead (is-zoom-beside)
+    Surface.prototype.zoomRoom = function () {
+        var zm = this.n && this.n.zoom, root = this.root
+        this.zoomClear = null
+        if (!this.o.zoomRight || !zm) return
+        root.classList.remove('is-zoom-beside')
+        var Hh = root.clientHeight, zt = zm.offsetTop, zb = zt + zm.offsetHeight
+        var n = this.o.nodes.filter(function (o) { return o.kind === 'output' && o.cell }).length
+        if (!n || !zm.offsetHeight) return
+        var tall = (n - 1) * PORT_STEP + PORT + PORT_LABEL
+        var below = zt < Hh / 2
+        if (below ? zb + ZOOM_GAP + tall > Hh : zt - ZOOM_GAP - tall < 0) { root.classList.add('is-zoom-beside'); return }
+        this.zoomClear = function (top) { return below ? Math.max(top, zb + ZOOM_GAP) : Math.min(top, zt - ZOOM_GAP - tall) }
     }
     Surface.prototype.placePorts = function () {
         var self = this
+        this.zoomRoom()
         ;(this.portEls || []).forEach(function (p) { p.el.style.top = self.portTop(p.node) + 'px' })
     }
 

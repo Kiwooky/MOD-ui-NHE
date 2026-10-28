@@ -30,20 +30,6 @@
     height: 100%;
     zoom: var(--nhe-zoom, 1);
 }
-/* NHE's builder / MOD's, top right. Zoomed: its own lengths count in
-   zoomed px, so the top is divided back */
-#nhe-constructor .nhe-constructor__switch {
-    position: absolute;
-    top: calc(12px / var(--nhe-zoom, 1));
-    /* left of MOD's output tiles (48 px and a gap, zoomed like the surface),
-       clear of a phone's notch held sideways */
-    right: calc(64px + env(safe-area-inset-right, 0px) / var(--nhe-zoom, 1));
-    z-index: 7;    /* over the surface's own layers */
-    zoom: var(--nhe-zoom, 1);
-}
-#nhe-constructor .nhe-constructor__switch .nhe-segmented { width: 120px; height: 36px; }
-#nhe-constructor .nhe-constructor__switch .nhe-segmented button { color: var(--nhe-text-primary); }
-
 /* a focused face: MOD's working icon (borrowed off its canvas), scaled to
    the face's picture; MOD's own jacks and buttons on it are hidden (the
    surface draws the jacks), as in the performance view */
@@ -78,23 +64,13 @@
     cursor: grab;
 }
 
-/* the surface's zoom buttons: in one row with the NHE / MOD switch, left of
-   it. They're inside the surface (scaled by --nhe-zoom from its top left),
-   the switch outside it: hence the sums */
-#nhe-constructor .nhe-surface__zoom {
-    left: auto;
-    bottom: auto;
-    top: calc(12px / var(--nhe-zoom, 1));
-    right: calc(64px + 120px + 8px / var(--nhe-zoom, 1) + env(safe-area-inset-right, 0px) / var(--nhe-zoom, 1));
-    z-index: 7;
-}
-#nhe-constructor .nhe-surface__zoom button { width: 36px; height: 36px; font-size: 20px; }
-
-/* upright on a phone the snapshot chips (features/bars) take the top row
-   across the screen (Figma "Snapshot switch bar"): the switch and the zoom
-   buttons go to the bottom, still left of MOD's output tiles */
-.nhe-phone-upright #nhe-constructor .nhe-constructor__switch,
+/* the surface's zoom buttons sit at the right edge, clear of the snapshot
+   chips under the top bar (surface.js zoomRight: MOD's output tiles keep
+   below them). Upright on a phone the chips (features/bars) take the top
+   row across the screen (Figma "Snapshot switch bar"): the buttons go to
+   the bottom of the edge, the output tiles above them. (NHE's builder or
+   MOD's is chosen in SET.) */
 .nhe-phone-upright #nhe-constructor .nhe-surface__zoom {
     top: auto;
-    bottom: calc(12px / var(--nhe-zoom, 1));
+    bottom: 12px;
 }

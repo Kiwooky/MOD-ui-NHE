@@ -198,8 +198,11 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   that pedal lies.
 - The surface: `calm-dark.jpg` (a grey sheet), tiled so its holes come
   three to a cell with one under every +, also in SET → Work surface for MOD's builder. The + circles are
-  solid and dark. Zoom buttons sit bottom left (on MOD: one row at the top
-  right with the NHE / MOD switch, left of MOD's output tiles).
+  solid and dark. Zoom buttons sit bottom left (on MOD: at the top
+  right edge, stacked with + on top, shaped like MOD's output tiles and
+  clear of the snapshot chips; the output tiles keep below them, or, with
+  no room for that, the buttons stand left of the tiles; upright on a
+  phone they sit at the bottom of the edge).
 - **Desktop and large tablets** (the screen's short side 600 px or more):
   the pedals' faces with no card behind them, 20% larger than the phone's
   cards' pictures, and a tap zooms in until the face shows at its full
@@ -249,8 +252,8 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   after it; several into one jack join just before it.
 - **On MOD's real pedalboard** (`nhe/features/constructor/`, preference
   `nhe-constructor`): SET → Builder (NHE / MOD, remembered per browser,
-  MOD's by default; also the switch at the surface's top right, or
-  `NHE.builder.set('nhe')`) shows the surface over MOD's builder, between
+  MOD's by default; or `NHE.builder.set('nhe')`; no switch on the
+  surface itself) shows the surface over MOD's builder, between
   its header and footer. The adapter reads the board (`mod.board()`:
   plugins, their ports, MOD's own ports, connections), follows it over
   the websocket (`mod.onBoardChange`), and writes through MOD's own calls
