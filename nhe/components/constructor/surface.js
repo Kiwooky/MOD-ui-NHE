@@ -711,8 +711,9 @@
             // pedals move apart. Cards have no plugs: the gap between two will do
             if (!best || len < (self.faces ? 64 : 20)) return
             seen[pair] = true
-            // in the cable's colour
-            var g = svgEl('g', 'nhe-surface__insert is-' + w.kind, self.n.plugs)
+            // in the cable's colour; with the cables, under the pedals (a face
+            // that covers it hides it)
+            var g = svgEl('g', 'nhe-surface__insert is-' + w.kind, self.n.wires)
             svgEl('circle', 'nhe-surface__insert-hit', g, { cx: best[0], cy: best[1], r: 22 })
             var ring = svgEl('circle', 'nhe-surface__insert-ring', g, { cx: best[0], cy: best[1], r: 10.5 })
             var colour = self.colourOf(w.c)
