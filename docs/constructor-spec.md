@@ -56,8 +56,11 @@ Status: being worked out with Niels; open points are marked **Open**.
 
 - On a desktop (a mouse) every face shows the pedal's working GUI, as MOD's
   builder does: MOD's own icons, lent to the faces and kept up to date by
-  MOD, one copy each. As there, any face's controls play; a click
-  elsewhere on a face zooms in on it, a drag pans or lifts it.
+  MOD, one copy each. Unlike there, a face's controls play only once
+  it's zoomed in on (or shown at 90% of its real size or more), so a slip
+  on a small face can't change a setting unseen; a click on a face that
+  doesn't play, or elsewhere on one that does, zooms in on it, a drag
+  pans or lifts it.
   The performance view and MOD's builder get the icons back while they
   show. A touch screen keeps the pictures, the zoomed-in face live.
 - Phones (cards): a red dot at the card's top left while the plugin is on.

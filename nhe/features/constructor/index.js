@@ -234,11 +234,12 @@ NHE.register('constructor', function (mod) {
                 var icon = mod.borrowIcon(node.id)
                 if (!icon) return false
                 var scaler = $('<div class="nhe-constructor__live">').appendTo(layer)
-                scaler.css('transform', 'scale(' + (layer.offsetWidth / (icon.outerWidth() || layer.offsetWidth)) + ')')
+                var k = layer.offsetWidth / (icon.outerWidth() || layer.offsetWidth)
+                scaler.css('transform', 'scale(' + k + ')')
                 icon.addClass('nhe-constructor__icon').appendTo(scaler)
                 // modgui's click on its background zooms MOD's own canvas: not from here
                 layer.addEventListener('click', function (e) { if (mod.isIconBackground(e.target)) e.stopPropagation() }, true)
-                return true
+                return k || true       // its scale in the layer: the surface works out its size on screen
             },
             onBlur: function (node) {
                 var icon = mod.plugins()[node.id]

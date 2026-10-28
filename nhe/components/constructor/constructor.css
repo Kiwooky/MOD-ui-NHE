@@ -449,6 +449,10 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 .nhe-surface__item.is-live .nhe-surface__face img { visibility: hidden; }
 /* the live GUI keeps the picture's shadow */
 .nhe-surface__item.is-live .nhe-surface__live { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); }
+/* shown too small to play (surface.js markSmall): its controls take no
+   presses; the picture under it (there, unseen) takes them as on any face */
+.nhe-surface__item.is-live.is-small .nhe-surface__live { pointer-events: none; }
+.nhe-surface__item.is-live.is-small .nhe-surface__face img { visibility: visible; opacity: 0; }
 .nhe-surface__item.is-lifted { z-index: 5; box-shadow: 0 12px 32px rgba(0, 0, 0, .7), 0 0 0 3px var(--nhe-accent-default); transform: scale(1.05); }
 
 /* MOD's own ports: a layer over the surface, flush against the screen's

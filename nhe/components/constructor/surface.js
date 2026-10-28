@@ -38,7 +38,9 @@
  *                                           // builder (a desktop); else only the focused one
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
  *                                           // in `layer` (over its picture, the picture's size),
- *                                           // return true if it did; called again after a redraw
+ *                                           // return true if it did (or the scale it drew it at in
+ *                                           // the layer: then it plays only when shown at PLAY_MIN
+ *                                           // of its real size or more); called again after a redraw
  *       onBlur: fn(node),                   // the focused face let go (zoomed out, another one
  *                                           // focused, lifted): take the working GUI back
  *       isControl: fn(target),              // a press there belongs to the live GUI (a knob,
@@ -105,6 +107,7 @@
     var LONG_MS = 450       // a press this long on a pedal lifts it
     var SLOP = 8            // px a pointer can move and still count as a tap / press
     var ZMIN = 0.35, ZMAX = 4.8  // room to show a large face at FOCUS x its full size
+    var PLAY_MIN = 0.9           // a live face's controls play from this much of its real size up (smaller: a slip goes unseen)
     var FOCUS = 1.2         // a tapped face zooms to 120% of its own size (easier to play)
     var FIT_ABOVE = 44, FIT_BELOW = 44   // screen px a focused pedal keeps free above (its gear) and below (its name)
     var MIN_COLS = 3, MIN_ROWS = 3
@@ -1164,6 +1167,7 @@
         this.root.style.backgroundSize = 'auto ' + (this.tile * v.z) + 'px'
         // for what stays screen-sized on the plane (a card's plug button)
         this.root.style.setProperty('--nhe-surface-z', v.z)
+        this.markSmall()
         this.placePorts()
         this.renderWires()
     }
@@ -1306,6 +1310,7 @@
         if (this.released) return
         if (this.o.liveAll && this.faces) this.o.nodes.forEach(function (nd) { if (nd.kind === 'pedal' && nd.cell && self.els[nd.id]) self.mountFace(nd) })
         else if (f) this.mountFace(this.node(f.id))
+        this.markSmall()
     }
     Surface.prototype.mountFace = function (nd) {
         var d = this.els[nd.id], self = this
@@ -1324,14 +1329,30 @@
         layer.style.top = (img.offsetTop + a.y) + 'px'
         layer.style.width = a.w + 'px'
         layer.style.height = a.h + 'px'
-        d.classList.toggle('is-live', !!this.o.liveFace(nd, layer))
+        var live = this.o.liveFace(nd, layer)
+        d.classList.toggle('is-live', !!live)
+        d.__nheLiveScale = typeof live === 'number' ? live : 0
+        this.markSmall()
+    }
+    // live faces shown smaller than PLAY_MIN of their real size don't play
+    // (is-small): a press there pans, lifts or zooms in, as on a picture.
+    // The focused one always plays
+    Surface.prototype.markSmall = function () {
+        var self = this, z = this.view.z, f = this.focused
+        this.o.nodes.forEach(function (nd) {
+            var d = self.els[nd.id]
+            if (!d || !d.classList.contains('is-live')) return
+            // liveFace's scale in the layer, times the view's: its size on screen
+            var s = d.__nheLiveScale ? d.__nheLiveScale * z : 1
+            d.classList.toggle('is-small', s < PLAY_MIN && !(f && f.id === nd.id))
+        })
     }
     // a face lets go of its working GUI (onBlur takes it back)
     Surface.prototype.unmount = function (nd) {
         var d = nd && this.els[nd.id]
         if (typeof this.o.onBlur === 'function' && nd) this.o.onBlur(nd)
         if (!d) return
-        d.classList.remove('is-live')
+        d.classList.remove('is-live', 'is-small')
         var layer = d.querySelector('.nhe-surface__live')
         if (layer) layer.parentNode.removeChild(layer)
     }
@@ -1367,7 +1388,8 @@
     }
 
     // a press on a live face's controls is the GUI's, not the surface's: the
-    // focused face's, or with liveAll any face's (as on MOD's builder). On the
+    // focused face's, or with liveAll any face's shown big enough to see
+    // what it does (markSmall; MOD's builder plays at any size). On the
     // rest of a face a press pans, lifts, or (a tap) zooms in on it
     Surface.prototype.onLive = function (target) {
         var f = this.focused
@@ -1375,6 +1397,7 @@
         var layer = target.closest && target.closest('.nhe-surface__live')
         if (!layer) return false
         if (!(this.o.liveAll && this.faces) && (!f || layer.parentNode !== this.els[f.id])) return false
+        if (layer.parentNode.classList.contains('is-small')) return false     // too small to play
         return this.o.isControl(target)
     }
 
