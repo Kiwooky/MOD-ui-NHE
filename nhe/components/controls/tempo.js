@@ -81,7 +81,7 @@
 
         // full screen on a touch screen, or when it wouldn't fit: NHE.fitDialog (controls.js)
         var overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
-        var d = el('div', 'nhe-dialog nhe-tempo-dialog', overlay)
+        var d = el('div', 'nhe-dialog nhe-dialog--card nhe-tempo-dialog', overlay)
         d.setAttribute('role', 'dialog')
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', 'Tempo and sync')

@@ -646,8 +646,10 @@
 /*
  * Dialogs that fit the screen. Every NHE dialog is a .nhe-dialog-overlay
  * put straight into <body>; this watches for them. On a touch screen (a
- * phone or a tablet: no hover, a coarse pointer) each one runs full screen;
- * elsewhere it stays a centred card unless it would spill over the window,
+ * phone or a tablet: no hover, a coarse pointer) each one runs full screen,
+ * except a short one (.nhe-dialog--card: a yes / no, tempo and sync), which
+ * stays a card there too; elsewhere it stays a centred card unless it would
+ * spill over the window,
  * then it goes full screen too (also when it grows, or the window shrinks).
  * Full screen is sized in px from the window, divided by the dialog's own
  * CSS zoom: Safari multiplies a zoomed box's percentage sizes by its zoom,
@@ -659,11 +661,12 @@
     var NHE = window.NHE = window.NHE || {}
     var DIALOG = '.nhe-dialog, .nhe-add'
     var touch = function () { return !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) }
+    var always = function (d) { return touch() && !d.classList.contains('nhe-dialog--card') }
 
     NHE.fitDialog = function (overlay) {
         var d = overlay && overlay.querySelector(DIALOG)
         if (!d || !overlay.parentNode) return
-        var full = touch()
+        var full = always(d)
         if (!full) {
             // as a card: does it spill?
             overlay.classList.remove('is-full')
@@ -694,7 +697,7 @@
                     NHE.fitDialog(n)
                     // a card that grows later (another assignment type, a field shown)
                     var d = n.querySelector(DIALOG)
-                    if (d && window.ResizeObserver) new ResizeObserver(function () { if (!touch()) NHE.fitDialog(n) }).observe(d)
+                    if (d && window.ResizeObserver) new ResizeObserver(function () { if (!always(d)) NHE.fitDialog(n) }).observe(d)
                 }
             })
         }).observe(document.body, { childList: true })

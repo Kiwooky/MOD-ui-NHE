@@ -22,7 +22,7 @@
     NHE.ConfirmDialog = function (options) {
         var o = mix({ plugin: '', pill: '', title: 'Are you sure?', icon: 'info', text: '', yes: 'Yes', no: 'No', accent: null }, options || {})
         var overlay = el('div', 'nhe-ctl nhe-dialog-overlay', document.body)
-        var d = el('div', 'nhe-dialog nhe-confirm-dialog', overlay)
+        var d = el('div', 'nhe-dialog nhe-dialog--card nhe-confirm-dialog', overlay)
         d.setAttribute('role', 'alertdialog')
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', o.title)

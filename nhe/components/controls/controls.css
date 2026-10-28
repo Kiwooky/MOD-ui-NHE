@@ -864,6 +864,8 @@
 /* the name dialog (preset Save as / Rename) and the confirm dialog are
    short: no stretch above the buttons */
 .nhe-name-dialog .nhe-dialog__field, .nhe-confirm-dialog .nhe-dialog__field { flex: none; }
+/* the confirm dialog's note is all it says: full size */
+.nhe-confirm-dialog .nhe-dialog__note { font-size: var(--nhe-font-size-md); opacity: .85; }
 
 /* a field being typed into starts empty: the old value shows faintly */
 .nhe-ctl input::placeholder { color: inherit; opacity: .45; }
