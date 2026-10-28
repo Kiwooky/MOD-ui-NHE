@@ -49,6 +49,7 @@ function PerformanceView(options) {
     var MAX_SCALE   = 2.0
     var GAP         = 48  // px between pedals
     var PAD_Y       = 28  // px above and below the pedal
+    var TOOLS_H     = 52  // px over it for Flip / Hide and the way out (44 tall, 8 apart): the track's padding-top in the CSS
     var POLL_MS     = 400
     var SETTLE_MS   = 140
     var STORAGE_KEY = 'mod-performance-view'
@@ -556,7 +557,7 @@ function PerformanceView(options) {
         }
         lastStage = key
 
-        var availH = Math.max(40, stageH - PAD_Y * 2)
+        var availH = Math.max(40, stageH - PAD_Y * 2 - TOOLS_H)
         var availW = Math.max(40, stageW * 0.86)
         // the hidden tile: full height, a column of pedals, then more columns
         if (tile && slides.indexOf(tile) >= 0) {

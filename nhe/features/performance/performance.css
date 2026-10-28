@@ -77,7 +77,9 @@ body.performance-mode #js-cv-addressing-toggle {
 #performance-view .performance-track {
     display: flex;
     align-items: center;
+    box-sizing: border-box;
     height: 100%;
+    padding-top: 52px;   /* room for the pills over the centred pedal (performance.js TOOLS_H) */
     width: max-content;
 }
 #performance-view .performance-spacer {
@@ -160,12 +162,12 @@ body.performance-mode #js-cv-addressing-toggle {
     font-size: 20px;
 }
 
-/* = FLIP AND HIDE: pills (icon + label) on the centred pedal's top-left corner
+/* = FLIP AND HIDE: pills (icon + label) over the centred pedal's top-left corner
 ================================================ */
 #performance-view .performance-tools {
     position: absolute;
-    left: -22px;   /* half outside the pedal: clear of a pedal that fills the screen */
-    top: -22px;
+    left: 0;
+    top: -52px;    /* wholly over the pedal, clear of its face (the track keeps that room) */
     z-index: 3;
     display: flex;
     gap: 8px;
@@ -173,7 +175,7 @@ body.performance-mode #js-cv-addressing-toggle {
 /* the optional way out (options.exitButton): the top-right corner */
 #performance-view .performance-tools-exit {
     left: auto;
-    right: -22px;
+    right: 0;
 }
 #performance-view .performance-exit svg { width: 22px; height: 22px; }
 #performance-view .performance-flip,
