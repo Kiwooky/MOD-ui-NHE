@@ -9,7 +9,7 @@
  * plugin's own settings screen. Above
  * them, across the screen, the board's snapshots (80 px tall, the labels
  * as big as fits); the bar's chips don't show over it. The
- * system bar has the meters and SET, no Exit and no Chain tab: another
+ * system bar has the meters, no Exit, SET or Chain tab: another
  * screen in the bottom bar leaves it (features/bars: Live, left of
  * Constructor).
  *
@@ -23,7 +23,7 @@
  *   NHE.liveSurface.open() / close() / isOpen() / onToggle(fn(open))
  *
  * Needs the settings feature (NHE.settingsScreen: the controls' descriptions,
- * the addressing dialog, SET).
+ * the addressing dialog).
  */
 NHE.register('live', function (mod) {
     if (!NHE.settingsScreen || !NHE.settingsScreen.describe) { NHE.log('live: needs the settings feature'); return }
@@ -81,9 +81,8 @@ NHE.register('live', function (mod) {
     var bar = new NHE.SystemBar(barEl[0], {
         tempo: t.bpm, tempoLocked: t.locked, sync: t.sync,
         cpu: stats.cpu, ram: stats.ram, xruns: stats.xruns,
-        exit: false, tabs: false,
-        onTempo: function (bpm) { mod.setTempo(bpm) },
-        onSet: function () { S.openSet() }
+        exit: false, tabs: false,      // and no SET (no onSet)
+        onTempo: function (bpm) { mod.setTempo(bpm) }
     })
     mod.onStats(function (s) { bar.setStats({ cpu: s.cpu, xruns: s.xruns }); bar.setSysStats({ ram: s.ram }) })
     mod.onTempo(function (x) { bar.setTempo(x.bpm, x.locked, x.sync) })
