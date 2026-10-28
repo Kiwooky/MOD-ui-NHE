@@ -477,14 +477,17 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 /* a cable's small +: a pedal goes in between */
 .nhe-surface__insert { pointer-events: all; cursor: pointer; }
 .nhe-surface__insert-hit { fill: transparent; }
-/* the + : white, with a 2.5 px edge in the cable's colour */
+/* the + : white at half strength, with a 2.5 px edge in the cable's colour */
 .nhe-surface__insert-edge, .nhe-surface__insert-plus { fill: none; stroke-linecap: round; }
 .nhe-surface__insert-edge { stroke-width: 8; }
 .nhe-surface__insert.is-audio .nhe-surface__insert-edge { stroke: #6152f0; }
 .nhe-surface__insert.is-midi .nhe-surface__insert-edge { stroke: #d08a2e; }
 .nhe-surface__insert.is-cv .nhe-surface__insert-edge { stroke: #2ea7a0; }
-.nhe-surface__insert-plus { stroke: #fff; stroke-width: 3; }
-.nhe-surface__insert:hover .nhe-surface__insert-edge { filter: brightness(1.25); }
+.nhe-surface__insert-plus { stroke: #fff; stroke-width: 3; opacity: .5; }
+/* desktop: the + shows fully while the pointer is on it */
+@media (hover: hover) and (pointer: fine) {
+    .nhe-surface__insert:hover .nhe-surface__insert-plus { opacity: 1; }
+}
 .nhe-surface__wire-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; cursor: pointer; }
 
 /* faces: sockets on every jack, a plug on each cable end (drag to rewire,

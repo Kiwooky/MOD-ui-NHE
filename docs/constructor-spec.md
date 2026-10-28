@@ -74,8 +74,9 @@ Status: being worked out with Niels; open points are marked **Open**.
   view, **Constructor view** (the puzzle, top right of the centred pedal)
   comes back, zoomed in on the pedal the carousel was showing.
 - A free cell's + is black on a faint white circle (on a desktop, while
-  the pointer is over the cell); a cable's + is white with a few pixels'
-  edge in the cable's colour, no circle.
+  the pointer is over the cell); a cable's + is white, half see-through
+  (fully white under the pointer on a desktop), with a few pixels' edge in
+  the cable's colour, no circle.
 
 ### Kept per board
 
