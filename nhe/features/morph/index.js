@@ -238,7 +238,7 @@ NHE.register('morph', function (mod) {
         var s = st(), n = 0, text = '', counted = ''
         sw.setValue(s.on)
         page.classList.toggle('is-on', !!s.on)
-        if (!s.on) text = s.keys.length ? 'Morph is off: its ' + s.keys.length + ' sliders are free. A and B are kept for when it is on again.' : 'Morph lets you control up to ' + MAX + ' sliders simultaneously between a min and max position.'
+        if (!s.on) text = s.keys.length ? 'Last used Min and Max settings are saved. Turn on to restore.' : 'Morph lets you control up to ' + MAX + ' sliders simultaneously between a min and max position.'
         else if (busy) text = 'Working…'
         else if (!eligible().length) text = 'Add sliders to the live surface first (a control\'s settings → Add to surface).'
         else if (s.phase === 'ready') text = 'Press "Set" to set the minimum value.'
