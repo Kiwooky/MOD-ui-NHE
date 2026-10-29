@@ -1,0 +1,25 @@
+/* SPDX-FileCopyrightText: 2026 New Horizon Electronics */
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+/* Morph targets (index.js): the live surface's Morph tab, and the rings on
+   its sliders while Morph is on */
+
+/* the tab: the switch (no settings icon), Set, the message in a chain card */
+.nhe-morph { gap: var(--nhe-space-8); padding: var(--nhe-space-8) var(--nhe-space-8) 0; overflow-y: auto; }
+.nhe-morph > .nhe-cell { width: 100%; }
+.nhe-morph .nhe-footer { display: none; }
+.nhe-morph .nhe-trigger.is-disabled { opacity: .4; pointer-events: none; }
+.nhe-morph__note.nhe-card { width: 100%; cursor: default; text-align: left; font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-snug); font-weight: var(--nhe-font-weight-medium); }
+.nhe-morph__note.nhe-card:hover { background: inherit; box-shadow: none; }
+.nhe-morph__count { width: 100%; text-align: center; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); color: var(--nhe-status-morph); }
+.nhe-morph__show { display: flex; align-items: center; gap: var(--nhe-space-8); margin-top: auto; padding: var(--nhe-space-8) 0; font-size: var(--nhe-font-size-sm); opacity: .8; cursor: pointer; }
+.nhe-morph__show input { width: 20px; height: 20px; margin: 0; accent-color: var(--nhe-accent-default); }
+
+/* the live surface's sliders: green = Morph moves it (or can), orange =
+   assigned to something else, so it can't; broken free: the green faint */
+.nhe-slider.is-morph .nhe-slider__knob { box-shadow: inset 0 0 0 3px var(--nhe-status-morph); }
+.nhe-slider.is-morph-free .nhe-slider__knob { box-shadow: inset 0 0 0 3px rgba(193, 218, 0, .4); }
+.nhe-slider.is-morph-blocked .nhe-slider__knob { box-shadow: inset 0 0 0 3px var(--nhe-status-warn); }
+
+/* the Morph slider's block: one column */
+.nhe-live__morph { min-width: 0; }

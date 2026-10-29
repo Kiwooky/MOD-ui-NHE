@@ -93,6 +93,8 @@ NHE.register('constructor', function (mod) {
 
     var read = function () {
         var b = mod.board(), out = []
+        // Morph targets' Control to CV, unless "Show in builder" (features/morph)
+        if (NHE.morph) b.pedals = b.pedals.filter(function (p) { return !NHE.morph.hides(p.instance) })
         if (!origin && b.pedals.length) {
             origin = { x: Infinity, y: Infinity }
             b.pedals.forEach(function (p) { origin.x = Math.min(origin.x, p.x); origin.y = Math.min(origin.y, p.y) })
@@ -427,6 +429,7 @@ NHE.register('constructor', function (mod) {
     NHE.builder = {
         current: saved,
         surface: function () { return surface },     // for the console: the work surface (components/constructor/surface.js)
+        refresh: function () { refresh() },
         set: function (v) {
             try { localStorage.setItem(KEY, v === 'nhe' ? 'nhe' : 'mod') } catch (e) {}
             apply()

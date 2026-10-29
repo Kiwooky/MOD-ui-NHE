@@ -1200,6 +1200,60 @@
         else if (on) text.change()                                              // a new name
     }
 
+    // Morph targets (features/morph): a plugin's CV output as a CV source, and
+    // controls addressed to it, without MOD's windows.
+    // The source as MOD's CV checkbox makes it (pedalboard.js): POST
+    // /pedalboard/cv_addressing_plugin_port/add (uri "/cv<port>", name), then
+    // hardwareManager.addCvOutputPort; the port's checkbox and name field
+    // (.output-cv-checkbox, when drawn) are set to match, without their
+    // change handlers.
+    mod.cvSourceUri = function (port) { return '/cv' + port }
+    mod.hasCvSource = function (port) {
+        var hw = mod.pedalboard().data('hardwareManager'), uri = mod.cvSourceUri(port)
+        return !!(hw && (hw.cvOutputPorts || []).some(function (p) { return p.uri === uri }))
+    }
+    mod.addCvSource = function (port, name, cb) {
+        var hw = mod.pedalboard().data('hardwareManager'), uri = mod.cvSourceUri(port)
+        if (!hw) { if (cb) cb(false); return }
+        $.ajax({ url: '/pedalboard/cv_addressing_plugin_port/add', type: 'POST', data: { uri: uri, name: name }, dataType: 'json',
+            success: function (r) {
+                hw.addCvOutputPort(uri, name, r && r.operational_mode)
+                var box = cvBox(port)
+                box.find('input[type=checkbox]').prop('checked', true)
+                box.find('input[type=text]').val(name)
+                if (cb) cb(true)
+            },
+            error: function () { if (cb) cb(false) }
+        })
+    }
+    // a control addressed to a CV source (sourceUri) over min .. max (min may
+    // be above max: it goes down as the source goes up), or unaddressed
+    // (sourceUri null). Through hardwareManager.addressNow (hardware.js),
+    // which posts /effect/parameter/address<port> and updates MOD's own
+    // records (addressingsByPortSymbol / addressingsData, the control
+    // locked while CV drives it) as MOD's Save does. It reports back only by
+    // removing the form it's given, and only when it worked: a stand-in
+    // form's remove() is the callback, with a time-out for a failure.
+    mod.cvAddress = function (instance, symbol, sourceUri, min, max, cb) {
+        var hw = mod.pedalboard().data('hardwareManager'), gui = mod.gui(instance)
+        var port = gui && gui.controls[symbol]
+        var actuator = sourceUri ? (hw && (hw.cvOutputPorts || []).filter(function (p) { return p.uri === sourceUri })[0]) : { uri: null }
+        if (!hw || !port || !actuator) { if (cb) cb(false); return }
+        var done = false, timer = null
+        var finish = function (ok) { if (done) return; done = true; clearTimeout(timer); if (cb) cb(ok) }
+        timer = setTimeout(function () { finish(false) }, 5000)
+        hw.addressNow(instance, port, actuator, min, max, port.shortName || port.name || symbol, 33, false, null, null, null, null, null, null,
+                      sourceUri ? (actuator.defaultOperationalMode || '+') : null, { remove: function () { finish(true) } })
+    }
+    // the addressing's source and range: { uri, minimum, maximum } or null
+    mod.addressingOf = function (instance, symbol) {
+        var hw = mod.pedalboard().data('hardwareManager'), key = instance + '/' + symbol
+        var uri = hw && hw.addressingsByPortSymbol && hw.addressingsByPortSymbol[key]
+        if (!uri || uri === 'null') return null
+        var d = (hw.addressingsData && hw.addressingsData[key]) || {}
+        return { uri: uri, minimum: d.minimum, maximum: d.maximum }
+    }
+
     // the transport: rolling (desktop.transportControls' :rolling port), and
     // setting it as MOD's play button does (ws "transport-rolling", then
     // setPlaybackState: transport.js)

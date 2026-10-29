@@ -130,6 +130,7 @@
     --nhe-border-focus: var(--nhe-accent-default);          /* value box outline, focus: follows the theme colour */
     --nhe-selection: var(--nhe-accent-default);             /* selected row, active segment: follows the theme colour */
     --nhe-status-warn: var(--nhe-color-amber-500);          /* blocked / warning outline */
+    --nhe-status-morph: var(--nhe-color-lime-500);          /* a slider Morph targets can move */
     --nhe-status-error: var(--nhe-color-red-500);           /* errors: xrun outline on the CPU meter */
     --nhe-fill-disabled: var(--nhe-color-grey-700);         /* slider fill while the control is bound */
     --nhe-shadow-thumb: rgba(0, 0, 0, .3);                  /* faux shadow under the slider thumb */

@@ -6,7 +6,7 @@
  * view. Spec: docs/system-bar-spec.md. Needs controls.js and controls.css.
  *
  *   var bar = new NHE.SystemBar(el, {
- *       tab: 'meters' | 'chain',
+ *       tab: 'meters' | 'chain' | 'morph',
  *       tempo: 120, tempoLocked: false, sync: 'MIDI clock',
  *       cpu: 24, ram: 41, xruns: 0,
  *       plugin: 'Can Abyss Delay',
@@ -14,7 +14,9 @@
  *                outputs: [{ port: 'Out (L)', items: [...] }] },
  *       exitIcon: 'exit', exitLabel: 'Exit',   // the top-left button
  *       exit: false,     // no top-left button (the live surface: left by another screen)
- *       tabs: false,     // the meters only, no Chain tab (the live surface)
+ *       tabs: false,     // the meters only, no tabs
+ *       tabs: ['meters', 'morph'],   // which tabs (default meters and chain); the
+ *                        // morph page is bar.n.morph, for the host to fill (features/morph)
  *       onExit, onSet, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab)
  *   })
  *   bar.setStats({ cpu, xruns })   // MOD websocket "stats"
@@ -80,11 +82,17 @@
         n.current = el('div', 'nhe-chain__current', cp)
         n.chain = el('div', 'nhe-chain', cp)
 
+        // morph page: filled by the host
+        n.morph = el('div', 'nhe-system-bar__page nhe-system-bar__morph-page', root)
+
         // tabs
         var tabs = el('div', 'nhe-tabs', root)
-        if (this.o.tabs === false) { tabs.style.display = 'none'; this.o.tab = 'meters' }
+        var ids = this.o.tabs === false ? ['meters'] : this.o.tabs instanceof Array ? this.o.tabs : ['meters', 'chain']
+        if (this.o.tabs === false) tabs.style.display = 'none'
+        if (ids.indexOf(this.o.tab) < 0) this.o.tab = ids[0]
         n.tabs = {}
-        ;[['meters', 'meters', 'Meters'], ['chain', 'chainView', 'Chain']].forEach(function (d) {
+        ;[['meters', 'meters', 'Meters'], ['chain', 'chainView', 'Chain'], ['morph', 'target', 'Morph targets']].forEach(function (d) {
+            if (ids.indexOf(d[0]) < 0) return
             var b = el('button', null, tabs, icon(d[1]))
             b.type = 'button'
             b.setAttribute('aria-label', d[2])
@@ -102,8 +110,7 @@
     SystemBar.prototype.render = function () {
         var o = this.o, n = this.n
         this.root.setAttribute('data-tab', o.tab)
-        n.tabs.meters.classList.toggle('is-active', o.tab === 'meters')
-        n.tabs.chain.classList.toggle('is-active', o.tab === 'chain')
+        Object.keys(n.tabs).forEach(function (id) { n.tabs[id].classList.toggle('is-active', o.tab === id) })
         if (!this.editing) n.readout.innerHTML = '<span class="nhe-readout__value">' + Number(o.tempo).toFixed(2) + '</span><span class="nhe-readout__unit">BPM</span>'
         this.root.classList.toggle('is-tempo-locked', !!o.tempoLocked)
         n.sync.textContent = (o.sync || 'Sync') + ' · Locked'

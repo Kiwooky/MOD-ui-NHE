@@ -425,7 +425,8 @@
 
 .nhe-system-bar__page { display: none; flex-direction: column; align-items: center; width: 100%; flex: 1 1 auto; min-height: 0; }
 .nhe-system-bar[data-tab="meters"] .nhe-system-bar__meters-page,
-.nhe-system-bar[data-tab="chain"] .nhe-system-bar__chain-page { display: flex; }
+.nhe-system-bar[data-tab="chain"] .nhe-system-bar__chain-page,
+.nhe-system-bar[data-tab="morph"] .nhe-system-bar__morph-page { display: flex; }
 
 .nhe-readout {
     display: flex;

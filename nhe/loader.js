@@ -65,6 +65,11 @@
             ]
         },
         {
+            // Morph targets: the live surface's Morph tab (before live, which shows it)
+            id: 'morph',
+            files: ['features/morph/morph.css', 'features/morph/index.js']
+        },
+        {
             // the live surface: controls picked from any plugin, on one screen
             // (before the bars, which give it its button)
             id: 'live',
