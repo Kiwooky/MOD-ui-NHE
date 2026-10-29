@@ -352,6 +352,12 @@
         if (this.full.cols) expand('nhe-surface__expand--col', 'Expand surface', this.cellX(this.cols) + EDGE / 2, Hh + FOOT / 2, function () { self.cols++; self.render() })
         if (this.full.rows) expand('nhe-surface__expand--row', 'Expand surface', EDGE + this.cols * CELL / 2, Hh + FOOT / 2, function () { self.rows++; self.render() })
 
+        // a live face whose pedal is gone from the nodes (removed, or hidden as
+        // Morph's Control to CV) gives its GUI back: off MOD's page, MOD holds
+        // that plugin's values (MIDI, knobs) until it arrives again
+        Object.keys(this.els || {}).forEach(function (id) {
+            if (!self.node(id) && self.els[id].classList.contains('is-live')) self.unmount({ id: id, kind: 'pedal' })
+        })
         // pedals in the plane; MOD's ports in the edge layer (placed in apply)
         n.items.innerHTML = ''
         n.edge.innerHTML = ''

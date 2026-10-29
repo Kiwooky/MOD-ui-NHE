@@ -9,7 +9,7 @@
  *
  * It runs on the MOD, not in the browser: the Morph slider is the Control of
  * MOD's "Control to CV" plugin, added to the board for it (hidden in NHE's
- * builder unless "Show in builder" is ticked); its CV output is a CV source,
+ * builder unless "Show CV setup in constructor" is ticked); its CV output is a CV source,
  * and every morphed slider is CV-addressed to it with A as its minimum and B
  * as its maximum (B may be below A). So a knob, MIDI or an expression pedal
  * on the Morph slider morphs with the tablet closed. Moving the tablet as
@@ -225,7 +225,7 @@ NHE.register('morph', function (mod) {
         count = $('<div class="nhe-morph__count">').appendTo(el)
         var label = $('<label class="nhe-morph__show">').appendTo(el)
         show = $('<input type="checkbox">').prop('checked', showInBuilder()).appendTo(label)
-        $('<span>').text('Show in builder').appendTo(label)
+        $('<span>').text('Show CV setup in constructor').appendTo(label)
         show.on('change', function () {
             try { localStorage.setItem(SHOW_KEY, this.checked ? 'true' : 'false') } catch (e) {}
             if (NHE.builder && NHE.builder.refresh) NHE.builder.refresh()
@@ -238,7 +238,7 @@ NHE.register('morph', function (mod) {
         var s = st(), n = 0, text = '', counted = ''
         sw.setValue(s.on)
         page.classList.toggle('is-on', !!s.on)
-        if (!s.on) text = s.keys.length ? 'Morph is off: its ' + s.keys.length + ' sliders are free. A and B are kept for when it is on again.' : 'Switch on to morph up to ' + MAX + ' sliders on the live surface between two positions.'
+        if (!s.on) text = s.keys.length ? 'Morph is off: its ' + s.keys.length + ' sliders are free. A and B are kept for when it is on again.' : 'Morph lets you control up to ' + MAX + ' sliders simultaneously between a min and max position.'
         else if (busy) text = 'Working…'
         else if (!eligible().length) text = 'Add sliders to the live surface first (a control\'s settings → Add to surface).'
         else if (s.phase === 'ready') text = 'Press "Set" to set the minimum value.'

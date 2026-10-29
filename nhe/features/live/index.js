@@ -8,7 +8,7 @@
  * its colour, at least two columns wide; the controls play as on the
  * plugin's own settings screen. Above
  * them, across the screen, the board's snapshots (80 px tall, the labels
- * as big as fits); the bar's chips don't show over it. The
+ * as big as fits; none with only one); the bar's chips don't show over it. The
  * system bar has the meters and Morph targets (features/morph: its tab, and
  * the Morph slider before the controls), no Exit, SET or Chain tab: another
  * screen in the bottom bar leaves it (features/bars: Live, left of
@@ -222,18 +222,20 @@ NHE.register('live', function (mod) {
     var SNAP_FONT = 28, SNAP_FONT_MIN = 12
     var renderSnaps = function (done) {
         mod.snapshots(function (list) {
-            var had = snaps.children().length > 0
+            var had = snaps.css('display') !== 'none'
             snaps.empty()
             var cur = mod.snapshotCurrent()
             list.forEach(function (s) {
                 $('<button type="button" class="nhe-live__snap">').append($('<span>').text(s.name)).toggleClass('is-on', s.id === cur).appendTo(snaps)
                     .on('click', function () { if (s.id !== mod.snapshotCurrent()) mod.loadSnapshot(s.id) })
             })
-            snaps.toggle(list.length > 0)
+            // one snapshot (the default) has nothing to switch to: no bar
+            var shown = list.length > 1
+            snaps.toggle(shown)
             fitSnaps()
             // the controls' height changes with the bar
             if (done) done()
-            else if (had !== list.length > 0) build()
+            else if (had !== shown) build()
         })
     }
     // the labels at one size, the largest at which all of them fit
