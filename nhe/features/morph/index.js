@@ -299,6 +299,9 @@ NHE.register('morph', function (mod) {
     }
     // a board loaded with Morph on: its plugin, source and addressings back
     var restore = function () {
+        // New: an empty, unsaved board starts with Morph off, whatever an
+        // earlier unsaved board had
+        if (boardId === UNSAVED && !mod.board().pedals.length) delete all[UNSAVED]
         var s = st()
         free = {}
         if (s.instance && !present()) {
@@ -307,6 +310,8 @@ NHE.register('morph', function (mod) {
             if (other) s.instance = other.instance
         }
         if (!s.on) { render(); return }
+        // Control to CV goes back only on a board that has the sliders it morphs
+        if (!present() && !s.keys.some(port)) { render(); return }
         ensurePlugin(function (ok) {
             if (!ok) { render(); return }
             watch()
@@ -322,7 +327,9 @@ NHE.register('morph', function (mod) {
             var id = mod.boardId() || UNSAVED
             if (id === boardId) return
             if (boardId === UNSAVED && all[UNSAVED]) { all[id] = all[UNSAVED]; delete all[UNSAVED] }
-            else if (!all[id] && all[boardId] && !mod.boardLoading()) all[id] = JSON.parse(JSON.stringify(all[boardId]))   // Save as
+            // Save as: the same board under a new name, its Control to CV still
+            // on it (New renames too, but clears the board: nothing to copy)
+            else if (!all[id] && all[boardId] && !mod.boardLoading() && all[boardId].instance && mod.gui(all[boardId].instance)) all[id] = JSON.parse(JSON.stringify(all[boardId]))
             boardId = id
             store()
         }, 300)
@@ -334,7 +341,8 @@ NHE.register('morph', function (mod) {
         // of the same load keep the restore waiting)
         clearTimeout(settle)
         settle = setTimeout(function () {
-            if (reloading) { reloading = false; restore() } else { watch(); render() }
+            // the bundle can change after the first of the load's events: the board's own state
+            if (reloading) { reloading = false; boardId = mod.boardId() || UNSAVED; restore() } else { watch(); render() }
         }, reloading ? 1500 : 300)
     })
     setTimeout(restore, 1500)
