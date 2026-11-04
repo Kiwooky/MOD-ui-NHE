@@ -3,7 +3,8 @@
 
 /*
  * Morph targets: one Morph slider moves up to 10 of the live surface's
- * sliders between two positions, A and B, recorded with Set. It lives in the
+ * sliders between two positions, A (min) and B (max), recorded with Set min
+ * and Set max. It lives in the
  * live surface's system bar (its Morph tab) and as a slider placed before
  * the surface's controls.
  *
@@ -15,20 +16,25 @@
  * on the Morph slider morphs with the tablet closed. Moving the tablet as
  * fast as that backs the Duo up (see ROADMAP: tested).
  *
- *   - Switch on: Set records A (every live-surface slider not assigned
- *     elsewhere); move the sliders, Set records B. The sliders that changed
- *     (the first 10) morph; Morph stands at B (10).
+ *   - Switch on: Set min records A, Set max records B, in either order
+ *     (every live-surface slider not assigned elsewhere). Each sets only its
+ *     own end: the other is kept. The sliders whose A and B differ (the
+ *     first 10) morph; Morph goes to the end just set, so nothing set jumps.
  *   - A morphed slider moved on the live surface breaks free (its CV
- *     addressing dropped); when Morph moves it snaps back. Set while some are
- *     free keeps their new place: in A when Morph is nearer 0, else in B.
- *     Set with none free starts a new morph (A recorded now).
+ *     addressing dropped); when Morph moves it snaps back. Set min / Set max
+ *     takes its new place as that end. A morphed slider still following
+ *     Morph keeps its ends (its place is Morph's): to change an end, move
+ *     Morph there, move the sliders, press that end's Set.
+ *   - A snapshot sets the values saved in it, Morph's and the morphed
+ *     sliders' too: once it has loaded, Morph goes back to where it stood
+ *     and the morphed sliders to their places on it (free ones snap back).
  *   - Switch off: every morphed slider is released; A and B are kept and
  *     come back when switched on.
  *   - A slider assigned to something else (a knob, MIDI) can't morph: an
  *     orange ring while Morph is on; one that can, a green ring.
  *
  * Kept per board (its bundle) in localStorage "nhe-morph" = { bundle: { on,
- * phase: 'ready'|'a'|'done', instance, a: { 'instance/symbol': value }, b,
+ * instance, a: { 'instance/symbol': value }, b, last: 'a'|'b' (set last),
  * keys: [...] } }, and "nhe-morph-show" = 'true' to show the plugin in the
  * builder; components/config.js keeps both on the MOD. A board loaded with
  * Morph on gets its plugin, source and addressings back if it wasn't saved
@@ -58,7 +64,7 @@ NHE.register('morph', function (mod) {
     var boardId = mod.boardId() || UNSAVED
     var st = function () {
         var s = all[boardId]
-        if (!s) s = all[boardId] = { on: false, phase: 'ready', instance: null, a: {}, b: {}, keys: [] }
+        if (!s) s = all[boardId] = { on: false, instance: null, a: {}, b: {}, keys: [] }
         return s
     }
     var store = function () {
@@ -89,9 +95,11 @@ NHE.register('morph', function (mod) {
     }
     var surfaceKeys = function () { return NHE.liveSurface && NHE.liveSurface.list ? NHE.liveSurface.list() : [] }
     var eligible = function () { return surfaceKeys().filter(function (k) { return continuous(k) && !assignedElsewhere(k) }) }
+    var has = function (end) { return Object.keys(st()[end] || {}).length > 0 }
+    // before a morph: the sliders moved since the end set last
     var changed = function () {
-        var a = st().a
-        return eligible().filter(function (k) { return a[k] !== undefined && Math.abs(value(k) - a[k]) > 1e-6 })
+        var s = st(), at = s[s.last || 'a'] || {}
+        return eligible().filter(function (k) { return at[k] !== undefined && Math.abs(value(k) - at[k]) > 1e-6 })
     }
 
     // ---- MOD: the plugin, the source, the addressings ------------------------
@@ -147,54 +155,43 @@ NHE.register('morph', function (mod) {
         ensurePlugin(function (ok) {
             if (!ok) { s.on = false; store(); mod.notify('error', 'Morph: could not add Control to CV'); render(); return }
             watch()
-            if (s.phase === 'done' && s.keys.length) address(s.keys, true)
+            if (s.keys.length) address(s.keys, true)
             render()
             refresh()
         })
         render()
     }
 
-    var pressSet = function () {
+    // Set min (end 'a') / Set max ('b'): the sliders' places now become that
+    // end, the other end kept; then every slider with two different ends morphs
+    var setEnd = function (end) {
         var s = st()
         if (!s.on || busy) return
-        if (s.phase === 'ready') { record('a'); s.phase = 'a'; store(); render(); return }
-        if (s.phase === 'a') {
-            var keys = changed().slice(0, MAX)
-            if (!keys.length) { render('Nothing has changed yet. Move your controls to the desired maximum and press "Set".'); return }
-            record('b')
-            s.keys = keys
-            s.phase = 'done'
-            store()
-            setMorph(TOP)            // Morph at B: nothing jumps
-            address(keys, true)
-            render()
-            return
-        }
-        // done: keep the free ones where they are (A or B, the nearer end), or start again
-        var f = Object.keys(free).filter(function (k) { return s.keys.indexOf(k) >= 0 })
-        if (f.length) {
-            var end = morphValue() < TOP / 2 ? 'a' : 'b'
-            f.forEach(function (k) { s[end][k] = value(k) })
-            free = {}
-            store()
-            address(f, true)
-            render()
-            return
-        }
-        var old = s.keys
-        s.keys = []
-        s.b = {}
-        record('a')
-        s.phase = 'a'
+        // a morphed slider following Morph is at Morph's place, not one set by hand
+        var follows = function (k) { return s.keys.indexOf(k) >= 0 && !free[k] }
+        if (!s[end]) s[end] = {}
+        eligible().forEach(function (k) { if (!follows(k)) s[end][k] = value(k) })
+        s.last = end
+        delete s.phase
+        var differ = function (k) { return s.a[k] !== undefined && s.b && s.b[k] !== undefined && Math.abs(s.a[k] - s.b[k]) > 1e-6 }
+        var can = eligible()
+        var keys = s.keys.filter(function (k) { return can.indexOf(k) >= 0 })
+            .concat(can.filter(function (k) { return s.keys.indexOf(k) < 0 }))
+            .filter(differ).slice(0, MAX)
+        var dropped = s.keys.filter(function (k) { return keys.indexOf(k) < 0 })
+        var added = keys.filter(function (k) { return s.keys.indexOf(k) < 0 || free[k] })
+        s.keys = keys
+        free = {}
         store()
-        address(old, false)
+        if (keys.length) setMorph(end === 'a' ? 0 : TOP)     // at the end just set: nothing set jumps
+        address(dropped, false, function () { address(added, true) })
         render()
     }
 
     // a morphed slider moved by hand: it breaks free until Morph moves
     var touched = function (instance, symbol) {
         var s = st(), k = instance + '/' + symbol
-        if (!s.on || s.phase !== 'done' || s.keys.indexOf(k) < 0 || free[k]) return
+        if (!s.on || s.keys.indexOf(k) < 0 || free[k]) return
         free[k] = true
         var v = value(k)
         mod.cvAddress(instance, symbol, null, 0, 1, function () {
@@ -215,12 +212,14 @@ NHE.register('morph', function (mod) {
 
     // ---- the Morph tab -------------------------------------------------------
 
-    var page = null, sw = null, set = null, note = null, count = null, show = null
+    var page = null, sw = null, setMin = null, setMax = null, note = null, count = null, show = null
     var attach = function (el) {
         page = el
         el.classList.add('nhe-morph')
         sw = new NHE.Toggle($('<div>').appendTo(el)[0], { title: 'Morph targets', value: st().on, onChange: function (on) { switchOn(on) } })
-        set = new NHE.Trigger($('<div>').appendTo(el)[0], { title: 'Set', onTrigger: pressSet })
+        var ends = $('<div class="nhe-morph__ends">').appendTo(el)[0]
+        setMin = new NHE.Trigger($('<div>').appendTo(ends)[0], { title: 'Set min', onTrigger: function () { setEnd('a') } })
+        setMax = new NHE.Trigger($('<div>').appendTo(ends)[0], { title: 'Set max', onTrigger: function () { setEnd('b') } })
         note = $('<div class="nhe-card nhe-morph__note" role="status">').appendTo(el)
         count = $('<div class="nhe-morph__count">').appendTo(el)
         var label = $('<label class="nhe-morph__show">').appendTo(el)
@@ -241,19 +240,23 @@ NHE.register('morph', function (mod) {
         if (!s.on) text = s.keys.length ? 'Last used Min and Max settings are saved. Turn on to restore.' : 'Morph lets you control up to ' + MAX + ' sliders simultaneously between a min and max position.'
         else if (busy) text = 'Working…'
         else if (!eligible().length) text = 'Add sliders to the live surface first (a control\'s settings → Add to surface).'
-        else if (s.phase === 'ready') text = 'Press "Set" to set the minimum value.'
-        else if (s.phase === 'a') {
-            text = 'Move your controls to the desired maximum and press "Set" to create a morph.'
-            n = changed().length
-            counted = n > MAX ? n + ' sliders changed: the first ' + MAX + ' will morph' : n + ' of ' + MAX + ' sliders changed'
+        else if (!s.keys.length) {
+            var other = s.last === 'b' ? 'min' : 'max'
+            if (!has('a') && !has('b')) text = 'Move your controls to their minimum and press "Set min", or to their maximum and press "Set max".'
+            else {
+                text = (s.last === 'b' ? 'Max' : 'Min') + ' set. Move your controls to their ' + other + 'imum and press "Set ' + other + '" to create a morph.'
+                n = changed().length
+                counted = n > MAX ? n + ' sliders changed: the first ' + MAX + ' will morph' : n + ' of ' + MAX + ' sliders changed'
+            }
         } else {
             var f = Object.keys(free).length
-            text = f ? f + ' broken free. Move Morph to snap ' + (f === 1 ? 'it' : 'them') + ' back, or press "Set" to keep ' + (f === 1 ? 'it' : 'them') + ' there.'
-                     : 'Morphing ' + s.keys.length + ' slider' + (s.keys.length === 1 ? '' : 's') + '. Press "Set" to start a new morph.'
+            text = f ? f + ' broken free. Move Morph to snap ' + (f === 1 ? 'it' : 'them') + ' back, or press "Set min" or "Set max" to keep ' + (f === 1 ? 'it' : 'them') + ' there.'
+                     : 'Morphing ' + s.keys.length + ' slider' + (s.keys.length === 1 ? '' : 's') + '. To change an end, move Morph to it, move the sliders and press its "Set".'
         }
         note.text(message || text)
         count.text(counted).toggle(!!counted)
-        set.root.classList.toggle('is-disabled', !s.on || busy)
+        setMin.root.classList.toggle('is-disabled', !s.on || busy)
+        setMax.root.classList.toggle('is-disabled', !s.on || busy)
     }
     var refresh = function () { if (NHE.liveSurface && NHE.liveSurface.rebuild) NHE.liveSurface.rebuild() }
 
@@ -295,8 +298,26 @@ NHE.register('morph', function (mod) {
         var s = st()
         if (!present() || watched === mod.gui(s.instance)) return
         watched = mod.gui(s.instance)
-        mod.onPortValue(s.instance, function (symbol) { if (symbol === CONTROL) snapBack() })
+        noteMove(morphValue(), 0)        // where it stands now, however long ago
+        mod.onPortValue(s.instance, function (symbol) { if (symbol === CONTROL) { noteMove(morphValue(), Date.now()); snapBack() } })
     }
+    // Morph's recent places, [{ v, t }]: where it stood before a snapshot's
+    // values arrived (they come within LOAD_MS of its "pedal_snapshot")
+    var moves = [], LOAD_MS = 1500
+    var noteMove = function (v, t) { moves.push({ v: v, t: t }); if (moves.length > 50) moves.shift() }
+    var stoodAt = function (now) {
+        var before = moves.filter(function (m) { return m.t < now - LOAD_MS })
+        return before.length < moves.length && before.length ? before[before.length - 1].v : null
+    }
+    mod.onSnapshotLoaded(function () {
+        var s = st(), now = Date.now(), v = stoodAt(now)
+        if (!s.on || !present() || !s.keys.length || busy) return
+        if (v !== null && v !== morphValue()) setMorph(v)
+        // the snapshot set the morphed sliders too: back on Morph
+        free = {}
+        address(s.keys, true)
+        noteMove(v !== null ? v : morphValue(), now - LOAD_MS)
+    })
     // a board loaded with Morph on: its plugin, source and addressings back
     var restore = function () {
         // New: an empty, unsaved board starts with Morph off, whatever an
@@ -316,7 +337,7 @@ NHE.register('morph', function (mod) {
             if (!ok) { render(); return }
             watch()
             var src = source()
-            var missing = s.phase === 'done' ? s.keys.filter(function (k) { var x = split(k), a = mod.addressingOf(x.instance, x.symbol); return port(k) && (!a || a.uri !== src) }) : []
+            var missing = s.keys.length ? s.keys.filter(function (k) { var x = split(k), a = mod.addressingOf(x.instance, x.symbol); return port(k) && (!a || a.uri !== src) }) : []
             address(missing, true)
             render()
             refresh()
@@ -351,9 +372,9 @@ NHE.register('morph', function (mod) {
         attach: attach, slider: slider, paint: paint, binding: binding,
         touched: touched, surfaceChanged: surfaceChanged,
         hides: function (instance) { return !showInBuilder() && instance === st().instance },
-        // a control's value changed: while A is set, the count of changed sliders (once a frame)
+        // a control's value changed: before a morph, the count of changed sliders (once a frame)
         moved: function () {
-            if (!st().on || st().phase !== 'a' || moveQueued) return
+            if (!st().on || st().keys.length || moveQueued) return
             moveQueued = true
             requestAnimationFrame(function () { moveQueued = false; render() })
         }

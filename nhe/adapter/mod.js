@@ -1166,6 +1166,19 @@
         if (win && window.MutationObserver) new MutationObserver(function () { if (!$(win).is(':visible')) later() }).observe(win, { attributes: true, attributeFilter: ['style', 'class'] })
     }
 
+    // a snapshot finished loading (from NHE, MOD's window or the device's
+    // footswitches): host.py snapshot_load sends "pedal_snapshot <id> <name>"
+    // over the websocket after setting the snapshot's values ("param_set"
+    // for each one that changed, Control to CV's and CV-addressed ones too)
+    mod.onSnapshotLoaded = function (cb) {
+        var socket = window.ws
+        if (socket && socket.addEventListener) {
+            socket.addEventListener('message', function (evt) {
+                if (String(evt.data).split(' ', 1)[0] === 'pedal_snapshot') cb()
+            })
+        }
+    }
+
     // Manage CV ports (the top bar's CV button; desktop.cvAddressing): which
     // CV outputs are offered as CV sources to assign controls to. MOD puts a
     // checkbox and a name field (.output-cv-checkbox) under every CV output

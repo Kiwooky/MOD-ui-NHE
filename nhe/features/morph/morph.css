@@ -4,10 +4,13 @@
 /* Morph targets (index.js): the live surface's Morph tab, and the rings on
    its sliders while Morph is on */
 
-/* the tab: the switch (no settings icon), Set, the message in a chain card */
+/* the tab: the switch (no settings icon), Set min above Set max (the
+   bar is one control wide), the message in a chain card */
 .nhe-morph { gap: var(--nhe-space-8); padding: var(--nhe-space-8) var(--nhe-space-8) 0; overflow-y: auto; }
 .nhe-morph > .nhe-cell { width: 100%; }
 .nhe-morph .nhe-footer { display: none; }
+.nhe-morph__ends { display: flex; flex-direction: column; gap: var(--nhe-space-8); width: 100%; }
+.nhe-morph__ends > .nhe-cell { width: 100%; }
 .nhe-morph .nhe-trigger.is-disabled { opacity: .4; pointer-events: none; }
 .nhe-morph__note.nhe-card { width: 100%; cursor: default; text-align: left; font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-snug); font-weight: var(--nhe-font-weight-medium); }
 .nhe-morph__note.nhe-card:hover { background: inherit; box-shadow: none; }
