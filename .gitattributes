@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# installers: Windows needs CRLF, the MOD and macOS need LF
+*.bat text eol=crlf
+*.command text eol=lf
+*.sh text eol=lf

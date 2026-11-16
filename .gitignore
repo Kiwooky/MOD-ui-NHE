@@ -5,3 +5,4 @@ node_modules/
 !nhe/backgrounds/*.png
 __pycache__/
 .claude/
+dist/

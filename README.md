@@ -16,6 +16,19 @@ Values, presets and assignments all go through MOD's own code, so everything sta
 
 ## Install it on your MOD
 
+### The easy way: double-click
+
+1. **Download** this repository: on GitHub, **Code → Download ZIP**, and unzip it.
+2. **Connect the MOD** over USB and wait until http://192.168.51.1 opens MOD's page in your browser.
+3. **Run the installer** in the unzipped folder:
+   - **Mac:** double-click `Install NHE.command`. The first time, macOS blocks it because it was downloaded: right-click it, choose **Open**, then **Open** again (on macOS 15 and later: **System Settings → Privacy & Security → Open Anyway**).
+   - **Windows 10 / 11:** double-click `Install NHE (Windows).bat`. If Windows warns about it, choose **More info → Run anyway**.
+4. Press Return for the usual address, then type the MOD's password when asked: `mod`. Reload http://192.168.51.1.
+
+Run it again to update, and after every MOD OS update (which removes NHE's hooks). `Uninstall NHE.command` / `Uninstall NHE (Windows).bat` put MOD's own page back.
+
+### From a terminal
+
 You need a Mac or Linux computer (on Windows, use [WSL](https://learn.microsoft.com/windows/wsl/)) and your MOD device connected over USB.
 
 1. **Get this repository.** Either `git clone https://github.com/Kiwooky/MOD-ui-NHE.git`, or on GitHub choose **Code → Download ZIP** and unzip it.
@@ -37,6 +50,16 @@ For a MOD on your network instead of USB, add its address: `sh tools/deploy.sh 1
 - Use **one MOD tab at a time**: MOD's UI expects one browser, and a second tab can hang on "Loading pedalboard…".
 
 Status and what's next: [ROADMAP.md](ROADMAP.md).
+
+### On Starless (19 or newer): a zip, no terminal
+
+Starless has an installer for other web UIs in **Settings › Developer › User interfaces (EXPERIMENTAL)**. It takes a whole web UI, so NHE's zip is Starless's own UI with NHE inside it.
+
+1. **Build the zip** (on a Mac or Linux computer, from this folder): `npm run zip`, or `sh tools/package-zip.sh`. It downloads Starless's UI (github.com/sejerpz/mod-ui, branch `starless`), adds `nhe/` and the loader tag, and writes `dist/nhe-<version>.zip`. Share that file with testers.
+2. **Install it** in the MOD's web UI: Settings › Developer › User interfaces, name it `nhe`, choose the zip (don't unpack it), **Install**, then pick **nhe** in the list. Reload.
+3. **Switch back**: pick **Default** in the same list.
+
+The zip carries a copy of Starless's UI as it was when you built it: rebuild it when Starless updates. Other sources: `--ref <branch or tag>`, `--repo <owner/repo>`, or `--html <folder>` for a html/ folder you have (see `sh tools/package-zip.sh --help`). Stock MOD OS has no such installer; use the steps above.
 
 ## How it fits into MOD
 
@@ -67,6 +90,7 @@ nhe/
 tools/
   devproxy.js            local preview: MOD's real UI + this repo's files, live
   deploy.sh              copy to the device and install
+  package-zip.sh         a zip for Starless's User interfaces installer (npm run zip)
 playground/              component playgrounds, no MOD needed (npm run playground)
 docs/                    specs (slider, buttons, selects, system bar, addressing, plugin colour, performance flip)
 test/                    browser tests (see test/README.md)

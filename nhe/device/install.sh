@@ -8,7 +8,8 @@
 #
 # Safe to run again (after every deploy, or after a MOD OS update, which
 # wipes these hooks). It:
-#   - backs up MOD's original index.html to /data/nhe-backup/ (first run only)
+#   - backs up MOD's original index.html to /data/nhe-backup/ (whenever it is
+#     still MOD's own, so also after a MOD OS update)
 #   - links /usr/share/mod/html/nhe -> /data/nhe (so later updates are just
 #     file copies into /data/nhe, no remount needed)
 #   - adds one <script> tag for nhe/loader.js to index.html
@@ -38,14 +39,14 @@ restore() { if [ "$remounted" = 1 ]; then sync; mount -o remount,ro /; fi; }
 trap restore EXIT
 
 mkdir -p "$BACKUP"
-if [ ! -f "$BACKUP/index.html.orig" ]; then
-    # an earlier manual install kept its backup here; prefer that pristine copy
-    if [ -f /data/index.html.orig ]; then
-        cp /data/index.html.orig "$BACKUP/index.html.orig"
-    else
-        cp "$HTML/index.html" "$BACKUP/index.html.orig"
-    fi
+if ! grep -q 'nhe/loader\.js\|performance-inject\.js' "$HTML/index.html"; then
+    # MOD's own page, untouched: back it up, also after a MOD OS update (which
+    # brings a new one), so uninstall.sh never puts back an older OS's page
+    cp "$HTML/index.html" "$BACKUP/index.html.orig"
     echo "Backed up MOD's index.html to $BACKUP/index.html.orig"
+elif [ ! -f "$BACKUP/index.html.orig" ] && [ -f /data/index.html.orig ]; then
+    # an earlier manual install kept its backup here
+    cp /data/index.html.orig "$BACKUP/index.html.orig"
 fi
 
 # link (replace a stale link, never a real folder)
