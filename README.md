@@ -18,7 +18,7 @@ Values, presets and assignments all go through MOD's own code, so everything sta
 
 ### The easy way: double-click
 
-1. **Download** this repository: on GitHub, **Code → Download ZIP**, and unzip it.
+1. **Download** [nhe-installer.zip](https://github.com/Kiwooky/MOD-ui-NHE/releases/latest/download/nhe-installer.zip) (the latest release) and unzip it.
 2. **Connect the MOD** over USB and wait until http://192.168.51.1 opens MOD's page in your browser.
 3. **Run the installer** in the unzipped folder:
    - **Mac:** double-click `Install NHE.command`. The first time, macOS blocks it because it was downloaded: right-click it, choose **Open**, then **Open** again (on macOS 15 and later: **System Settings → Privacy & Security → Open Anyway**).
@@ -55,11 +55,15 @@ Status and what's next: [ROADMAP.md](ROADMAP.md).
 
 Starless has an installer for other web UIs in **Settings › Developer › User interfaces (EXPERIMENTAL)**. It takes a whole web UI, so NHE's zip is Starless's own UI with NHE inside it.
 
-1. **Build the zip** (on a Mac or Linux computer, from this folder): `npm run zip`, or `sh tools/package-zip.sh`. It downloads Starless's UI (github.com/sejerpz/mod-ui, branch `starless`), adds `nhe/` and the loader tag, and writes `dist/nhe-<version>.zip`. Share that file with testers.
+1. **Download** [nhe-starless.zip](https://github.com/Kiwooky/MOD-ui-NHE/releases/latest/download/nhe-starless.zip) (the latest release). Or build one yourself (Mac or Linux, from this folder): `npm run zip`, or `sh tools/package-zip.sh`. It downloads Starless's UI (github.com/sejerpz/mod-ui, branch `starless`), adds `nhe/` and the loader tag, and writes `dist/nhe-<version>.zip`.
 2. **Install it** in the MOD's web UI: Settings › Developer › User interfaces, name it `nhe`, choose the zip (don't unpack it), **Install**, then pick **nhe** in the list. Reload.
 3. **Switch back**: pick **Default** in the same list.
 
 The zip carries a copy of Starless's UI as it was when you built it: rebuild it when Starless updates. Other sources: `--ref <branch or tag>`, `--repo <owner/repo>`, or `--html <folder>` for a html/ folder you have (see `sh tools/package-zip.sh --help`). Stock MOD OS has no such installer; use the steps above.
+
+### Releasing (for maintainers)
+
+Publish a release on GitHub (**Releases → Draft a new release**, a tag such as `v0.2.0`, notes). The **Release downloads** workflow (`.github/workflows/release.yml`) then builds `nhe-starless.zip` and `nhe-installer.zip` and attaches them, so the links above fetch the new version. When Starless updates its UI, rebuild a release from **Actions → Release downloads → Run workflow** with its tag.
 
 ## How it fits into MOD
 

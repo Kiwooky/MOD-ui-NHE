@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 New Horizon Electronics
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Builds NHE's downloads and attaches them to a GitHub release:
+#   nhe-starless.zip   for Starless's Settings > Developer > User interfaces
+#   nhe-installer.zip  the double-click installers + nhe/, for stock MOD OS
+#
+# Runs when a release is published. To rebuild an existing release (e.g. after
+# Starless updated its UI): Actions > Release downloads > Run workflow, give the tag.
+#
+# Their names never change, so these links always fetch the newest release:
+#   https://github.com/Kiwooky/MOD-ui-NHE/releases/latest/download/nhe-starless.zip
+#   https://github.com/Kiwooky/MOD-ui-NHE/releases/latest/download/nhe-installer.zip
+
+name: Release downloads
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to rebuild (e.g. v0.2.0)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: Starless zip
+        run: NHE_VERSION="$TAG" sh tools/package-zip.sh -o "$RUNNER_TEMP/nhe-starless.zip"
+
+      - name: Installer zip
+        run: |
+          DIR="MOD-ui-NHE-$TAG"
+          mkdir -p "$RUNNER_TEMP/pkg/$DIR"
+          cp -R nhe README.md LICENSE \
+             "Install NHE.command" "Uninstall NHE.command" \
+             "Install NHE (Windows).bat" "Uninstall NHE (Windows).bat" \
+             "$RUNNER_TEMP/pkg/$DIR/"
+          chmod +x "$RUNNER_TEMP/pkg/$DIR/"*.command
+          (cd "$RUNNER_TEMP/pkg" && zip -qr -X "$RUNNER_TEMP/nhe-installer.zip" "$DIR")
+
+      - name: Attach to the release
+        run: gh release upload "$TAG" "$RUNNER_TEMP/nhe-starless.zip" "$RUNNER_TEMP/nhe-installer.zip" --clobber --repo "$GITHUB_REPOSITORY"

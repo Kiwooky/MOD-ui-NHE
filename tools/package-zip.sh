@@ -71,7 +71,9 @@ HTML="$TMP/out/html"
 rm -rf "$HTML/nhe"
 
 # 2. NHE inside it (the device scripts only make sense on a stock install)
-VERSION=$(git rev-parse --short HEAD 2>/dev/null || echo nogit)-$(date +%Y%m%d%H%M%S)
+# NHE_VERSION (e.g. a release tag) names this build; otherwise commit + time
+VERSION=${NHE_VERSION:-$(git rev-parse --short HEAD 2>/dev/null || echo nogit)-$(date +%Y%m%d%H%M%S)}
+VERSION=$(printf %s "$VERSION" | tr -cd 'A-Za-z0-9._-')
 mkdir -p "$HTML/nhe"
 (cd nhe && tar -cf - --exclude ./device --exclude .DS_Store .) | (cd "$HTML/nhe" && tar -xf -)
 printf '{"version": "%s"}\n' "$VERSION" > "$HTML/nhe/version.json"
