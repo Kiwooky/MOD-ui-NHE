@@ -96,6 +96,7 @@
             var b = el('button', null, tabs, icon(d[1]))
             b.type = 'button'
             b.setAttribute('aria-label', d[2])
+            b.title = d[2]
             b.addEventListener('click', function () { self.o.tab = d[0]; self.render(); self.emit('onTab', d[0]) })
             n.tabs[d[0]] = b
         })

@@ -45,7 +45,7 @@
         o = o || {}
         var b = el('button', 'nhe-icon-button', null, icon(name))
         b.type = 'button'
-        if (o.label) b.setAttribute('aria-label', o.label)
+        if (o.label) { b.setAttribute('aria-label', o.label); b.title = o.label }    // the tooltip too
         if (o.disabled) b.disabled = true
         if (o.onClick) b.addEventListener('click', o.onClick)
         return b

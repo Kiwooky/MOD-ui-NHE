@@ -137,6 +137,17 @@ NHE.register('settings', function (mod) {
         var stage = st.stage = $('<div class="nhe-settings__stage">').appendTo(st.sizer)
         st.barEl = $('<div>').appendTo(stage)
         st.panelEl = $('<div>').appendTo(stage)
+        // built for a height that was still settling (a pedal's back measured
+        // mid-flip, a tablet's toolbars coming and going): built again once it
+        // has its own (the window's resize doesn't always follow)
+        if (window.ResizeObserver) {
+            var settle = null
+            new ResizeObserver(function () {
+                if (!st.panel || !shown(st) || Math.abs((st.root.innerHeight() || st.host.innerHeight()) - st.measured) < 2) return
+                clearTimeout(settle)
+                settle = setTimeout(function () { if (shown(st)) build(st) }, 150)
+            }).observe(st.root[0])
+        }
         var t = mod.tempo(), stats = mod.stats()
         st.bar = new NHE.SystemBar(st.barEl[0], {
             tempo: t.bpm, tempoLocked: t.locked, sync: t.sync,
@@ -183,7 +194,8 @@ NHE.register('settings', function (mod) {
 
         // the column height follows the host, in the stage's own (scaled) px
         var z = NHE.settingsZoom ? NHE.settingsZoom() : 1
-        var h = Math.max(MIN_HEIGHT, Math.floor(((st.root.innerHeight() || st.host.innerHeight()) - 8) / z))
+        st.measured = st.root.innerHeight() || st.host.innerHeight()
+        var h = Math.max(MIN_HEIGHT, Math.floor((st.measured - 8) / z))
 
         st.barEl.css('height', h + 'px')
         st.bar.update({ plugin: info.label, chain: mod.neighbours(instance), tab: barTab() })

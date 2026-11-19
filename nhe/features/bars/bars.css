@@ -23,6 +23,9 @@
     z-index: 2;
 }
 :is(#pedalboard-actions, #main-menu) .nhe-topbar { top: 0; }
+/* the bottom bar's More menu open: MOD's bar over its screens (z-index 1000),
+   or the menu opens behind the Library, Banks, File manager and Store */
+#main-menu.nhe-raised { z-index: 1001; }
 :is(#pedalboard-actions, #main-menu) .nhe-bottombar { bottom: 0; justify-content: space-between; }
 
 /* an icon button, its label beside it when it has one */

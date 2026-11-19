@@ -299,11 +299,14 @@ NHE.register('bars', function (mod) {
         if (more) more.remove()
         more = null
         bMenu.removeClass('is-open')
+        bottom.parent().removeClass('nhe-raised')
     }
     var toggleMore = function () {
         if (more) { closeMore(); return }
         closePanel()
         bMenu.addClass('is-open')
+        // over MOD's screens (Library, Banks, ...: z-index 1000) while it's open
+        bottom.parent().addClass('nhe-raised')
         more = $('<div class="nhe-menupanel nhe-menupanel--up" role="menu">').attr('aria-label', 'More').appendTo(bottom)
         menuRows(more, MORE, closeMore)
     }
