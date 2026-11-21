@@ -414,8 +414,18 @@ NHE.register('constructor', function (mod) {
 
     var shown = function () { return saved() === 'nhe' }
 
+    // MOD's builder: - / + where NHE's builder has them (MOD's own are under
+    // NHE's top bar), and touch pans and pinches it (adapter: touchBoard)
+    var modZoom = $('<div class="nhe-modzoom">').appendTo(mod.boardFrame())
+    ;[['+', 1, 'Zoom in'], ['\u2212', -1, 'Zoom out']].forEach(function (z) {
+        $('<button type="button">').text(z[0]).attr({ 'aria-label': z[2], title: z[2] }).appendTo(modZoom)
+            .on('click', function () { mod.zoomBoard(z[1]) })
+    })
+    mod.touchBoard()
+
     var apply = function () {
         var on = shown()
+        modZoom.toggle(!on)
         if (!on && surface) surface.release()  // MOD's builder gets its icons back
         view.toggle(on)
         mod.coverBuilder(on)

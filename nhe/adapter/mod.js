@@ -1481,6 +1481,67 @@
     // While NHE's builder covers MOD's: MOD's zoom buttons and CV toggle
     // (#zoom-controllers, #js-cv-addressing-toggle, over the canvas) hide,
     // as the performance view does
+    // MOD's builder, zoomed and panned from NHE: its own - / + (#zoom-controllers)
+    // sit in MOD's top bar, under NHE's, and its pinch is Safari's gesture
+    // events only (pedalboard.js initGestures), so Chrome and Edge zoom the
+    // whole page. pedalboard.js zoomIn / zoomOut step between minScale, 0.5
+    // and 1; zoom(scale, canvasX, canvasY, screenX, screenY, ms) puts canvas
+    // point (x, y) at screen point (x, y), as its drag and gestures do
+    mod.zoomBoard = function (dir) { mod.pedalboard().pedalboard(dir > 0 ? 'zoomIn' : 'zoomOut') }
+    mod.boardFrame = function () { return mod.pedalboard().parent() }     // MOD's canvas's window
+    // touch on MOD's canvas: one finger on its empty part pans (MOD pans on
+    // mousedown, which a dragging finger never sends), two pinch (not on
+    // Safari: MOD's own gestures do it there). Pedals stay MOD's (touch-punch)
+    mod.touchBoard = function () {
+        var pb = mod.pedalboard(), el = pb[0], down = {}, g = null
+        var safari = 'ongesturestart' in window
+        el.style.touchAction = 'none'
+        var ids = function () { return Object.keys(down) }
+        var mid = function (a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }
+        var dist = function (a, b) { return Math.hypot(a.x - b.x, a.y - b.y) || 1 }
+        // the canvas point under page point p, at the scale now
+        var anchor = function (p) {
+            var k = pb.data('scale'), o = pb.offset()
+            return { scale: k, cx: (p.x - o.left) / k, cy: (p.y - o.top) / k }
+        }
+        var frame = function () { return pb.parent().offset() }
+        el.addEventListener('pointerdown', function (e) {
+            if (e.pointerType !== 'touch') return
+            var p = down[e.pointerId] = { x: e.pageX, y: e.pageY }
+            var n = ids().length
+            if (n === 1) {
+                // the canvas itself (its cables' svg too), not a pedal or a jack
+                var bare = e.target === el || String(e.target.tagName).toLowerCase() === 'svg'
+                g = bare ? { mode: 'pan', id: e.pointerId, start: p, a: anchor(p), f: frame() } : null
+            } else if (n === 2 && !safari) {
+                var a = down[ids()[0]], b = down[ids()[1]]
+                g = { mode: 'pinch', dist: dist(a, b), a: anchor(mid(a, b)) }
+            } else g = null
+        })
+        window.addEventListener('pointermove', function (e) {
+            if (!down[e.pointerId]) return
+            down[e.pointerId] = { x: e.pageX, y: e.pageY }
+            if (!g) return
+            if (g.mode === 'pan') {
+                if (e.pointerId !== g.id) return
+                pb.pedalboard('zoom', g.a.scale, g.a.cx, g.a.cy, g.start.x - g.f.left + e.pageX - g.start.x, g.start.y - g.f.top + e.pageY - g.start.y, 0)
+                return
+            }
+            var l = ids()
+            if (l.length < 2) return
+            var a = down[l[0]], b = down[l[1]], m = mid(a, b), f = frame()
+            var k = Math.max(pb.data('minScale'), Math.min(pb.data('maxScale'), g.a.scale * dist(a, b) / g.dist))
+            pb.pedalboard('zoom', k, g.a.cx, g.a.cy, m.x - f.left, m.y - f.top, 0)
+        })
+        var up = function (e) {
+            if (!down[e.pointerId]) return
+            delete down[e.pointerId]
+            g = null                // a pinch ends when a finger lifts; no pan from the one left
+        }
+        window.addEventListener('pointerup', up)
+        window.addEventListener('pointercancel', up)
+    }
+
     mod.coverBuilder = function (on) {
         var style = document.getElementById('nhe-cover-builder')
         if (on && !style) {
