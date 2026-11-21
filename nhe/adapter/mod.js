@@ -1003,11 +1003,21 @@
         snapshotManage: '#pedalboard-info .js-preset-manage',
         // bottom bar (#main-menu)
         constructor: '#mod-plugins', performance: '#mod-performance', library: '#mod-pedalboard', banks: '#mod-bank',
-        files: '#mod-file-manager', store: '#mod-cloud-plugins', report: '#mod-report', tempo: '#mod-transport-icon',
+        // store: MOD's Plugin Store, or MODEP's PatchStorage (#patchstorage, Patchbox
+        // OS / mod-ui 1.13), which MODEP shows in its place
+        files: '#mod-file-manager', store: '#mod-cloud-plugins, #patchstorage', report: '#mod-report', tempo: '#mod-transport-icon',
         bypass1: '#mod-bypassLeft', bypass2: '#mod-bypassRight', midiPorts: '#mod-show-midi-port',
         settings: '#mod-settings', devices: '#mod-devices', update: '#mod-update'
     }
-    var barEl = function (name) { return BAR[name] ? $(BAR[name]).first() : $() }
+    // with more than one candidate (store), the one MOD shows; else the first
+    var barEl = function (name) {
+        if (!BAR[name]) return $()
+        var all = $(BAR[name])
+        var shown = all.filter(function () {
+            return !$(this).hasClass('mod-hidden') && $(this).css('display') !== 'none' && (!this.style || this.style.display !== 'none')
+        })
+        return (shown.length ? shown : all).first()
+    }
     mod.menuAction = function (name) { barEl(name).click() }
     // { shown, selected, greyed, modified, on, available, text } of one of
     // MOD's bar items: shown when MOD shows it (not .mod-hidden, not display:
