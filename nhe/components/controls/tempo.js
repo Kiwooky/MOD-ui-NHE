@@ -91,15 +91,17 @@
         // it as tall as the dialog lets them be
         var body = el('div', 'nhe-tempo__body', d)
         var stack = el('div', 'nhe-tempo__stack', body)
-        el('span', 'nhe-dialog__plugin', el('div', 'nhe-dialog__header', stack)).textContent = 'Tempo and sync'
-        var sync = new NHE.OptionList(el('div', null, stack), {
+        // Close stays at the foot; what's above it scrolls on a screen too short
+        var top = el('div', 'nhe-tempo__top', stack)
+        el('span', 'nhe-dialog__plugin', el('div', 'nhe-dialog__header', top)).textContent = 'Tempo and sync'
+        var sync = new NHE.OptionList(el('div', null, top), {
             title: 'Sync mode',
             options: SYNC_LABELS.map(function (label, i) { return { label: label, value: i } }),
             value: Math.max(0, SYNC.indexOf(st.sync)),
             onChange: function (i) { call('onSync', SYNC[i]) }
         })
         sync.root.classList.add('is-first', 'nhe-tempo__sync')
-        var transport = new Transport(el('div', null, stack), {
+        var transport = new Transport(el('div', null, top), {
             value: st.rolling, binding: bind(':rolling'),
             onChange: function (on) { call('onRolling', on) },
             onSettings: function () { call('onSettings', ':rolling') }
@@ -136,7 +138,8 @@
             else {
                 var z = parseFloat(getComputedStyle(d).zoom) || 1, cs = getComputedStyle(overlay)
                 var room = (overlay.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) / z
-                h = Math.min(stack.scrollHeight, Math.floor(room))
+                var natural = top.scrollHeight + foot.offsetHeight + (parseFloat(getComputedStyle(stack).paddingBottom) || 0)
+                h = Math.min(Math.ceil(natural), Math.floor(room))
             }
             if (h > 0) body.style.setProperty('--nhe-slider-height', h + 'px')
         }

@@ -879,17 +879,19 @@
 .nhe-tempo-dialog { width: auto; padding: 0 var(--nhe-space-8); }
 .nhe-tempo__body { display: flex; justify-content: center; gap: var(--nhe-space-8); flex: 1 1 auto; min-height: 0; }
 .nhe-tempo__stack { display: flex; flex-direction: column; flex: none; align-self: flex-start; max-height: 100%; width: 200px; padding-bottom: var(--nhe-space-8); }
-.nhe-tempo__stack { overflow-y: auto; scrollbar-width: none; }        /* only if the screen is shorter still */
-.nhe-tempo__stack .nhe-dialog__header { margin-bottom: var(--nhe-space-8); }
+.nhe-tempo__top { flex: 0 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; }   /* scrolls only if the screen is shorter still */
+.nhe-tempo__top::-webkit-scrollbar { display: none; }
+.nhe-tempo__stack .nhe-dialog__header { margin-bottom: var(--nhe-space-4); }
 .nhe-tempo__stack .nhe-cell { width: auto; }
-.nhe-tempo__stack .nhe-dialog__buttons { padding-top: var(--nhe-space-16); }
+.nhe-tempo__stack .nhe-dialog__buttons { padding-top: var(--nhe-space-8); }
 .nhe-tempo-dialog .nhe-slider { --nhe-slider-band: 0px; }        /* no group band */
 .nhe-tempo-dialog .nhe-slider__band { display: none; }
 .nhe-tempo__sync .nhe-footer { display: none; }      /* the sync mode can't be assigned */
 .nhe-tempo__sync .nhe-list { align-self: stretch; width: auto; margin: 0 var(--nhe-space-16) var(--nhe-space-16); }
-.nhe-tempo__stack .nhe-transport { height: auto; }
-.nhe-tempo__stack .nhe-transport__pair { flex: none; padding: var(--nhe-space-4) 0; }
-.nhe-tempo__sync .nhe-row__label { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: var(--nhe-font-line-tight); }   /* Ableton Link */
+/* the transport on one row: stop, play, then its settings icon */
+.nhe-tempo__stack .nhe-transport { height: auto; flex-direction: row; flex-wrap: wrap; justify-content: center; padding-bottom: var(--nhe-space-4); }
+.nhe-tempo__stack .nhe-transport__pair { flex: none; }
+.nhe-tempo__stack .nhe-transport .nhe-footer { width: auto; margin-left: var(--nhe-space-8); }
 
 /* the transport cell: stop and play, the one that holds lit */
 .nhe-transport { height: 169px; }
