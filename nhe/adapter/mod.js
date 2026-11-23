@@ -730,7 +730,9 @@
     }
 
     // the plugins and device jacks directly connected to a plugin, per port:
-    // { inputs: [{ port, items: [{ id, brand, name } | { device: true }] }], outputs: [...] }
+    // { inputs: [{ port, items: [{ id, brand, name } | { device: true }],
+    //              ports: [portId], type: 'audio' | 'cv' | 'midi' }], outputs: [...] }
+    // (ports wired to the same things share one heading, and its ports)
     mod.neighbours = function (instance) {
         var gui = mod.gui(instance), cm = mod.pedalboard().data('connectionManager')
         if (!gui || !cm) return { inputs: [], outputs: [] }
@@ -756,7 +758,7 @@
                         var d = describe(other), key = d.device ? 'device' : d.id
                         if (!seen[key]) { seen[key] = true; items.push(d) }
                     })
-                    out.push({ port: p.name || p.symbol, items: items })
+                    out.push({ port: p.name || p.symbol, items: items, ports: [path], type: type })
                 })
             })
             return out
@@ -767,8 +769,9 @@
             list.forEach(function (p) {
                 var key = p.items.map(function (i) { return i.device ? 'device' : i.id }).join('|')
                 var prev = out[out.length - 1]
-                if (prev && prev.key === key && key) {
+                if (prev && prev.key === key && key && prev.type === p.type) {
                     prev.names.push(p.port)
+                    prev.ports = prev.ports.concat(p.ports)
                     // the shared start up to its last space: "In L", "In R" -> "In L/R";
                     // "Audio Input 1", "Audio Input 2" -> "Audio Input 1/2"
                     var first = prev.names[0], n = first.length
@@ -779,11 +782,37 @@
                         : prev.names.join(' / ')
                     return
                 }
-                out.push({ port: p.port, items: p.items, key: key, names: [p.port] })
+                out.push({ port: p.port, items: p.items, key: key, names: [p.port], ports: p.ports, type: p.type })
             })
-            return out.map(function (p) { return { port: p.port, items: p.items } })
+            return out.map(function (p) { return { port: p.port, items: p.items, ports: p.ports, type: p.type } })
         }
         return { inputs: merge(side('input', cm.destIndex)), outputs: merge(side('output', cm.origIndex)) }
+    }
+
+    // what one of a plugin's jacks can be plugged into, grouped by owner:
+    // [{ id, name, brand, device, jacks: [{ port, name, on }] }]. For an output
+    // (dir 'output'): the other pedals' inputs of its type, then the device's
+    // outputs; for an input: their outputs, then the device's inputs. on: a
+    // cable is there now (connectionManager.origIndex[from][to])
+    mod.portChoices = function (portId, dir, type) {
+        var b = mod.board(), cm = mod.pedalboard().data('connectionManager'), mine = portId.slice(0, portId.lastIndexOf('/'))
+        var out = dir === 'output', groups = []
+        var on = function (other) {
+            var from = out ? portId : other, to = out ? other : portId
+            return !!(cm && cm.origIndex[from] && cm.origIndex[from][to])
+        }
+        b.pedals.forEach(function (p) {
+            if (p.instance === mine) return
+            var list = (p.ports[type] && p.ports[type][out ? 'in' : 'out']) || []
+            if (!list.length) return
+            groups.push({ id: p.instance, name: p.name, brand: p.brand, jacks: list.map(function (j) { return { port: j, name: mod.portName(j), on: on(j) } }) })
+        })
+        groups.sort(function (a, c) { return a.name.localeCompare(c.name) })
+        // the device's jacks: its inputs are sources (hwOutputs on MOD's canvas)
+        var dev = b.system.filter(function (s) { return s.type === type && s.source === !out })
+        if (dev.length) groups.push({ id: 'device', name: out ? 'Device outputs' : 'Device inputs', device: true,
+            jacks: dev.map(function (s) { return { port: s.port, name: s.name, on: on(s.port) } }) })
+        return groups
     }
 
     mod.openSettings = function (instance) {

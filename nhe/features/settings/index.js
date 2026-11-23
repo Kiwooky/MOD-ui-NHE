@@ -159,6 +159,8 @@ NHE.register('settings', function (mod) {
             onExit: function () { st.actions.exit() },
             onTempo: function (bpm) { mod.setTempo(bpm) },
             onHop: function (id) { st.actions.hop(id) },
+            // a port's heading or its "Not connected": what it can plug into, as ticks
+            onPort: NHE.PortsDialog ? function (r) { connectPort(st, r.port, r.dir) } : null,
             // SET: NHE settings is in NHE's bottom bar's More menu (features/bars);
             // here only with MOD's menus (or the bars switched off), the way back
             onSet: NHE.menus && NHE.menus.current() === 'nhe' ? null : function () { openSet(st) },
@@ -185,6 +187,32 @@ NHE.register('settings', function (mod) {
         mod.onFilesChange(instance, function () { refreshFiles(st) })
         screens.push(st)
         return st
+    }
+
+    // the Chain tab's connect dialog: a section per jack under the heading
+    // ("Wet L/R": Wet L, Wet R), a tick per jack it can plug into; the chain
+    // follows each change
+    var connectPort = function (st, p, dir) {
+        var instance = st.instance, info = mod.pluginInfo(instance)
+        var sections = p.ports.map(function (port) {
+            return { title: p.ports.length > 1 ? mod.portName(port) : p.port, port: port, groups: mod.portChoices(port, dir, p.type) }
+        })
+        var follow = function () {
+            var f = function () { if (st.bar) st.bar.update({ chain: mod.neighbours(instance) }) }
+            f(); setTimeout(f, 400)   // MOD's cable list follows the host's websocket answer
+        }
+        NHE.PortsDialog({
+            plugin: (info && info.label) || instance, accent: colourOf(instance), dir: dir, sections: sections,
+            onToggle: function (port, other, on, done) {
+                var from = dir === 'output' ? port : other, to = dir === 'output' ? other : port
+                if (on) mod.connect(from, to, function (ok) {
+                    if (!ok) mod.notify('warn', 'MOD refused that connection.', 3000)
+                    done(ok); follow()
+                })
+                else mod.disconnect(from, to, function () { done(true); follow() })
+            },
+            onClose: follow
+        })
     }
 
     var build = function (st) {

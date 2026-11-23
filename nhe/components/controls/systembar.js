@@ -10,14 +10,17 @@
  *       tempo: 120, tempoLocked: false, sync: 'MIDI clock',
  *       cpu: 24, ram: 41, xruns: 0,
  *       plugin: 'Can Abyss Delay',
- *       chain: { inputs:  [{ port: 'In',      items: [{ id, brand, name } | { device: true }] }],
+ *       chain: { inputs:  [{ port: 'In',      items: [{ id, brand, name } | { device: true }],
+ *                            ports: [portId], type: 'audio' }],   // (ports, type: for onPort)
  *                outputs: [{ port: 'Out (L)', items: [...] }] },
  *       exitIcon: 'exit', exitLabel: 'Exit',   // the top-left button
  *       exit: false,     // no top-left button (the live surface: left by another screen)
  *       tabs: false,     // the meters only, no tabs
  *       tabs: ['meters', 'morph'],   // which tabs (default meters and chain); the
  *                        // morph page is bar.n.morph, for the host to fill (features/morph)
- *       onExit, onSet, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab)
+ *       onExit, onSet, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab),
+ *       onPort: fn({ port, dir: 'input' | 'output' })   // a chain port's heading or its
+ *                        // "Not connected" was tapped (port: a chain entry, with ports and type)
  *   })
  *   bar.setStats({ cpu, xruns })   // MOD websocket "stats"
  *   bar.setSysStats({ ram })       // MOD websocket "sys_stats"
@@ -135,10 +138,26 @@
         box.innerHTML = ''
         var section = function (ports, ic, iconFirst) {
             ;(ports || []).forEach(function (p) {
-                var head = el('div', 'nhe-chain__port', box)
-                var label = '<span>' + p.port + '</span>'
+                // with onPort: the heading and "Not connected" open what it connects to
+                var can = typeof o.onPort === 'function' && p.ports && p.ports.length
+                var dir = iconFirst ? 'input' : 'output'
+                var connect = function () { self.emit('onPort', { port: p, dir: dir }) }
+                var head = el(can ? 'button' : 'div', 'nhe-chain__port', box)
+                var label = '<span></span>'
                 head.innerHTML = iconFirst ? icon(ic) + label : label + icon(ic)
-                if (!p.items || !p.items.length) { el('div', 'nhe-chain__none', box).textContent = 'Not connected'; return }
+                head.querySelector('span').textContent = p.port
+                if (can) {
+                    head.type = 'button'
+                    head.title = 'Connect ' + p.port
+                    head.insertAdjacentHTML('beforeend', '<span class="nhe-chain__edit">' + icon('plug') + '</span>')
+                    head.addEventListener('click', connect)
+                }
+                if (!p.items || !p.items.length) {
+                    var none = el(can ? 'button' : 'div', 'nhe-chain__none', box)
+                    none.textContent = can ? 'Not connected · Connect' : 'Not connected'
+                    if (can) { none.type = 'button'; none.addEventListener('click', connect) }
+                    return
+                }
                 p.items.forEach(function (it) {
                     var c = el('button', 'nhe-card', box)
                     c.type = 'button'
