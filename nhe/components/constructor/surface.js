@@ -83,7 +83,8 @@
  * Grid size: it starts at the screen's size and keeps exactly one empty
  * column at the right and one empty row at the bottom: a second empty one
  * goes again, and when none is left an Expand tile adds one: it sits in the
- * cell just past the grid (right of the last column, under the last row),
+ * row just under the grid (a column: in the corner past the last column;
+ * a row: in the middle),
  * outside the view that fits the grid, reached by panning.
  *
  * Touch: drag to pan (also starting on a pedal, as long as it moves before
@@ -251,8 +252,8 @@
 
     Surface.prototype.span = function (nd) { return { w: (nd.span && nd.span.w) || 1, h: (nd.span && nd.span.h) || 1 } }
     Surface.prototype.cellX = function (col) { return EDGE + col * CELL }
-    // room under the grid: a whole cell while the row Expand tile is there, else FOOT
-    Surface.prototype.foot = function () { return this.full && this.full.rows ? CELL : FOOT }
+    // room under the grid: a whole cell while an Expand tile is there, else FOOT
+    Surface.prototype.foot = function () { return this.full && (this.full.rows || this.full.cols) ? CELL : FOOT }
     Surface.prototype.cellY = function (row) { return row * CELL }
 
     // a node's box on the plane
@@ -361,9 +362,9 @@
             b.style.width = b.style.height = XTILE + 'px'
             b.addEventListener('click', function () { if (!self.moved) fn() })
         }
-        // a column: right of the last column, on the top row; a row: under the
-        // last row, in the middle column (clear of the zoom buttons, bottom left)
-        if (this.full.cols) expand('nhe-surface__expand--col', this.cellX(this.cols) + (CELL - XTILE) / 2, (CELL - XTILE) / 2, function () { self.cols++; self.render() })
+        // both in the row under the grid: a column right of the last column (the
+        // corner), a row in the middle column (clear of the zoom buttons, bottom left)
+        if (this.full.cols) expand('nhe-surface__expand--col', this.cellX(this.cols) + (CELL - XTILE) / 2, Hh + (CELL - XTILE) / 2, function () { self.cols++; self.render() })
         if (this.full.rows) expand('nhe-surface__expand--row', this.cellX(Math.floor(this.cols / 2)) + (CELL - XTILE) / 2, Hh + (CELL - XTILE) / 2, function () { self.rows++; self.render() })
 
         // a live face whose pedal is gone from the nodes (removed, or hidden as
