@@ -495,13 +495,12 @@
 .nhe-chain__port { display: flex; align-items: center; justify-content: center; gap: var(--nhe-space-8); padding-top: var(--nhe-space-8); font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
 .nhe-chain__port svg { width: 24px; height: 24px; }
 .nhe-chain__none { text-align: center; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-medium); opacity: .5; }
-/* a port's heading and its "Not connected" open the connect dialog (ports.js) */
-button.nhe-chain__port { width: 100%; padding-left: 0; padding-right: 0; padding-bottom: 0; border: 0; background: none; color: inherit; font: inherit; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; cursor: pointer; }
-button.nhe-chain__port:active { opacity: .7; }
-button.nhe-chain__port .nhe-chain__edit { display: flex; opacity: .6; }
-button.nhe-chain__port .nhe-chain__edit svg { width: 16px; height: 16px; }
-button.nhe-chain__none { display: block; width: 100%; padding: var(--nhe-space-8); border: 1px dashed var(--nhe-border-default, rgba(255, 255, 255, .3)); border-radius: var(--nhe-radius-md); background: none; color: inherit; font: inherit; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-medium); opacity: .6; cursor: pointer; }
-button.nhe-chain__none:hover { opacity: .9; border-color: var(--nhe-accent-default); }
+/* a port's heading, cards and "Not connected" all open the connect dialog (ports.js) */
+.nhe-chain__group { display: contents; cursor: pointer; }
+.nhe-chain__group > * { cursor: pointer; }
+button.nhe-chain__port { width: 100%; padding-left: 0; padding-right: 0; padding-bottom: 0; border: 0; background: none; color: inherit; font: inherit; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
+.nhe-chain__none.is-tappable { padding: var(--nhe-space-8); border: 1px dashed rgba(255, 255, 255, .3); border-radius: var(--nhe-radius-md); opacity: .6; }
+.nhe-chain__group:active > * { opacity: .7; }
 
 /* the connect dialog (ports.js): a tick per jack, grouped by pedal */
 .nhe-ports-dialog__body { flex: none; }
@@ -511,7 +510,7 @@ button.nhe-chain__none:hover { opacity: .9; border-color: var(--nhe-accent-defau
 .nhe-ports-dialog__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--nhe-font-size-sm); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; }
 .nhe-ports-dialog__jack { display: flex; align-items: center; gap: var(--nhe-space-8); min-height: 44px; width: 100%; padding: 0 var(--nhe-space-8); border: 0; border-radius: var(--nhe-radius-md); background: var(--nhe-surface-sunken); color: inherit; font: inherit; font-size: var(--nhe-font-size-md); text-align: left; cursor: pointer; }
 .nhe-ports-dialog__jack > * { pointer-events: none; }
-.nhe-ports-dialog__tick { flex: none; width: 24px; height: 24px; border-radius: var(--nhe-radius-sm, 4px); box-shadow: inset 0 0 0 2px var(--nhe-icon-default, rgba(255, 255, 255, .6)); color: var(--nhe-text-on-accent); }
+.nhe-ports-dialog__tick { flex: none; width: 28px; height: 28px; border-radius: var(--nhe-radius-sm, 4px); box-shadow: inset 0 0 0 2px var(--nhe-icon-default, rgba(255, 255, 255, .6)); color: var(--nhe-text-on-accent); }
 .nhe-ports-dialog__tick svg { display: none; width: 100%; height: 100%; }
 .nhe-ports-dialog__jack.is-on .nhe-ports-dialog__tick { background: var(--nhe-accent-default); box-shadow: none; }
 .nhe-ports-dialog__jack.is-on .nhe-ports-dialog__tick svg { display: block; }

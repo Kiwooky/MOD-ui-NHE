@@ -19,8 +19,9 @@
  *       tabs: ['meters', 'morph'],   // which tabs (default meters and chain); the
  *                        // morph page is bar.n.morph, for the host to fill (features/morph)
  *       onExit, onSet, onTempo: fn(bpm), onHop: fn(id), onTab: fn(tab),
- *       onPort: fn({ port, dir: 'input' | 'output' })   // a chain port's heading or its
- *                        // "Not connected" was tapped (port: a chain entry, with ports and type)
+ *       onPort: fn({ port, dir: 'input' | 'output' })   // a chain port was tapped: its heading,
+ *                        // a card under it or its "Not connected" (port: a chain entry, with
+ *                        // ports and type); the cards then don't hop
  *   })
  *   bar.setStats({ cpu, xruns })   // MOD websocket "stats"
  *   bar.setSysStats({ ram })       // MOD websocket "sys_stats"
@@ -138,37 +139,31 @@
         box.innerHTML = ''
         var section = function (ports, ic, iconFirst) {
             ;(ports || []).forEach(function (p) {
-                // with onPort: the heading and "Not connected" open what it connects to
+                // with onPort: the port's heading, its cards and its "Not connected"
+                // all open what it connects to (the card no longer hops)
                 var can = typeof o.onPort === 'function' && p.ports && p.ports.length
                 var dir = iconFirst ? 'input' : 'output'
-                var connect = function () { self.emit('onPort', { port: p, dir: dir }) }
-                var head = el(can ? 'button' : 'div', 'nhe-chain__port', box)
+                var group = box
+                if (can) {
+                    group = el('div', 'nhe-chain__group', box)
+                    group.addEventListener('click', function () { self.emit('onPort', { port: p, dir: dir }) })
+                }
+                var head = el(can ? 'button' : 'div', 'nhe-chain__port', group)
                 var label = '<span></span>'
                 head.innerHTML = iconFirst ? icon(ic) + label : label + icon(ic)
                 head.querySelector('span').textContent = p.port
-                if (can) {
-                    head.type = 'button'
-                    head.title = 'Connect ' + p.port
-                    head.insertAdjacentHTML('beforeend', '<span class="nhe-chain__edit">' + icon('plug') + '</span>')
-                    head.addEventListener('click', connect)
-                }
+                if (can) { head.type = 'button'; head.title = 'Connect ' + p.port }
                 if (!p.items || !p.items.length) {
-                    var none = el(can ? 'button' : 'div', 'nhe-chain__none', box)
-                    none.textContent = can ? 'Not connected · Connect' : 'Not connected'
-                    if (can) { none.type = 'button'; none.addEventListener('click', connect) }
+                    el('div', 'nhe-chain__none' + (can ? ' is-tappable' : ''), group).textContent = 'Not connected'
                     return
                 }
                 p.items.forEach(function (it) {
-                    var c = el('button', 'nhe-card', box)
-                    c.type = 'button'
-                    if (it.device) {
-                        el('span', 'nhe-card__brand', c).textContent = 'Device'
-                        el('span', 'nhe-card__name', c).textContent = iconFirst ? 'Inputs' : 'Outputs'
-                        c.disabled = true
-                        return
-                    }
-                    el('span', 'nhe-card__brand', c).textContent = it.brand || ''
-                    el('span', 'nhe-card__name', c).textContent = it.name
+                    var c = el(can ? 'div' : 'button', 'nhe-card', group)
+                    if (!can) c.type = 'button'
+                    el('span', 'nhe-card__brand', c).textContent = it.device ? 'Device' : it.brand || ''
+                    el('span', 'nhe-card__name', c).textContent = it.device ? (iconFirst ? 'Inputs' : 'Outputs') : it.name
+                    if (can) return
+                    if (it.device) { c.disabled = true; return }
                     // hop: open that plugin's settings
                     c.addEventListener('click', function () { self.emit('onHop', it.id) })
                 })
