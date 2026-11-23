@@ -82,7 +82,9 @@
  *
  * Grid size: it starts at the screen's size and keeps exactly one empty
  * column at the right and one empty row at the bottom: a second empty one
- * goes again, and when none is left an Expand button adds one.
+ * goes again, and when none is left an Expand tile adds one: it sits in the
+ * cell just past the grid (right of the last column, under the last row),
+ * outside the view that fits the grid, reached by panning.
  *
  * Touch: drag to pan (also starting on a pedal, as long as it moves before
  * the long-press), two fingers to pinch-zoom, a long-press (LONG_MS) on a
@@ -110,7 +112,9 @@
     var FOCUS = 1.2         // a tapped face zooms to 120% of its own size (easier to play)
     var FIT_ABOVE = 44, FIT_BELOW = 44   // screen px a focused pedal keeps free above (its gear) and below (its name)
     var MIN_COLS = 3, MIN_ROWS = 3
-    var FOOT = 96           // a strip under the grid for the Expand buttons
+    var FOOT = 16           // screen room under the grid when it fits the screen
+    var XTILE = CELL / 2    // an Expand tile: half a cell, in the empty column / row
+                            // past the grid (off the fitted view, a pan away)
     var HEAD = 30           // screen px above the top row: room for the faces' gears
     var RIGHT_ROOM = 160    // plane px the view can pan past the last column: the cables to MOD's outputs
     var PORT = 48           // MOD's port tiles: screen px, flush against the screen's left and right edges
@@ -165,13 +169,14 @@
             b.addEventListener('click', function () { self.zoomAt(root.clientWidth / 2, root.clientHeight / 2, self.view.z * z[1]) })
         })
 
-        // the grid starts at the screen's size (the surface's own px: a page
+        // the grid starts at the screen's size or a little over (whole cells, so
+        // the Expand tiles past it start off the screen; the surface's own px: a page
         // that scales it, NHE.zoom on a phone, doesn't count)
         var r = { width: root.clientWidth, height: root.clientHeight }
         this.safe()
         var gap = (this.gapL() + this.gapR()) / 2              // the port tiles' strips, each side
-        this.minCols = Math.max(MIN_COLS, Math.floor((r.width - 2 * gap) / CELL))
-        this.minRows = Math.max(MIN_ROWS, Math.floor((r.height - FOOT) / CELL))
+        this.minCols = Math.max(MIN_COLS, Math.ceil((r.width - 2 * gap) / CELL - 0.05))
+        this.minRows = Math.max(MIN_ROWS, Math.ceil((r.height - HEAD - FOOT) / CELL - 0.05))
         this.cols = Math.max(this.minCols, this.o.cols || 0)
         this.rows = Math.max(this.minRows, this.o.rows || 0)
         // a narrow screen (a phone) starts zoomed out to about two and a half
@@ -181,7 +186,7 @@
         var fit = Math.min((r.width - 2 * gap) / (2.5 * CELL), (r.height - HEAD) / (2 * CELL))
         if (fit < 1) {
             this.view.z = Math.max(ZMIN, fit)
-            this.minRows = Math.max(MIN_ROWS, Math.floor((r.height / this.view.z - FOOT) / CELL))
+            this.minRows = Math.max(MIN_ROWS, Math.ceil(((r.height - HEAD) / this.view.z - FOOT) / CELL - 0.05))
             this.rows = Math.max(this.minRows, this.o.rows || 0)
         }
 
@@ -233,8 +238,8 @@
         this.seen = { w: W, h: Hh }
         this.safe()
         var z = Math.min(1, this.view.z)
-        this.minCols = Math.max(MIN_COLS, Math.floor((W / z - this.gapL() - this.gapR()) / CELL))
-        this.minRows = Math.max(MIN_ROWS, Math.floor((Hh / z - FOOT) / CELL))
+        this.minCols = Math.max(MIN_COLS, Math.ceil((W - this.gapL() - this.gapR()) / z / CELL - 0.05))
+        this.minRows = Math.max(MIN_ROWS, Math.ceil(((Hh - HEAD) / z - FOOT) / CELL - 0.05))
         this.clamp()
         this.render()
         // a focused pedal fits the new size too
@@ -246,6 +251,8 @@
 
     Surface.prototype.span = function (nd) { return { w: (nd.span && nd.span.w) || 1, h: (nd.span && nd.span.h) || 1 } }
     Surface.prototype.cellX = function (col) { return EDGE + col * CELL }
+    // room under the grid: a whole cell while the row Expand tile is there, else FOOT
+    Surface.prototype.foot = function () { return this.full && this.full.rows ? CELL : FOOT }
     Surface.prototype.cellY = function (row) { return row * CELL }
 
     // a node's box on the plane
@@ -321,7 +328,7 @@
         this.size()
         var W = 2 * EDGE + this.cols * CELL, Hh = this.rows * CELL
         n.plane.style.width = W + 'px'
-        n.plane.style.height = (Hh + FOOT) + 'px'
+        n.plane.style.height = (Hh + this.foot()) + 'px'
         n.wires.setAttribute('width', W)
         n.wires.setAttribute('height', Hh)
         n.plugs.setAttribute('width', W)
@@ -343,17 +350,21 @@
                 b.addEventListener('click', function () { if (!self.moved && typeof self.o.onAdd === 'function') self.o.onAdd({ col: c, row: r }) })
             })(c, r)
         }
-        // Expand: only when no empty column / row is left
-        var expand = function (cls, label, x, y, fn) {
-            var b = el('button', 'nhe-surface__expand ' + cls, n.cells, icon(cls.indexOf('col') >= 0 ? 'expandCol' : 'expandRow') + '<span>' + label + '</span>')
+        // Expand: only when no empty column / row is left; a half-cell tile
+        // where a pedal's picture would be in the cell just past the grid
+        var expand = function (cls, x, y, fn) {
+            var b = el('button', 'nhe-surface__expand ' + cls, n.cells, '<span class="nhe-surface__expand-tile">' + icon(cls.indexOf('col') >= 0 ? 'expandCol' : 'expandRow') + '</span><span>Expand</span>')
             b.type = 'button'
+            b.setAttribute('aria-label', cls.indexOf('col') >= 0 ? 'Expand the surface: a column' : 'Expand the surface: a row')
             b.style.left = x + 'px'
             b.style.top = y + 'px'
+            b.style.width = b.style.height = XTILE + 'px'
             b.addEventListener('click', function () { if (!self.moved) fn() })
         }
-        // in the strip under the grid: a column at the right, a row in the middle
-        if (this.full.cols) expand('nhe-surface__expand--col', 'Expand surface', this.cellX(this.cols) + EDGE / 2, Hh + FOOT / 2, function () { self.cols++; self.render() })
-        if (this.full.rows) expand('nhe-surface__expand--row', 'Expand surface', EDGE + this.cols * CELL / 2, Hh + FOOT / 2, function () { self.rows++; self.render() })
+        // a column: right of the last column, on the top row; a row: under the
+        // last row, in the middle column (clear of the zoom buttons, bottom left)
+        if (this.full.cols) expand('nhe-surface__expand--col', this.cellX(this.cols) + (CELL - XTILE) / 2, (CELL - XTILE) / 2, function () { self.cols++; self.render() })
+        if (this.full.rows) expand('nhe-surface__expand--row', this.cellX(Math.floor(this.cols / 2)) + (CELL - XTILE) / 2, Hh + (CELL - XTILE) / 2, function () { self.rows++; self.render() })
 
         // a live face whose pedal is gone from the nodes (removed, or hidden as
         // Morph's Control to CV) gives its GUI back: off MOD's page, MOD holds
@@ -1233,13 +1244,13 @@
     // pan no further than the grid: its first column just clear of the port
     // tiles on the left; on the right past its last column by RIGHT_ROOM,
     // where the cables run down to MOD's outputs (on a phone they ran off
-    // the screen); its top row at the top and the Expand strip at the
-    // bottom. A grid smaller than the screen stays put at the top left.
+    // the screen; the column Expand tile sits there too); its top row at
+    // the top and the bottom (the row Expand tile's cell included). A grid smaller than the screen stays put at the top left.
     Surface.prototype.clamp = function (v) {
         v = v || this.view
         var W = this.root.clientWidth, Hh = this.root.clientHeight
         var maxX = this.gapL() - EDGE * v.z, minX = W - this.gapR() - (EDGE + this.cols * CELL + RIGHT_ROOM) * v.z
-        var maxY = HEAD, minY = Hh - (this.rows * CELL + FOOT) * v.z
+        var maxY = HEAD, minY = Hh - (this.rows * CELL + this.foot()) * v.z
         v.x = Math.max(Math.min(maxX, minX), Math.min(maxX, v.x))
         v.y = Math.max(Math.min(maxY, minY), Math.min(maxY, v.y))
         return v
