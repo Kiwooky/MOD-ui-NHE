@@ -75,7 +75,7 @@
     bottom: 12px;
 }
 
-/* MOD's builder: its - / + at the right edge, as NHE's builder has them
-   (index.js; components/constructor: .is-zoom-right .nhe-surface__zoom) */
-.nhe-modzoom { position: absolute; top: 40px; right: env(safe-area-inset-right, 0px); z-index: 7; display: flex; flex-direction: column; gap: 4px; }
-.nhe-modzoom button { width: 48px; height: 40px; padding: 0; border: 0; border-radius: 16px 0 0 16px; background: var(--nhe-surface-sunken); color: var(--nhe-text-primary); font-size: 22px; line-height: 1; cursor: pointer; }
+/* MOD's builder: its − / + at the top of the right edge, as NHE's builder
+   has them (index.js; their pill and buttons: components/constructor,
+   .is-zoom-right .nhe-surface__zoom) */
+.nhe-modzoom { position: absolute; top: 40px; right: env(safe-area-inset-right, 0px); z-index: 7; zoom: var(--nhe-zoom, 1); }   /* SET → Screen size, as NHE's builder */

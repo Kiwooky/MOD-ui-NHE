@@ -63,6 +63,9 @@
     NHE.icons.back = svg(32, stroke('M26 16H7M14 8l-8 8 8 8'))
     // the constructor's surface: a + on free cells, and Expand surface
     NHE.icons.plus = svg(32, stroke('M16 7v18M7 16h18'))
+    // the builders' zoom buttons (Figma "Frame 77"): bolder lines, rounded ends
+    var bold = function (d) { return '<path d="' + d + '" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>' }
+    NHE.zoomIcons = { minus: svg(32, bold('M7 16h18')), plus: svg(32, bold('M16 7v18M7 16h18')) }
     NHE.icons.expandCol = svg(32, '<rect x="7" y="5" width="8" height="22" rx="2" stroke="currentColor" stroke-width="1.5"/>' + stroke('M21 16h8M25 12v8'))
     NHE.icons.expandRow = svg(32, '<rect x="5" y="7" width="22" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/>' + stroke('M12 25h8M16 21v8'))
     NHE.icons.arrowRight = svg(32, stroke('M6 16h19M18 8l8 8-8 8'))

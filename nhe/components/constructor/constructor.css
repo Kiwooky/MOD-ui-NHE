@@ -545,14 +545,21 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 /* the zoom buttons */
 .nhe-surface__zoom { position: absolute; left: 80px; bottom: 12px; display: flex; flex-direction: row; gap: 6px; z-index: 6; }
 .nhe-surface__zoom button { width: 44px; height: 44px; border: 0; border-radius: var(--nhe-radius-md); background: var(--nhe-surface-sunken); color: var(--nhe-text-primary); font-size: 24px; line-height: 1; cursor: pointer; }
-/* zoomRight: stacked at the right edge, + on top (− comes first), shaped
-   like MOD's output tiles under them and as wide; clear of a notch as they are */
-.nhe-surface.is-zoom-right .nhe-surface__zoom { left: auto; bottom: auto; right: env(safe-area-inset-right, 0px); top: 40px; flex-direction: column-reverse; gap: 4px; z-index: 7; }
-.nhe-surface.is-zoom-right .nhe-surface__zoom button { width: 48px; height: 40px; border-radius: 16px 0 0 16px; font-size: 22px; }
-.nhe-surface.is-zoom-right.is-inset-r .nhe-surface__zoom button,
-.nhe-surface.is-zoom-right.is-zoom-beside .nhe-surface__zoom button { border-radius: 16px; }
-/* no room above the tiles (a short screen): left of them and their labels */
-.nhe-surface.is-zoom-right.is-zoom-beside .nhe-surface__zoom { right: calc(72px + env(safe-area-inset-right, 0px)); }
+/* zoomRight: one pill at the top of the right edge, − then + side by side
+   (Figma "Frame 77"), against the edge as MOD's output tiles are, clear of a
+   notch as they are. Also MOD's builder's (features/constructor: .nhe-modzoom) */
+.nhe-surface.is-zoom-right .nhe-surface__zoom { left: auto; bottom: auto; right: env(safe-area-inset-right, 0px); top: 40px; z-index: 7; }
+.nhe-surface.is-zoom-right .nhe-surface__zoom, .nhe-modzoom {
+    display: flex; flex-direction: row; gap: 0; padding: 0 4px 0 8px;
+    border-radius: 20px 0 0 20px; background: #000;
+}
+.nhe-surface.is-zoom-right .nhe-surface__zoom button, .nhe-modzoom button {
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 40px; padding: 0; border: 0; border-radius: 0;
+    background: transparent; color: #fff; cursor: pointer;
+}
+.nhe-surface.is-zoom-right .nhe-surface__zoom svg, .nhe-modzoom svg { width: 28px; height: 28px; }
+.nhe-surface.is-zoom-right.is-inset-r .nhe-surface__zoom { border-radius: 20px; padding-right: 8px; }
 
 /* Manage CV ports (surface.js renderCvTags): a tick beside each CV output,
    its name once ticked, as on MOD's builder */

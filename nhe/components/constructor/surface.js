@@ -31,9 +31,9 @@
  *       onPerformance: fn(node),            // a focused face's gallery icon, left of its gear: the
  *                                           // performance view, on this pedal
  *       onFaceLoad: fn(img, node),          // a pedal's picture came in (may swap its src)
- *       zoomRight: true | false,          // the zoom buttons stacked at the right edge, + on top,
- *                                           // MOD's output tiles below (or above) them; with no room
- *                                           // for that, left of the tiles (default: bottom left)
+ *       zoomRight: true | false,          // the zoom buttons side by side (− +) at the top of the
+ *                                           // right edge, MOD's output tiles below (or above) them
+ *                                           // (default: bottom left)
  *       liveAll: true | false,              // faces: every face live and playing, as on MOD's
  *                                           // builder (a desktop); else only the focused one
  *       liveFace: fn(node, layer),          // the focused face: put the pedal's working GUI
@@ -154,12 +154,13 @@
         n.edge = el('div', 'nhe-surface__edge', root)
         // zoom buttons (desktop); pinch does the same
         var zoom = n.zoom = el('div', 'nhe-surface__zoom', root)
-        // − then +: zooming in at the right
-        ;[['−', 0.8, 'Zoom out'], ['+', 1.25, 'Zoom in']].forEach(function (z) {
+        // − then +: zooming in at the right (NHE.zoomIcons: line icons)
+        ;[['minus', 0.8, 'Zoom out'], ['plus', 1.25, 'Zoom in']].forEach(function (z) {
             var b = el('button', null, zoom)
             b.type = 'button'
-            b.textContent = z[0]
+            b.innerHTML = NHE.zoomIcons[z[0]]
             b.setAttribute('aria-label', z[2])
+            b.title = z[2]
             b.addEventListener('click', function () { self.zoomAt(root.clientWidth / 2, root.clientHeight / 2, self.view.z * z[1]) })
         })
 
@@ -1188,20 +1189,19 @@
         return top + side.indexOf(nd) * PORT_STEP
     }
     // zoomRight: the outputs keep clear of the zoom buttons at the right edge,
-    // below them (above, when they sit at the bottom); where there's no room
-    // for that, the buttons stand left of the tiles instead (is-zoom-beside)
+    // below them (above, when they sit at the bottom). On a screen too short
+    // for both, the tiles keep to the screen and run under the buttons'
+    // corner: the buttons stay where they are, over them
     Surface.prototype.zoomRoom = function () {
         var zm = this.n && this.n.zoom, root = this.root
         this.zoomClear = null
         if (!this.o.zoomRight || !zm) return
-        root.classList.remove('is-zoom-beside')
         var Hh = root.clientHeight, zt = zm.offsetTop, zb = zt + zm.offsetHeight
-        var n = this.o.nodes.filter(function (o) { return o.kind === 'output' && o.cell }).length
-        if (!n || !zm.offsetHeight) return
-        var tall = (n - 1) * PORT_STEP + PORT + PORT_LABEL
+        if (!zm.offsetHeight) return
         var below = zt < Hh / 2
-        if (below ? zb + ZOOM_GAP + tall > Hh : zt - ZOOM_GAP - tall < 0) { root.classList.add('is-zoom-beside'); return }
-        this.zoomClear = function (top) { return below ? Math.max(top, zb + ZOOM_GAP) : Math.min(top, zt - ZOOM_GAP - tall) }
+        this.zoomClear = function (top, tall) {
+            return below ? Math.max(top, Math.min(zb + ZOOM_GAP, Hh - tall)) : Math.min(top, Math.max(0, zt - ZOOM_GAP - tall))
+        }
     }
     Surface.prototype.placePorts = function () {
         var self = this
