@@ -195,7 +195,7 @@ NHE.register('settings', function (mod) {
         // the column height follows the host, in the stage's own (scaled) px
         var z = NHE.settingsZoom ? NHE.settingsZoom() : 1
         st.measured = st.root.innerHeight() || st.host.innerHeight()
-        var h = Math.max(MIN_HEIGHT, Math.floor((st.measured - 8) / z))
+        var h = Math.max(MIN_HEIGHT, Math.floor((st.measured - (NHE.columnReserve ? NHE.columnReserve() : 8)) / z))
 
         st.barEl.css('height', h + 'px')
         st.bar.update({ plugin: info.label, chain: mod.neighbours(instance), tab: barTab() })

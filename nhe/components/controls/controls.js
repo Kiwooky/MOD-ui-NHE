@@ -666,6 +666,13 @@
         return Math.max(1, Math.min(ZOOM_MAX, w / (phone ? PHONE_TARGET : ZOOM_TARGET)))
     }
     NHE.upright = function () { return upright() > 1 }
+    // a short screen (a 5" 800 x 480, a phone sideways): every px counts.
+    // controls.css tightens NHE's screens under the same media query, and
+    // they leave no room under their columns for a scrollbar (the native one
+    // is hidden there: the scroll hints and dragging scroll them), only 2 px,
+    // so their bottom icons sit as far from the edge as the bottom bar's
+    NHE.short = function () { return !!(window.matchMedia && window.matchMedia('(max-height: 600px)').matches) }
+    NHE.columnReserve = function () { return NHE.short() ? 2 : 8 }
     NHE.zoom = function () {
         var z = upright()
         return z > 1 ? z : NHE.uiScale()

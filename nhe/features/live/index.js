@@ -154,7 +154,7 @@ NHE.register('live', function (mod) {
 
     var build = function () {
         var z = NHE.settingsZoom ? NHE.settingsZoom() : 1
-        var h = Math.max(MIN_HEIGHT, Math.floor(((root.innerHeight() || view.innerHeight()) - 8) / z))
+        var h = Math.max(MIN_HEIGHT, Math.floor(((root.innerHeight() || view.innerHeight()) - (NHE.columnReserve ? NHE.columnReserve() : 8)) / z))
         barEl.css('height', h + 'px')
         var ps = plugins()
         // (not toggle(): that sets display: block on the row, a flex row)

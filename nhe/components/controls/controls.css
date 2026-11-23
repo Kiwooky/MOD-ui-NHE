@@ -917,3 +917,19 @@
 .nhe-presetfile-dialog__limit { margin-top: var(--nhe-space-16); opacity: .7; }
 .nhe-presetfile-dialog__status { min-height: 1.4em; margin-top: var(--nhe-space-8); color: var(--nhe-text-primary); }
 .nhe-presetfile-dialog__status.is-error { color: var(--nhe-status-warn); }
+
+/* ---- a short screen (NHE.short: a 5" 800 x 480, a phone sideways) ---------- */
+/* every px counts: no native scrollbar under the columns (the scroll hints
+   and dragging scroll them; NHE.columnReserve leaves no room for it), and a
+   more compact plugin header and signal chain */
+@media (max-height: 600px) {
+    .nhe-scroll__area { scrollbar-width: none; }
+    .nhe-scroll__area::-webkit-scrollbar { display: none; }
+    .nhe-plugin-header__name { height: 40px; }
+    .nhe-plugin-header__tools { padding-top: 0; }
+    .nhe-plugin-header__row, .nhe-plugin-header__tools + .nhe-plugin-header__row { padding-top: 0; padding-bottom: var(--nhe-space-4); }
+    .nhe-chain__current { height: 28px; }
+    .nhe-chain { gap: 6px; }
+    .nhe-chain__port { padding-top: var(--nhe-space-4); }
+    .nhe-system-bar .nhe-card { padding-top: 10px; padding-bottom: 10px; }
+}
