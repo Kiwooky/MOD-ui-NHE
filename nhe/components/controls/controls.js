@@ -660,6 +660,13 @@
         window.location.reload()
     }
 
+    // SET → Live surface: the live surface, its Add to surface and Morph
+    // (features/live, features/morph) on or off. Kept on this MOD
+    // (localStorage "nhe-live-show", components/config.js); on unless 'false'
+    NHE.liveShown = function () {
+        try { return window.localStorage.getItem('nhe-live-show') !== 'false' } catch (e) { return true }
+    }
+
     var upright = function () {
         var w = window.innerWidth, h = window.innerHeight
         if (h <= w) return 1

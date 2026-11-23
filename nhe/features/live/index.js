@@ -26,10 +26,12 @@
  *   NHE.liveSurface.open() / close() / isOpen() / onToggle(fn(open))
  *
  * Needs the settings feature (NHE.settingsScreen: the controls' descriptions,
- * the addressing dialog).
+ * the addressing dialog). Off (nothing of it shown) when SET → Live surface
+ * is Off (NHE.liveShown).
  */
 NHE.register('live', function (mod) {
     if (!NHE.settingsScreen || !NHE.settingsScreen.describe) { NHE.log('live: needs the settings feature'); return }
+    if (NHE.liveShown && !NHE.liveShown()) { NHE.log('live: switched off (SET → Live surface)'); return }
     var S = NHE.settingsScreen
     var KEY = 'nhe-live-surface', UNSAVED = '(unsaved)'
     var MIN_HEIGHT = 300

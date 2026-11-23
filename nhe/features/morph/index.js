@@ -47,10 +47,13 @@
  *   NHE.morph.touched(instance, symbol)          // a live-surface slider moved by hand
  *   NHE.morph.surfaceChanged()         // a control added to / removed from the surface
  *   NHE.morph.hides(instance)          // hidden in the builder
+ *   NHE.morph.dismantle(cb)            // released and its plugin removed (SET → Live surface → Off)
  *
- * Needs the settings feature; the live feature shows it.
+ * Needs the settings feature; the live feature shows it. Off with the live
+ * surface (SET → Live surface, NHE.liveShown).
  */
 NHE.register('morph', function (mod) {
+    if (NHE.liveShown && !NHE.liveShown()) { NHE.log('morph: the live surface is switched off'); return }
     var KEY = 'nhe-morph', SHOW_KEY = 'nhe-morph-show', UNSAVED = '(unsaved)'
     var URI = 'http://moddevices.com/plugins/mod-devel/mod-cv-control'
     var CONTROL = 'Control', OUTPUT = 'Cvoutput', TOP = 10, MAX = 10
@@ -368,8 +371,23 @@ NHE.register('morph', function (mod) {
     })
     setTimeout(restore, 1500)
 
+    // SET → Live surface → Off: Morph's sliders released and its Control to
+    // CV taken off this board (other boards keep theirs until loaded and
+    // removed by hand); cb() once done
+    var dismantle = function (cb) {
+        var s = st(), done = false
+        var finish = function () { if (!done) { done = true; cb() } }
+        var removePlugin = function () {
+            if (!present()) { finish(); return }
+            mod.removePlugin(s.instance, finish)
+            setTimeout(finish, 3000)       // MOD's removal without a callback
+        }
+        if (s.on && s.keys.length) address(s.keys, false, removePlugin)
+        else removePlugin()
+    }
+
     NHE.morph = {
-        attach: attach, slider: slider, paint: paint, binding: binding,
+        attach: attach, dismantle: dismantle, slider: slider, paint: paint, binding: binding,
         touched: touched, surfaceChanged: surfaceChanged,
         hides: function (instance) { return !showInBuilder() && instance === st().instance },
         // a control's value changed: before a morph, the count of changed sliders (once a frame)

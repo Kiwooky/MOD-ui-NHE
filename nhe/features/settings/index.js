@@ -394,6 +394,23 @@ NHE.register('settings', function (mod) {
     //
     // For now: which editor a plugin's settings window shows (NHE or MOD's
     // own). More settings will join it here.
+    // SET → Live surface: saved on the MOD at once (the page reloads, so the
+    // usual delayed save would be lost); off clears what was on it
+    var setLive = function (on) {
+        var values = NHE.config.all()
+        if (on) delete values['nhe-live-show']
+        else {
+            values['nhe-live-show'] = 'false'
+            delete values['nhe-live-surface']
+            delete values['nhe-morph']
+            delete values['nhe-morph-show']
+        }
+        NHE.config.replace(values, function (ok) {
+            if (!ok) { mod.notify('error', "Couldn't save the setting on the MOD.", 5000); return }
+            window.location.reload()
+        })
+    }
+
     var openSet = function (st) {
         var overlay = $('<div class="nhe-ctl nhe-dialog-overlay">').appendTo('body')
         var dlg = $('<div class="nhe-dialog nhe-dialog--columns nhe-set-dialog" role="dialog" aria-modal="true" aria-label="NHE settings" tabindex="-1">').appendTo(overlay)
@@ -435,6 +452,32 @@ NHE.register('settings', function (mod) {
                 NHE.menus.set(i ? 'mod' : 'nhe')
             } })
             $('<div class="nhe-dialog__note">').text("The top and bottom bars: NHE's, or MOD's own. Kept on this MOD.").appendTo(d)
+        }
+
+        // the live surface, its Add to surface and Morph (features/live,
+        // features/morph): off takes what's on it away, after a confirm
+        if (NHE.liveShown && NHE.config) {
+            d = $('<div class="nhe-dialog__group">').appendTo(body)
+            $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.star + '<span>Show live surface</span>').appendTo(d)
+            var lseg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
+            var liveOn = NHE.liveShown()
+            var liveSeg = new NHE.Segmented(lseg[0], { options: ['On', 'Off'], value: liveOn ? 0 : 1, onChange: function (i) {
+                if (!i === liveOn) return
+                if (!i) { setLive(true); return }
+                NHE.ConfirmDialog({
+                    plugin: 'Live surface', pill: 'Off',
+                    title: 'Switch the live surface off?', icon: 'info',
+                    text: "The controls on the live surface and the Morph settings are removed, for every board. On this board Morph's sliders are released and its Control to CV plugin is removed. The page reloads.",
+                    yes: 'Switch off', no: 'Cancel',
+                    onYes: function () {
+                        var go = function () { setLive(false) }
+                        if (NHE.morph && NHE.morph.dismantle) NHE.morph.dismantle(go)
+                        else go()
+                    },
+                    onNo: function () { liveSeg.update({ value: 0 }) }
+                })
+            } })
+            $('<div class="nhe-dialog__note">').text("A screen of controls picked from any plugin, with Morph. Off hides it, its button and Add to surface. Kept on this MOD. The page reloads.").appendTo(d)
         }
 
         // how large NHE's screens and dialogs are, in this browser (components/controls: NHE.uiScale)
