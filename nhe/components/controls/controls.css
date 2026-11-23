@@ -873,17 +873,22 @@
 
 /* ---- tempo and sync dialog (tempo.js) ------------------------------------ */
 
-/* three columns: the sync mode list over the transport, then two sliders as
-   tall as that stack (tempo.js sets --nhe-slider-height) */
-.nhe-tempo-dialog { width: auto; }
-/* full screen (controls.js NHE.fitDialog): the controls in the middle */
-.nhe-tempo-dialog.is-full .nhe-tempo__body { margin: auto 0; }
-.nhe-tempo-dialog.is-full .nhe-dialog__buttons { margin-top: 0; }
-.nhe-tempo__body { display: flex; justify-content: center; margin-top: var(--nhe-space-16); flex: none; }
-.nhe-tempo__stack { display: flex; flex-direction: column; flex: none; }
+/* as the plugin settings: a column (the name tab, the sync mode list, the
+   transport, Close at the foot), then two sliders as tall as the column on a
+   card, or as the screen when full screen (tempo.js sets --nhe-slider-height) */
+.nhe-tempo-dialog { width: auto; padding: 0 var(--nhe-space-8); }
+.nhe-tempo__body { display: flex; justify-content: center; gap: var(--nhe-space-8); flex: 1 1 auto; min-height: 0; }
+.nhe-tempo__stack { display: flex; flex-direction: column; flex: none; align-self: flex-start; max-height: 100%; width: 200px; padding-bottom: var(--nhe-space-8); }
+.nhe-tempo__stack { overflow-y: auto; scrollbar-width: none; }        /* only if the screen is shorter still */
+.nhe-tempo__stack .nhe-dialog__header { margin-bottom: var(--nhe-space-8); }
+.nhe-tempo__stack .nhe-cell { width: auto; }
+.nhe-tempo__stack .nhe-dialog__buttons { padding-top: var(--nhe-space-16); }
 .nhe-tempo-dialog .nhe-slider { --nhe-slider-band: 0px; }        /* no group band */
 .nhe-tempo-dialog .nhe-slider__band { display: none; }
-.nhe-tempo__sync .nhe-footer .nhe-icon-button { visibility: hidden; }   /* the sync mode can't be assigned */
+.nhe-tempo__sync .nhe-footer { display: none; }      /* the sync mode can't be assigned */
+.nhe-tempo__sync .nhe-list { align-self: stretch; width: auto; margin: 0 var(--nhe-space-16) var(--nhe-space-16); }
+.nhe-tempo__stack .nhe-transport { height: auto; }
+.nhe-tempo__stack .nhe-transport__pair { flex: none; padding: var(--nhe-space-4) 0; }
 .nhe-tempo__sync .nhe-row__label { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: var(--nhe-font-line-tight); }   /* Ableton Link */
 
 /* the transport cell: stop and play, the one that holds lit */

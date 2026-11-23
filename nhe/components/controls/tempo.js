@@ -4,9 +4,9 @@
 /*
  * Tempo and sync dialog: MOD's transport window (sync mode, beats per minute,
  * beats per bar, transport) in the addressing dialog's frame: centred, full
- * screen on a touch screen (NHE.fitDialog). Three columns of the plugin
- * panel's controls: the sync mode list with the transport under it (stacked,
- * as the panel stacks lists and switches), then two sliders. Needs
+ * screen on a touch screen (NHE.fitDialog). Laid out like the plugin
+ * settings: a column with the name tab, the sync mode list, the transport and
+ * Close, then two sliders as tall as the dialog. Needs
  * controls.js, controls.css, slider.js, slider.css and icons.js
  * (NHE.menuIcons: stop, play).
  *
@@ -86,10 +86,12 @@
         d.setAttribute('aria-modal', 'true')
         d.setAttribute('aria-label', 'Tempo and sync')
         d.setAttribute('tabindex', '-1')
-        el('span', 'nhe-dialog__plugin', el('div', 'nhe-dialog__header', d)).textContent = 'Tempo and sync'
-
+        // laid out like the plugin settings: a column on the left (the name
+        // tab, sync mode, transport, Close at the foot), the sliders beside
+        // it as tall as the dialog lets them be
         var body = el('div', 'nhe-tempo__body', d)
         var stack = el('div', 'nhe-tempo__stack', body)
+        el('span', 'nhe-dialog__plugin', el('div', 'nhe-dialog__header', stack)).textContent = 'Tempo and sync'
         var sync = new NHE.OptionList(el('div', null, stack), {
             title: 'Sync mode',
             options: SYNC_LABELS.map(function (label, i) { return { label: label, value: i } }),
@@ -102,8 +104,6 @@
             onChange: function (on) { call('onRolling', on) },
             onSettings: function () { call('onSettings', ':rolling') }
         })
-        // the sliders are as tall as the stack beside them
-        body.style.setProperty('--nhe-slider-height', stack.offsetHeight + 'px')
         var slider = function (title, symbol, value, min, max, unit, emit) {
             var s = new NHE.Slider(el('div', null, body), {
                 title: title, value: value, min: min, max: max, unit: unit, integer: true,
@@ -123,8 +123,25 @@
             ;[bpm, bpb].forEach(function (s) { if (s.destroy) s.destroy() })
             call('onClose')
         }
-        var foot = el('div', 'nhe-dialog__buttons', d)
+        var foot = el('div', 'nhe-dialog__buttons', stack)
         foot.appendChild(NHE.textButton('Close', 'primary', close))
+
+        // the sliders: as tall as the column beside them on a card, but no
+        // taller than the screen leaves (Close stays in view); as tall as the
+        // screen when it's full screen (NHE.fitDialog)
+        var size = function () {
+            if (!overlay.parentNode) return
+            var h
+            if (d.classList.contains('is-full')) h = body.clientHeight
+            else {
+                var z = parseFloat(getComputedStyle(d).zoom) || 1, cs = getComputedStyle(overlay)
+                var room = (overlay.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) / z
+                h = Math.min(stack.scrollHeight, Math.floor(room))
+            }
+            if (h > 0) body.style.setProperty('--nhe-slider-height', h + 'px')
+        }
+        size()
+        if (window.ResizeObserver) new ResizeObserver(size).observe(d)
 
         // the scrim closes it, as do Escape and Close
         overlay.addEventListener('click', function (e) { if (e.target === overlay) close() })
