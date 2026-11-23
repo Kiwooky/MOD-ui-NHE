@@ -1,0 +1,16 @@
+/* SPDX-FileCopyrightText: 2026 New Horizon Electronics
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Overrides of MOD's own CSS that every feature relies on (the CSS side of
+ * adapter/mod.js). Each rule names what in MOD it depends on.
+ */
+
+/* Screens narrower than 1024 px (a 5" 800 x 480 touch screen on a Pi).
+   MOD's css/main.css gives body min-width: 1024px and #wrapper
+   min-width: 980px. html and body are overflow: hidden, so a desktop
+   browser cut off the right of the page (OUT ports, the bar's right-hand
+   buttons), and a phone browser zoomed the whole page out. */
+@media (max-width: 1023px) {
+    body { min-width: 0 !important; }
+    #wrapper { min-width: 0 !important; }
+}

@@ -33,6 +33,27 @@
         $(check)
     }
 
+    // Screens narrower than 1024 px (adapter/mod.css lifts MOD's body
+    // min-width). MOD's pedalboard (pedalboard.js init) stores the window's
+    // width minus its canvas's width once, as data 'hmargins', and every
+    // fitToWindow sizes the canvas to the window minus that. MOD sets it up
+    // before NHE's stylesheet arrives, while the page is still 1024 / 980
+    // wide, so on an 800 px screen the margin came out negative and the
+    // canvas stayed 980 px wide, running off the right of the screen. MOD's
+    // canvas has no side margins, so a negative one is put back to 0.
+    // fitToWindow tells the server the new size over MOD's websocket (global
+    // ws, host.js), which throws while it is still connecting: wait for it.
+    mod.ready(function () {
+        var pb = desktop.pedalboard
+        if (!(pb.data('hmargins') < 0)) return
+        pb.data('hmargins', 0)
+        var fit = function () {
+            if (!window.ws || ws.readyState !== 1) return setTimeout(fit, 100)
+            pb.pedalboard('fitToWindow')
+        }
+        fit()
+    })
+
     // ------------------------------------------------------------------
     // globals, behind names we control
 
