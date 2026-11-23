@@ -176,8 +176,9 @@
         this.rows = Math.max(this.minRows, this.o.rows || 0)
         // a narrow screen (a phone) starts zoomed out to about two and a half
         // columns and MOD's ports (the half: room for cables out to the right);
-        // more is a pan or a pinch away
-        var fit = (r.width - 2 * gap) / (2.5 * CELL)
+        // a short one (a 5" 800 x 480) so that two rows fit under the gears'
+        // strip. More is a pan or a pinch away
+        var fit = Math.min((r.width - 2 * gap) / (2.5 * CELL), (r.height - HEAD) / (2 * CELL))
         if (fit < 1) {
             this.view.z = Math.max(ZMIN, fit)
             this.minRows = Math.max(MIN_ROWS, Math.floor((r.height / this.view.z - FOOT) / CELL))
