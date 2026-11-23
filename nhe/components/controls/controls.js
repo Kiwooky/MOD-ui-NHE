@@ -609,9 +609,22 @@
  * dialogs are scaled up (CSS transform, which every browser measures the
  * same way) so about ZOOM_TARGET px fill the width: the system bar, the
  * presets column and one slider; on a phone, PHONE_TARGET (the design's
- * width). Sideways and on a computer: 1.
+ * width). Sideways and on a computer: SET → Screen size (NHE.uiScale), 1
+ * unless chosen.
  *
- *   NHE.zoom()   // the current factor; CSS reads it as var(--nhe-zoom)
+ *   NHE.zoom()      // the current factor; CSS reads it as var(--nhe-zoom)
+ *   NHE.upright()   // scaled to fit an upright screen's width (the phone layouts)
+ *
+ * SET → Screen size: NHE's screens and dialogs larger by a factor, sideways
+ * and on a computer (upright they already fill the width). For this browser
+ * only, so a small touch screen and a laptop on the same MOD each keep their
+ * own: the key isn't "nhe-…", which components/config.js would share with
+ * every browser. "auto" is 1: phones and tablets already size a CSS px for
+ * their screen; a Pi's small screen gets its size from the kiosk's scale
+ * factor (device/kiosk), which enlarges MOD's UI as well.
+ *
+ *   NHE.uiScaleSetting()   // 'auto' or a factor, as a string ('1.15')
+ *   NHE.setUiScale('1.3')  // saved, then the page reloads
  */
 (function () {
     var NHE = window.NHE = window.NHE || {}
@@ -620,17 +633,48 @@
     // are the design's (as the phone's bars, features/bars)
     var PHONE_TARGET = 390
     var phone = Math.min(screen.width, screen.height) < 600
+    var SCALE_KEY = 'nhe.ui-scale'
 
-    NHE.zoom = function () {
+    NHE.uiScaleChoices = [
+        { value: 'auto', label: 'Auto' },
+        { value: '1.15', label: 'Larger' },
+        { value: '1.3', label: 'Large' },
+        { value: '1.5', label: 'Largest' }
+    ]
+    NHE.uiScaleSetting = function () {
+        var v = null
+        try { v = window.localStorage.getItem(SCALE_KEY) } catch (e) {}
+        return v || 'auto'
+    }
+    NHE.uiScale = function () {
+        var n = parseFloat(NHE.uiScaleSetting())
+        return n >= 1 && n <= 2 ? n : 1
+    }
+    NHE.setUiScale = function (value) {
+        try {
+            if (!value || value === 'auto') window.localStorage.removeItem(SCALE_KEY)
+            else window.localStorage.setItem(SCALE_KEY, String(value))
+        } catch (e) {}
+        // every screen measures itself on load and on a window resize: a
+        // reload is the one path that sizes them all again
+        window.location.reload()
+    }
+
+    var upright = function () {
         var w = window.innerWidth, h = window.innerHeight
         if (h <= w) return 1
         return Math.max(1, Math.min(ZOOM_MAX, w / (phone ? PHONE_TARGET : ZOOM_TARGET)))
+    }
+    NHE.upright = function () { return upright() > 1 }
+    NHE.zoom = function () {
+        var z = upright()
+        return z > 1 ? z : NHE.uiScale()
     }
     // the plugin settings screen: a little larger again everywhere (its text
     // and icons were on the small side); CSS: var(--nhe-settings-zoom). Not
     // on a phone upright: there the design's sizes are already the phone's
     var SETTINGS_SCALE = 1.15
-    var phoneUpright = function () { return phone && NHE.zoom() > 1 }
+    var phoneUpright = function () { return phone && NHE.upright() }
     NHE.settingsZoom = function () { return NHE.zoom() * (phoneUpright() ? 1 : SETTINGS_SCALE) }
     // html.nhe-phone-upright: for layouts the design draws differently there
     var apply = function () {

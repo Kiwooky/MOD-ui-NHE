@@ -33,7 +33,7 @@ if [ "$PATCHBOX" = 1 ]; then
     scp -r nhe "patch@$HOST:~/nhe-upload"
     printf '{"version": "dev"}\n' > nhe/version.json
     echo "Installing to /var/modep/nhe and hooking into MODEP (sudo on the Pi) ..."
-    ssh -t "patch@$HOST" 'sudo rm -rf /var/modep/nhe && sudo mv ~/nhe-upload /var/modep/nhe && sudo NHE_TEST_DATA=/var/modep/nhe NHE_TEST_BACKUP=/var/modep/nhe-backup sh /var/modep/nhe/device/install.sh'
+    ssh -t "patch@$HOST" 'sudo rm -rf /var/modep/nhe && sudo mv ~/nhe-upload /var/modep/nhe && sudo NHE_TEST_DATA=/var/modep/nhe NHE_TEST_BACKUP=/var/modep/nhe-backup sh /var/modep/nhe/device/install.sh && { sudo systemctl try-restart nhe-kiosk 2>/dev/null || true; }'
     echo "Done. Reload http://$HOST (Cmd+Shift+R)."
     exit 0
 fi

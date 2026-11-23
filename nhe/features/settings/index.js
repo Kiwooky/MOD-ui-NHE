@@ -435,6 +435,19 @@ NHE.register('settings', function (mod) {
             $('<div class="nhe-dialog__note">').text("The top and bottom bars: NHE's, or MOD's own. Kept on this MOD.").appendTo(d)
         }
 
+        // how large NHE's screens and dialogs are, in this browser (components/controls: NHE.uiScale)
+        if (NHE.setUiScale) {
+            d = $('<div class="nhe-dialog__group">').appendTo(body)
+            $('<div class="nhe-dialog__title nhe-set-dialog__section">').html(NHE.icons.magnifier + '<span>Screen size</span>').appendTo(d)
+            var zseg = $('<div>').appendTo($('<div class="nhe-dialog__setting">').appendTo(d))
+            var choices = NHE.uiScaleChoices, now = NHE.uiScaleSetting(), at = 0
+            choices.forEach(function (c, i) { if (c.value === now) at = i })
+            new NHE.Segmented(zseg[0], { options: choices.map(function (c) { return c.label }), value: at, onChange: function (i) {
+                NHE.setUiScale(choices[i].value)
+            } })
+            $('<div class="nhe-dialog__note">').text("NHE's bars, screens and dialogs, larger for a small touch screen. This browser only. The page reloads.").appendTo(d)
+        }
+
         // the work surface: the builder's background (features/background)
         if (NHE.backgroundList) {
             d = $('<div class="nhe-dialog__group">').appendTo(body)

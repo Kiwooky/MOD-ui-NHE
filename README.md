@@ -51,6 +51,31 @@ For a MOD on your network instead of USB, add its address: `sh tools/deploy.sh 1
 
 Status and what's next: [ROADMAP.md](ROADMAP.md).
 
+### On a Raspberry Pi (Patchbox OS / MODEP)
+
+Activate MODEP on the Pi first (`sudo patchbox module activate modep`; http://patchbox.local should show MOD's UI). Then, from this folder on your computer:
+
+```sh
+sh tools/deploy.sh --patchbox            # or: sh tools/deploy.sh --patchbox 192.168.1.40
+```
+
+It logs in as `patch` and asks for that user's password (for ssh, then for sudo on the Pi). NHE goes to `/var/modep/nhe`.
+
+**A touch screen on the Pi (kiosk).** To have MOD's UI open full screen on a screen attached to the Pi, run this once **on the Pi** (it needs the internet: it installs X and Chromium):
+
+```sh
+sudo sh /var/modep/nhe/device/kiosk/install.sh
+```
+
+From then on the Pi boots into MOD's UI. Settings are in `/etc/default/nhe-kiosk` (`sudo systemctl restart nhe-kiosk` after a change):
+
+- **`SCALE`**: how much larger to draw everything. `auto` works it out from the size the screen reports: 1.25 on a 5" 800 × 480, 1 on a 7" 800 × 480, up to 1.5 on denser screens. Many cheap screens report no size or a wrong one, and then auto stays at 1. If that happens, set a number yourself, for example `SCALE=1.25`. `journalctl -u nhe-kiosk` shows what auto chose and why.
+- **`X_ARGS=-nocursor`** hides the pointer. Leave it empty if you use a mouse.
+
+To make NHE's own bars, screens and dialogs larger on top of that (the top and bottom bars, the plugin settings screen, NHE's builder, SET), use SET → **Screen size**: Auto, Larger (×1.15), Large (×1.3) or Largest (×1.5). It applies to that browser only, so the Pi's screen and your laptop each keep their own. Auto leaves them as they are: phones and tablets already size the page for their screen, and the kiosk's `SCALE` handles the Pi. When the bottom bar runs out of room, it first drops the open screen's name, then shortens the CPU / RAM meters, then drops their icon, and finally zooms the bars only as far as they fit.
+
+`deploy.sh --patchbox` restarts the kiosk so it loads the new files. MOD's UI expects one browser, so while the kiosk shows it, opening http://patchbox.local on another computer can hang. Run `sudo systemctl stop nhe-kiosk` on the Pi to free it for a while. To take the kiosk away: `sudo sh /var/modep/nhe/device/kiosk/install.sh --remove`. Getting the screen itself working (its resolution, touch) is the Pi's own setup: see the screen maker's instructions, usually lines in `/boot/config.txt`.
+
 ### On Starless (19 or newer): a zip, no terminal
 
 Starless has an installer for other web UIs in **Settings › Developer › User interfaces (EXPERIMENTAL)**. It takes a whole web UI, so NHE's zip is Starless's own UI with NHE inside it.

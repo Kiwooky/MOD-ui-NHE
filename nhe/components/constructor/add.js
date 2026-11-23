@@ -78,7 +78,7 @@
         this.exclude = {}
         ;(this.o.exclude || []).forEach(function (id) { self.exclude[id] = true })
 
-        var full = NHE.zoom && NHE.zoom() > 1
+        var full = NHE.upright && NHE.upright()
         // a large card: the results grow with the screen, with the pedals' full pictures
         this.big = !full
         var overlay = this.overlay = el('div', 'nhe-ctl nhe-dialog-overlay nhe-add-overlay' + (full ? ' is-full' : ''), document.body)
@@ -531,7 +531,7 @@
     NHE.PluginInfoDialog = function (options) {
         var o = options || {}, plugin = o.plugin
         var go = function () {
-            var full = NHE.zoom && NHE.zoom() > 1
+            var full = NHE.upright && NHE.upright()
             var overlay = el('div', 'nhe-ctl nhe-dialog-overlay nhe-add-overlay' + (full ? ' is-full' : ''), document.body)
             var d = el('div', 'nhe-add' + (full ? ' is-full' : ''), overlay)
             d.setAttribute('role', 'dialog')

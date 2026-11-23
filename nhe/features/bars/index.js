@@ -5,7 +5,7 @@
  * NHE's menu bars (docs/menus-spec.md): a top and a bottom bar in place of
  * MOD's, on MOD's builder and NHE's alike (Figma "Touch friendly
  * constructor menus"). Desktop / tablet, and a phone held upright
- * (is-phone: NHE.zoom() > 1): a shorter top bar, five items in the bottom
+ * (is-phone: NHE.upright()): a shorter top bar, five items in the bottom
  * one, the rest in a full-height Menu.
  *
  * Every item drives MOD's own button or icon through NHE.mod (menuAction),
@@ -383,22 +383,48 @@ NHE.register('bars', function (mod) {
     $(document).on('keydown', function (e) { if (phoneMenu && e.key === 'Escape') closePhoneMenu() })
 
     // upright on a phone: the phone's bars, at the design's 390 px across the
-    // screen (--nhe-bar-zoom, CSS zoom); NHE's builder keeps clear of them
-    // (--nhe-bars-top / -bottom, in the page's px)
-    var PHONE_TOP = 64, PHONE_BOTTOM = 62
+    // screen (--nhe-bar-zoom, CSS zoom). Otherwise SET → Screen size
+    // (NHE.uiScale) enlarges the desktop bars by its factor (is-scaled). Taller
+    // bars lie over the top and bottom of MOD's canvas, as the phone's do;
+    // NHE's builder and live screen keep clear of them (--nhe-bars-top /
+    // -bottom, in the page's px)
+    //
+    // A narrow window, or a large Screen size: the bottom bar's items run
+    // into each other. Step by step until they fit: the open screen's name
+    // goes (is-tight), the CPU / RAM meters get shorter (is-tighter), lose
+    // their gauge icon (is-tightest); then both bars are zoomed only as far
+    // as the bottom one fits
+    var PHONE_TOP = 64, PHONE_BOTTOM = 62, BAR = 45
+    var TIGHT = ['is-tight', 'is-tighter', 'is-tightest']
     var layout = function () {
-        var ph = saved() === 'nhe' && NHE.zoom && NHE.zoom() > 1
-        top.add(bottom).toggleClass('is-phone', !!ph)
-        var z = ph ? window.innerWidth / 390 : 1, root = document.documentElement.style
+        var nhe = saved() === 'nhe'
+        var ph = nhe && NHE.upright && NHE.upright()
+        var s = nhe && !ph && NHE.uiScale ? NHE.uiScale() : 1
+        top.add(bottom).toggleClass('is-phone', !!ph).toggleClass('is-scaled', s > 1)
+        var z = ph ? window.innerWidth / 390 : s, root = document.documentElement.style
         root.setProperty('--nhe-bar-zoom', z)
+        bottom.removeClass(TIGHT.join(' '))
+        if (!ph) {
+            var el = bottom[0]
+            for (var i = 0; i < TIGHT.length && el.scrollWidth > el.clientWidth + 1; i++) bottom.addClass(TIGHT[i])
+            // the bar's px are zoomed, and its centred meters move as it
+            // narrows: shrink a step at a time, measuring again
+            while (z > 1 && el.scrollWidth > el.clientWidth + 1) {
+                z = Math.max(1, Math.round((z - 0.05) * 100) / 100)
+                root.setProperty('--nhe-bar-zoom', z)
+            }
+        }
         if (ph) {
             root.setProperty('--nhe-bars-top', PHONE_TOP * z + 'px')
             root.setProperty('--nhe-bars-bottom', PHONE_BOTTOM * z + 'px')
+        } else if (z > 1) {
+            root.setProperty('--nhe-bars-top', BAR * z + 'px')
+            root.setProperty('--nhe-bars-bottom', BAR * z + 'px')
         } else {
             root.removeProperty('--nhe-bars-top')
             root.removeProperty('--nhe-bars-bottom')
-            closePhoneMenu()
         }
+        if (!ph) closePhoneMenu()
     }
     window.addEventListener('resize', function (e) { if (e.target === window) layout() })
     window.addEventListener('orientationchange', layout)
@@ -423,6 +449,7 @@ NHE.register('bars', function (mod) {
         })
         // an update waiting: a dot on the menu button
         bMenu.toggleClass('is-modified', !!mod.menuItem('update').available && deviceShows('update'))
+        layout()    // the open screen's name changes the bottom bar's width
     }
     var pct = function (v) { return v == null || isNaN(v) ? null : Math.max(0, Math.min(100, v)) }
     var renderStats = function (st) {
