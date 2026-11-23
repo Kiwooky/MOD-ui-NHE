@@ -670,12 +670,18 @@
         var z = upright()
         return z > 1 ? z : NHE.uiScale()
     }
-    // the plugin settings screen: a little larger again everywhere (its text
-    // and icons were on the small side); CSS: var(--nhe-settings-zoom). Not
-    // on a phone upright: there the design's sizes are already the phone's
-    var SETTINGS_SCALE = 1.15
+    // the plugin settings screen: a little larger again on a large screen
+    // (its text and icons were on the small side there); CSS:
+    // var(--nhe-settings-zoom). Not on a small one (shorter than SMALL_H, a 5"
+    // 800 x 480, a phone sideways or upright) or with a Screen size chosen:
+    // there it matches the bars and the builder, or its icons came out
+    // decidedly larger than theirs
+    var SETTINGS_SCALE = 1.15, SMALL_H = 600
     var phoneUpright = function () { return phone && NHE.upright() }
-    NHE.settingsZoom = function () { return NHE.zoom() * (phoneUpright() ? 1 : SETTINGS_SCALE) }
+    NHE.settingsZoom = function () {
+        var extra = !phoneUpright() && NHE.uiScale() === 1 && Math.min(window.innerWidth, window.innerHeight) >= SMALL_H
+        return NHE.zoom() * (extra ? SETTINGS_SCALE : 1)
+    }
     // html.nhe-phone-upright: for layouts the design draws differently there
     var apply = function () {
         document.documentElement.style.setProperty('--nhe-zoom', NHE.zoom())
