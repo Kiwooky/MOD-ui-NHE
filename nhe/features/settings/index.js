@@ -159,7 +159,9 @@ NHE.register('settings', function (mod) {
             onExit: function () { st.actions.exit() },
             onTempo: function (bpm) { mod.setTempo(bpm) },
             onHop: function (id) { st.actions.hop(id) },
-            onSet: function () { openSet(st) },
+            // SET: NHE settings is in NHE's bottom bar's More menu (features/bars);
+            // here only with MOD's menus (or the bars switched off), the way back
+            onSet: NHE.menus && NHE.menus.current() === 'nhe' ? null : function () { openSet(st) },
         })
         st.hint = NHE.scrollHint(st.scroller[0])
 

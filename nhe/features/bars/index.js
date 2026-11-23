@@ -290,10 +290,16 @@ NHE.register('bars', function (mod) {
     var DEVICE_ONLY = { midiPorts: 'mod-show-midi-port', devices: 'mod-devices', settings: 'mod-settings', update: 'mod-update', bypass1: 'mod-bypassLeft', bypass2: 'mod-bypassRight' }
     var deviceOnly = function (name) { return Object.prototype.hasOwnProperty.call(DEVICE_ONLY, name) }   // not 'constructor' off Object's prototype
     var deviceShows = function (name) { return $(document.getElementById(DEVICE_ONLY[name])).is(':visible') }
+    // NHE's own settings (features/settings: SET's dialog); it was a SET
+    // button in the plugin settings screen's system bar
+    var nheSettings = { id: 'nheSettings', icon: I.gear, label: 'NHE settings', own: true,
+        run: function () { NHE.settingsScreen.openSet() },
+        only: function () { return !!(NHE.settingsScreen && NHE.settingsScreen.openSet) } }
     var MORE = [
         { id: 'midiPorts', icon: M.midi, label: 'MIDI ports' },
         { id: 'cv', icon: M.cv, label: 'Manage CV ports' },
-        { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() } },
+        { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() }, own: true },
+        nheSettings,
         // with NHE's builder it's the gallery icon beside a zoomed-in pedal's gear instead
         { id: 'performance', icon: I.gallery, label: 'Gallery view', only: function () { return !NHE.builder || NHE.builder.current() !== 'nhe' } },
         { id: 'report', icon: M.report, label: 'Report a problem' },
@@ -323,7 +329,7 @@ NHE.register('bars', function (mod) {
     // ports while on, a bypass while bypassed) lit, an update orange
     var menuRows = function (box, list, close) {
         list.forEach(function (m) {
-            var it = m.id === 'tempo' ? { shown: true } : m.id === 'live' ? { shown: !!live, selected: !!live && live.isOpen() } : mod.menuItem(m.id)
+            var it = m.own ? { shown: true } : m.id === 'live' ? { shown: !!live, selected: !!live && live.isOpen() } : mod.menuItem(m.id)
             // the live surface over the builder: the builder isn't the screen then
             if (m.id === 'constructor' && live && live.isOpen()) it.selected = false
             if (!it.shown || (deviceOnly(m.id) && !deviceShows(m.id)) || (m.only && !m.only())) return
@@ -361,7 +367,8 @@ NHE.register('bars', function (mod) {
         { id: 'banks', icon: M.banks, label: 'Banks' },
         { id: 'files', icon: M.filemanager, label: 'File manager' },
         { id: 'cv', icon: M.cv, label: 'Manage CV ports' },
-        { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() } },
+        { id: 'tempo', icon: M.tempo, label: 'Global tempo & sync', run: function () { openTempo() }, own: true },
+        nheSettings,
         { id: 'performance', icon: I.gallery, label: 'Gallery view' },
         { id: 'share', icon: M.share, label: 'Share your setup' },
         { id: 'report', icon: M.report, label: 'Report a problem' },
