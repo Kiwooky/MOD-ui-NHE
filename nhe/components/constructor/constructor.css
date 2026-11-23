@@ -471,9 +471,12 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 /* held clear of a notch / Dynamic Island, the tiles float: round all round */
 .is-inset-l .is-input .nhe-surface__port, .is-inset-r .is-output .nhe-surface__port { border-radius: 16px; }
 .nhe-surface__port > svg { width: 32px; height: 32px; }
-.nhe-surface__label { width: 72px; margin-top: 4px; font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); line-height: 1.1; text-transform: uppercase; text-shadow: 0 1px 2px #000; }
-.is-input .nhe-surface__label { margin-left: -12px; }
-.is-output .nhe-surface__label { margin-right: -12px; }
+/* the label under a tile: a little wider than it, reaching inward only (half
+   of a wider one ran off the screen's edge), on two lines when it needs them
+   ("All MIDI / Out"); surface.js PORT_STEP leaves room for the second line */
+.nhe-surface__label { width: 56px; margin-top: 4px; font-size: var(--nhe-font-size-xs); font-weight: var(--nhe-font-weight-semibold); line-height: 1.1; text-align: center; text-transform: uppercase; text-shadow: 0 1px 2px #000; overflow-wrap: normal; white-space: normal; }
+.is-input .nhe-surface__label { margin-left: 0; }
+.is-output .nhe-surface__label { margin-right: 0; }
 /* a connected pedal is out of view (its wire isn't drawn): a small white
    triangle on the side it lies (Figma 208:5831, 13 x 14) */
 .nhe-surface__tri { position: absolute; top: 50%; display: none; width: 0; height: 0; margin-top: -7px; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
