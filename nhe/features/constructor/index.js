@@ -440,6 +440,15 @@ NHE.register('constructor', function (mod) {
         current: saved,
         surface: function () { return surface },     // for the console: the work surface (components/constructor/surface.js)
         refresh: function () { refresh() },
+        // − / + from NHE's top bar (features/bars): whichever builder shows
+        zoom: function (dir) {
+            if (shown() && surface) {
+                var r = surface.root
+                surface.zoomAt(r.clientWidth / 2, r.clientHeight / 2, surface.view.z * (dir > 0 ? 1.25 : 0.8))
+            } else mod.zoomBoard(dir)
+        },
+        // the surface's pill shown or hidden (html.nhe-zoom-in-bar): MOD's output tiles again
+        relayout: function () { if (surface) surface.placePorts() },
         set: function (v) {
             try { localStorage.setItem(KEY, v === 'nhe' ? 'nhe' : 'mod') } catch (e) {}
             apply()

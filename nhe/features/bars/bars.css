@@ -76,6 +76,7 @@
     letter-spacing: .02em;
 }
 :is(#pedalboard-actions, #main-menu) .nhe-topbar__actions { display: flex; align-items: center; gap: var(--nhe-space-8); flex: none; }
+:is(#pedalboard-actions, #main-menu) .nhe-topbar__zoom { display: flex; align-items: center; gap: var(--nhe-space-4); flex: none; margin-left: var(--nhe-space-16); }
 /* unsaved changes: a dot on the floppy */
 :is(#pedalboard-actions, #main-menu) .nhe-topbar__save { position: relative; }
 :is(#pedalboard-actions, #main-menu) .nhe-topbar__save.is-modified::after {

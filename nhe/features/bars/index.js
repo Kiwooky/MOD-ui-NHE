@@ -36,6 +36,15 @@ NHE.register('bars', function (mod) {
     var bSnap = btn('nhe-menus__btn nhe-topbar__snap', M.snapshot, '', 'Snapshots').appendTo(acts)
     var bSave = btn('nhe-menus__btn nhe-topbar__save', M.save, '', 'Save').appendTo(acts)
     var bShare = btn('nhe-menus__btn', M.share, '', 'Share').appendTo(acts)
+    // the builder's − / +, right of the actions with a gap, while a builder
+    // (NHE's or MOD's) is the screen showing: NHE.builder.zoom. Meanwhile the
+    // builders' own pill over the canvas stands aside (html.nhe-zoom-in-bar).
+    // Upright on a phone the pill stays on the canvas (renderZoom)
+    var zoomBar = $('<div class="nhe-topbar__zoom">').appendTo(top)
+    ;[['minus', -1, 'Zoom out'], ['plus', 1, 'Zoom in']].forEach(function (z) {
+        btn('nhe-menus__btn', NHE.zoomIcons ? NHE.zoomIcons[z[0]] : '', '', z[2]).appendTo(zoomBar)
+            .on('click', function () { closePanel(); if (NHE.builder && NHE.builder.zoom) NHE.builder.zoom(z[1]) })
+    })
     var chips = $('<div class="nhe-snapchips">').appendTo(top)
 
     bNew.on('click', function () { closePanel(); mod.menuAction('new') })
@@ -425,6 +434,16 @@ NHE.register('bars', function (mod) {
             root.removeProperty('--nhe-bars-bottom')
         }
         if (!ph) closePhoneMenu()
+        renderZoom()
+    }
+    var renderZoom = function () {
+        var on = saved() === 'nhe' && !!(NHE.builder && NHE.builder.zoom) && !top.hasClass('is-phone') &&
+            !!mod.menuItem('constructor').selected && !(live && live.isOpen())
+        zoomBar.toggle(on)
+        var html = document.documentElement, was = html.classList.contains('nhe-zoom-in-bar')
+        html.classList.toggle('nhe-zoom-in-bar', on)
+        // NHE's builder places MOD's output tiles clear of its pill: again, with it gone or back
+        if (was !== on && NHE.builder && NHE.builder.relayout) NHE.builder.relayout()
     }
     window.addEventListener('resize', function (e) { if (e.target === window) layout() })
     window.addEventListener('orientationchange', layout)

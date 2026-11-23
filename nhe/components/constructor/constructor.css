@@ -560,6 +560,8 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 }
 .nhe-surface.is-zoom-right .nhe-surface__zoom svg, .nhe-modzoom svg { width: 28px; height: 28px; }
 .nhe-surface.is-zoom-right.is-inset-r .nhe-surface__zoom { border-radius: 20px; padding-right: 8px; }
+/* the − / + in NHE's top bar instead (features/bars: html.nhe-zoom-in-bar) */
+.nhe-zoom-in-bar .nhe-surface.is-zoom-right .nhe-surface__zoom, .nhe-zoom-in-bar .nhe-modzoom { display: none !important; }
 
 /* Manage CV ports (surface.js renderCvTags): a tick beside each CV output,
    its name once ticked, as on MOD's builder */
