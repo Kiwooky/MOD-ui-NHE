@@ -25,6 +25,7 @@
  *       onRewire: fn(node),                 // a pedal's plug button: a card's (phones: no hand
  *                                           // wiring), or left of a face's gear
  *       onPortTap: fn(node, connected),     // cards: one of MOD's port tiles was tapped
+ *       onPortHold: fn(node, connected),    // cards: one of MOD's port tiles was pressed and held (LONG_MS)
  *       onSettings: fn(node),               // a face's gear, just outside its top right
  *                                           // corner (as on MOD's builder): its settings
  *       onFocus: fn(node),                  // a face was tapped and zoomed to its full size
@@ -1494,6 +1495,15 @@
             self.moved = false
             if (item) {
                 g.timer = setTimeout(function () { if (g && g.mode === 'press' && !g.moved) self.lift(g) }, LONG_MS)
+            } else if (tile && typeof self.o.onPortHold === 'function') {
+                // press and hold a port tile: reported (its cables, to disconnect)
+                g.timer = setTimeout(function () {
+                    if (!g || g.mode !== 'press' || g.moved) return
+                    g.mode = 'held'
+                    if (navigator.vibrate) { try { navigator.vibrate(15) } catch (e) {} }
+                    var pn = self.node(g.tile.getAttribute('data-id'))
+                    if (pn) self.o.onPortHold(pn, self.connected(pn))
+                }, LONG_MS)
             } else if (cable) {
                 // press and hold a cable: drag that stretch of it elsewhere
                 g.timer = setTimeout(function () {
@@ -1548,6 +1558,7 @@
             if (g.mode === 'lifted') { self.drop(g, e.type === 'pointercancel'); g = null; return }
             if (g.mode === 'bend') { self.endBend(g, e.type === 'pointercancel'); g = null; setTimeout(function () { self.moved = false }, 0); return }
             if (g.mode === 'pinch') { if (!pts().length) g = null; return }
+            if (g.mode === 'held') { g = null; return }       // reported when the hold began: no tap
             if (g.mode === 'wire') {
                 if (g.moved) self.dropWire(e.type === 'pointercancel')
                 else if (g.hit && g.hit.hasAttribute('data-ci') && e.type === 'pointerup') self.tapPlug(g.hit)

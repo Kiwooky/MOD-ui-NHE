@@ -216,9 +216,14 @@ NHE.register('constructor', function (mod) {
             onRewire: function (node) { if (!pending[node.id]) rewire(node) },
             // phones: an input with nothing on it opens the + dialog with it as the input,
             // the new pedal near the board's start
+            // a connected port (tap, or press and hold): its cables, to disconnect
             onPortTap: function (node, connected) {
-                if (node.kind !== 'input' || connected) return
-                openAdd({ col: 0, row: 0 }, { inputs: [node.id] })
+                if (connected) { portCables(node); return }
+                if (node.kind === 'input') openAdd({ col: 0, row: 0 }, { inputs: [node.id] })
+            },
+            onPortHold: function (node, connected) {
+                if (connected) portCables(node)
+                else mod.notify('info', (node.short || node.name) + ' has no cables.', 2500)
             },
             // faces: the gear at the pedal's top right, as on MOD's builder (NHE's settings screen, or MOD's)
             onSettings: function (node) { if (!pending[node.id]) mod.openSettings(node.id) },
@@ -408,6 +413,66 @@ NHE.register('constructor', function (mod) {
                 }
             })
         })
+    }
+
+    // ---- one of MOD's ports: its cables, to disconnect (cards: tap or hold) --
+
+    // a port's other end, as a person reads it: the pedal and its jack, or
+    // another of MOD's ports
+    var endLabel = function (portId) {
+        var nd = surface && surface.ownerOf(portId)
+        if (!nd) return portId
+        if (nd.kind !== 'pedal') return nd.short || nd.name || portId
+        return (nd.name || nd.id) + ' · ' + mod.portName(portId)
+    }
+    var portCables = function (node) {
+        if (!surface) return
+        var mine = function () {
+            return connections.filter(function (c) { return surface.ownerOf(c[0]) === node || surface.ownerOf(c[1]) === node })
+        }
+        var overlay = $('<div class="nhe-ctl nhe-dialog-overlay">').appendTo('body')
+        var d = $('<div class="nhe-dialog nhe-dialog--card nhe-port-dialog" role="dialog" aria-modal="true" tabindex="-1">')
+            .attr('aria-label', 'Cables of ' + (node.short || node.name)).appendTo(overlay)
+        var head = $('<div class="nhe-dialog__header">').appendTo(d)
+        $('<span class="nhe-dialog__plugin">').text(node.short || node.name).appendTo(head)
+        $('<span class="nhe-dialog__pill">').text('Cables').appendTo(head)
+        var f = $('<div class="nhe-dialog__field">').appendTo(d)
+        $('<div class="nhe-dialog__title">').html(NHE.icons.plug + '<span>' + (node.kind === 'input' ? 'Feeds' : 'Fed by') + '</span>').appendTo(f)
+        var list = $('<div class="nhe-port-dialog__list">').appendTo(f)
+        var close = function () { overlay.remove() }
+        var cut = function (pairs) {
+            var left = pairs.length
+            if (!left) return
+            pairs.forEach(function (c) { mod.disconnect(c[0], c[1], function () { if (!--left) refresh() }) })
+        }
+        var render = function () {
+            var cs = mine()
+            if (!cs.length) { close(); return }
+            list.empty()
+            cs.forEach(function (c) {
+                var other = surface.ownerOf(c[0]) === node ? c[1] : c[0]
+                var row = $('<div class="nhe-port-dialog__row">').appendTo(list)
+                $('<span class="nhe-port-dialog__end">').text(endLabel(other)).appendTo(row)
+                row.append(NHE.textButton('Disconnect', 'secondary', function () {
+                    connections = connections.filter(function (x) { return x !== c })
+                    cut([c])
+                    render()
+                }))
+            })
+        }
+        render()
+        var foot = $('<div class="nhe-dialog__buttons">').appendTo(d)
+        foot.append(NHE.textButton('Close', 'secondary', close))
+        foot.append(NHE.textButton('Disconnect all', 'primary', function () {
+            var all = mine()
+            connections = connections.filter(function (x) { return all.indexOf(x) < 0 })
+            cut(all)
+            close()
+        }))
+        d.on('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close() } })
+        d.on('keyup', function (e) { e.stopPropagation() })
+        overlay.on('pointerdown', function (e) { if (e.target === overlay[0]) close() })
+        setTimeout(function () { d[0].focus() }, 0)
     }
 
     // ---- MOD's builder or NHE's --------------------------------------------

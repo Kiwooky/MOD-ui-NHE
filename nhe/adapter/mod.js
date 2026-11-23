@@ -1337,6 +1337,19 @@
         if (fn) fn(from, to, function (ok) { if (cb) cb(!!ok) })
         else $.ajax({ url: plugsUrl('connect', from, to), cache: false, dataType: 'json', success: function (ok) { if (cb) cb(!!ok) } })
     }
+    // a pedal's port by the name its plugin gives it ('In L'), from modgui's
+    // effect data (gui.effect.ports.<type>.<input|output>[].name); its
+    // symbol, spaced, when the plugin has none
+    mod.portName = function (portId) {
+        var i = String(portId).lastIndexOf('/'), instance = portId.slice(0, i), symbol = portId.slice(i + 1)
+        var gui = mod.gui(instance), ports = (gui && gui.effect && gui.effect.ports) || {}, found = null
+        ;['audio', 'midi', 'cv'].forEach(function (t) {
+            ;['input', 'output'].forEach(function (d) {
+                ;((ports[t] && ports[t][d]) || []).forEach(function (p) { if (p.symbol === symbol && p.name) found = p.name })
+            })
+        })
+        return found || symbol.replace(/_/g, ' ')
+    }
     mod.disconnect = function (from, to, cb) {
         var pb = mod.pedalboard(), fn = pb.data('portDisconnect')
         var done = function () { pb.trigger('modified'); if (cb) cb(true) }   // MOD's own disconnect marks the board modified

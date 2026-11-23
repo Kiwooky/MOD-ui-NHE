@@ -599,3 +599,10 @@ a.nhe-add__online { display: inline-flex; align-items: center; justify-content: 
 /* cards: a red dot at the top left while the plugin is on (surface.js setOn) */
 .nhe-surface__led { position: absolute; top: calc(6px / min(1, var(--nhe-surface-z, 1))); left: calc(6px / min(1, var(--nhe-surface-z, 1))); display: none; width: calc(10px / min(1, var(--nhe-surface-z, 1))); height: calc(10px / min(1, var(--nhe-surface-z, 1))); border-radius: 50%; background: #ff2a2a; box-shadow: 0 0 6px 1px rgba(255, 42, 42, .7); pointer-events: none; z-index: 1; }
 .nhe-surface__item.is-on .nhe-surface__led { display: block; }
+
+/* one of MOD's ports, its cables (features/constructor portCables): a row
+   per cable, its other end and a Disconnect */
+.nhe-port-dialog__list { display: flex; flex-direction: column; gap: var(--nhe-space-8); margin-top: var(--nhe-space-8); }
+.nhe-port-dialog__row { display: flex; align-items: center; gap: var(--nhe-space-8); }
+.nhe-port-dialog__end { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nhe-port-dialog__row .nhe-text-button { flex: none; }
