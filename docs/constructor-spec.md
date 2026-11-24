@@ -204,7 +204,7 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   that port's tile or label, isn't drawn: the
   tile shows a small white triangle pointing left or right, the side
   that pedal lies.
-- The surface: `calm-dark.jpg` (a grey sheet), tiled so its holes come
+- The surface: `pegs-mid-grey.jpg` (a grey sheet), tiled so its holes come
   three to a cell with one under every +, also in SET → Work surface for MOD's builder. The + circles are
   solid and dark. Zoom buttons sit bottom left (on MOD: at the top
   right edge, stacked with + on top, shaped like MOD's output tiles and
@@ -325,9 +325,10 @@ Full screen on a phone; the bottom menu bar gives way to **Cancel** and
   way are rounded on all four corners.
 - **Cards show the pedal's full-size picture** (MOD's screenshot), not its
   thumbnail: the thumbnails are about 40 × 64 px and blurred on a phone.
-- **SET → Work surface** applies to NHE's builder too: "NHE constructor
-  grid" (`calm-dark.jpg`, its holes lined up with the cells) by default,
-  or another image from `nhe/backgrounds/`, or MOD's wood.
+- **SET → Work surface** applies to NHE's builder too: "Pegs, grey
+  (NHE)" (`pegs-mid-grey.jpg`) by default, or another image from
+  `nhe/backgrounds/` (its pegs or squares lined up under the + too), or
+  MOD's wood.
 - **Touch:** a long press on the surface is the surface's: no iOS image
   menu or magnifier (`-webkit-touch-callout`), no Android context menu.
 - A plugin without a picture of its own (MOD shows "No interface

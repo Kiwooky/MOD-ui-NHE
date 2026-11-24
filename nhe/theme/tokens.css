@@ -118,8 +118,8 @@
          -hole:   its first hole's centre, as a fraction of the tile (holes
                   every half tile; the constructor lines one up under each +)
          -height: its tile's height on MOD's builder */
-    --nhe-texture: url("/nhe/backgrounds/calm-dark.jpg");
-    --nhe-texture-hole: 0.1224;
+    --nhe-texture: url("/nhe/backgrounds/pegs-mid-grey.jpg");
+    --nhe-texture-hole: 0.1232;
     --nhe-texture-height: 125px;
 
     /* Theme: text, icons, borders */

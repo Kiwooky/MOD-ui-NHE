@@ -310,17 +310,26 @@
 
     // The surface's image: NHE's grid texture (--nhe-texture, its holes lined
     // up with the cells: one under every +), or another one chosen in SET
-    // (--nhe-surface-texture, tiled --nhe-surface-tile px tall at zoom 1)
+    // (--nhe-surface-texture). One from nhe/backgrounds/ says how many tiles
+    // make a cell (--nhe-surface-per-cell) and where a peg sits in its tile
+    // (--nhe-surface-hole): it's lined up the same way. Any other image is
+    // tiled --nhe-surface-tile px tall at zoom 1.
     Surface.prototype.texture = function () {
         var cs = getComputedStyle(this.root), other = parseFloat(cs.getPropertyValue('--nhe-surface-tile'))
+        var tile = TILE, at = parseFloat(cs.getPropertyValue('--nhe-texture-hole')) || 0
         if (other > 0 && cs.getPropertyValue('--nhe-surface-texture').replace(/\s/g, '')) {
-            this.tile = other
-            this.bg = { x: 0, y: 0 }
-            return
+            var per = parseFloat(cs.getPropertyValue('--nhe-surface-per-cell'))
+            if (!(per > 0)) {
+                this.tile = other
+                this.bg = { x: 0, y: 0 }
+                return
+            }
+            tile = CELL / per
+            at = parseFloat(cs.getPropertyValue('--nhe-surface-hole')) || 0
         }
-        var hole = (parseFloat(cs.getPropertyValue('--nhe-texture-hole')) || 0) * TILE
-        this.tile = TILE
-        this.bg = { x: mod(EDGE + CELL / 2 - hole, TILE / 2), y: mod(CELL / 2 - hole, TILE / 2) }
+        var hole = at * tile
+        this.tile = tile
+        this.bg = { x: mod(EDGE + CELL / 2 - hole, tile), y: mod(CELL / 2 - hole, tile) }
     }
 
     Surface.prototype.render = function () {

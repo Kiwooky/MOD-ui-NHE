@@ -13,16 +13,20 @@
  *   NHE.background()                   // which one is on
  *
  * The images on offer are listed in nhe/backgrounds/backgrounds.json
- * ({ file, height }: the tile's height in px); SET's Work surface dropdown
- * shows them (NHE.backgroundList).
+ * ({ file, height, name, perCell, hole }); SET's Work surface dropdown
+ * shows them (NHE.backgroundList). height: the tile's height in px on MOD's
+ * builder; perCell: tiles to one of NHE's builder cells; hole: a peg's (or
+ * square's) centre, as a fraction of the tile, which NHE's builder lines up
+ * under every + (pegs every half tile, or one per tile).
  *
  * Until something is chosen, NHE's texture shows (tokens.css: --nhe-texture,
  * tiled --nhe-texture-height tall), the same image as the constructor's.
  * The choice is remembered in this browser. It shows on MOD's builder, in
  * the performance view and on NHE's builder (the constructor's surface:
- * --nhe-surface-texture / --nhe-surface-tile on the page, and an
- * 'nhe-background' event on window so it redraws). NHE's own texture there
- * keeps its holes lined up with the grid ("NHE constructor grid").
+ * --nhe-surface-texture / --nhe-surface-tile / --nhe-surface-per-cell /
+ * --nhe-surface-hole on the page, and an 'nhe-background' event on window
+ * so it redraws). A remembered file no longer in the list falls back to
+ * NHE's texture.
  */
 NHE.register('background', function (mod) {
     var KEY = 'nhe-background'
@@ -86,13 +90,23 @@ NHE.register('background', function (mod) {
 
     // NHE's builder: another image than its own grid (whose holes line up
     // with the cells, so the surface places that one itself)
+    var entry = function (name) {
+        var found = null
+        ;(list || []).forEach(function (b) { if (b.file === name) found = b })
+        return found
+    }
     var setSurface = function () {
-        var root = document.documentElement.style, name = saved(), url = null, height = null
+        var root = document.documentElement.style, name = saved(), url = null, height = null, b = null
         if (name === MOD) { var w = mod.builderWood(); url = w.url; height = w.height }
-        else if (name && name !== DEFAULT) { url = resolve(name); height = savedHeight() || 300 }
+        else if (name && name !== DEFAULT) { url = resolve(name); height = savedHeight() || 300; b = entry(name) }
+        root.removeProperty('--nhe-surface-per-cell')
+        root.removeProperty('--nhe-surface-hole')
         if (url) {
             root.setProperty('--nhe-surface-texture', 'url("' + String(url).replace(/["\\\n]/g, '') + '")')
             root.setProperty('--nhe-surface-tile', height + 'px')
+            // one of nhe/backgrounds/ with a grid: lined up with the cells
+            if (b && b.perCell > 0) root.setProperty('--nhe-surface-per-cell', String(b.perCell))
+            if (b && b.hole >= 0) root.setProperty('--nhe-surface-hole', String(b.hole))
         } else {
             root.removeProperty('--nhe-surface-texture')
             root.removeProperty('--nhe-surface-tile')
@@ -106,6 +120,16 @@ NHE.register('background', function (mod) {
         if (!readDefault() && ++tries < 100) { setTimeout(go, 50); return }
         mod.setBackground(resolve(saved()), savedHeight())
         setSurface()
+        // the list knows each image's grid; a file it no longer has (an
+        // older set of images) goes back to NHE's texture
+        NHE.backgroundList(function () {
+            var name = saved()
+            if (name && name !== MOD && name !== DEFAULT && !/^(https?:|data:|\/)/.test(name) && !entry(name)) {
+                try { localStorage.removeItem(KEY); localStorage.removeItem(HEIGHT_KEY) } catch (e) {}
+                mod.setBackground(resolve(saved()), savedHeight())
+            }
+            setSurface()
+        })
     }
     go()
 })
