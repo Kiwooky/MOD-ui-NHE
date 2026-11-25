@@ -27,7 +27,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 120px;
+    width: calc(120px * var(--nhe-column-scale, 1));   /* narrower on a phone (controls.js) */
     flex: none;
     background: var(--nhe-surface-base);
     border-top: 1px solid var(--nhe-border-divider);
@@ -136,8 +136,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    width: 88px;
-    height: 88px;
+    width: calc(88px * var(--nhe-column-scale, 1));
+    height: calc(88px * var(--nhe-column-scale, 1));
     padding: 0;
     border: 0;
     overflow: hidden;
@@ -184,8 +184,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 88px;
-    height: 88px;
+    width: calc(88px * var(--nhe-column-scale, 1));
+    height: calc(88px * var(--nhe-column-scale, 1));
     padding: 0;
     border: 0;
     border-radius: var(--nhe-radius-full);
@@ -564,7 +564,7 @@ button.nhe-chain__port:active, .nhe-chain__none.is-tappable:active { opacity: .7
     position: relative;
     display: flex;
     flex-direction: column;
-    width: 120px;
+    width: calc(120px * var(--nhe-column-scale, 1));
     height: var(--nhe-slider-height, 646px);
     flex: none;
     background: var(--nhe-surface-base);
@@ -575,7 +575,7 @@ button.nhe-chain__port:active, .nhe-chain__none.is-tappable:active { opacity: .7
 .nhe-stack__bar { position: absolute; left: 0; right: 0; top: 0; height: 8px; background: var(--nhe-slider-group-color); }
 .nhe-stack[data-group="none"] .nhe-stack__bar { display: none; }
 .nhe-stack[data-group="end"] .nhe-stack__bar, .nhe-stack[data-group="single"] .nhe-stack__bar { right: var(--nhe-space-8); }
-.nhe-stack__name { display: none; position: absolute; left: var(--nhe-space-8); top: var(--nhe-space-16); width: calc(var(--nhe-slider-group-width, 120px) - 16px); z-index: 1; font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-tight); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.nhe-stack__name { display: none; position: absolute; left: var(--nhe-space-8); top: var(--nhe-space-16); width: calc(var(--nhe-slider-group-width, calc(120px * var(--nhe-column-scale, 1))) - 16px); z-index: 1; font-size: var(--nhe-font-size-sm); line-height: var(--nhe-font-line-tight); font-weight: var(--nhe-font-weight-semibold); text-transform: uppercase; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .nhe-stack[data-group="start"] .nhe-stack__name, .nhe-stack[data-group="single"] .nhe-stack__name { display: -webkit-box; }
 
 /* ---- scroll hint: more columns to the right ------------------------------ */

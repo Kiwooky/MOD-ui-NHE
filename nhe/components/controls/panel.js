@@ -48,7 +48,8 @@
     }
 
     var widthOf = function (col) {
-        return col.kind === 'slider' && col.control.options && col.control.options.minimised ? 60 : 120
+        // controls.js: 120 (60 minimised), less on a phone
+        return NHE.columnWidth(col.kind === 'slider' && col.control.options && col.control.options.minimised)
     }
 
     // the layout alone: [{ kind: 'slider'|'stack', control | cells, group, groupKind, groupWidth }]

@@ -10,12 +10,13 @@
 .nhe-slider {
     /* geometry (spec: 120 x 646; band 44, header 69, footer 48). The height
        is inherited when set higher up (the panel sets it for every column). */
-    --nhe-slider-width: 120px;
+    /* narrower on a phone: --nhe-column-scale (controls.js, NHE.columnScale) */
+    --nhe-slider-width: calc(120px * var(--nhe-column-scale, 1));
     --nhe-slider-band: 44px;
     --nhe-slider-header: 69px;
     --nhe-slider-footer: 48px;
-    --nhe-slider-track: 88px;          /* track width */
-    --nhe-slider-thumb: 88px;          /* thumb diameter */
+    --nhe-slider-track: calc(88px * var(--nhe-column-scale, 1));   /* track width */
+    --nhe-slider-thumb: calc(88px * var(--nhe-column-scale, 1));   /* thumb diameter */
     --nhe-slider-lip: 11px;            /* accent crescent under the thumb */
     --nhe-slider-inner: 75%;           /* inner disc of the thumb */
     --nhe-slider-group-color: var(--nhe-group-0);
@@ -518,8 +519,8 @@
 /* ---- minimised: display only (spec refinement 2) ---------------------- */
 
 .nhe-slider.is-minimised {
-    --nhe-slider-width: 60px;
-    --nhe-slider-track: 24px;
+    --nhe-slider-width: calc(60px * var(--nhe-column-scale, 1));
+    --nhe-slider-track: calc(24px * var(--nhe-column-scale, 1));
     --nhe-slider-thumb: 0px;
 }
 

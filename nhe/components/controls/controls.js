@@ -700,6 +700,16 @@
         var extra = !phoneUpright() && NHE.uiScale() === 1 && Math.min(window.innerWidth, window.innerHeight) >= SMALL_H
         return NHE.zoom() * (extra ? SETTINGS_SCALE : 1)
     }
+    // A phone (either way up; never a desktop or tablet, whatever the window):
+    // the control columns (sliders, toggles, lists, their stacks) are drawn
+    // at COLUMN_PHONE of their width. CSS reads var(--nhe-column-scale);
+    // JS that adds up column widths uses NHE.columnWidth()
+    var COLUMN = 120, COLUMN_PHONE = 0.75
+    NHE.phone = function () { return phone }
+    NHE.columnScale = function () { return phone ? COLUMN_PHONE : 1 }
+    NHE.columnWidth = function (minimised) { return (minimised ? COLUMN / 2 : COLUMN) * NHE.columnScale() }
+    document.documentElement.style.setProperty('--nhe-column-scale', NHE.columnScale())
+    document.documentElement.classList.toggle('nhe-phone', phone)
     // html.nhe-phone-upright: for layouts the design draws differently there
     var apply = function () {
         document.documentElement.style.setProperty('--nhe-zoom', NHE.zoom())
