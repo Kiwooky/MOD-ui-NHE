@@ -703,11 +703,13 @@
     // A phone (either way up; never a desktop or tablet, whatever the window):
     // the control columns (sliders, toggles, lists, their stacks) are drawn
     // at COLUMN_PHONE of their width. CSS reads var(--nhe-column-scale);
-    // JS that adds up column widths uses NHE.columnWidth()
+    // JS that adds up column widths uses NHE.columnWidth(). An option list
+    // keeps its width (its names would be cut off), and so does a stack
+    // holding one: NHE.columnWidth(false, true)
     var COLUMN = 120, COLUMN_PHONE = 0.75
     NHE.phone = function () { return phone }
     NHE.columnScale = function () { return phone ? COLUMN_PHONE : 1 }
-    NHE.columnWidth = function (minimised) { return (minimised ? COLUMN / 2 : COLUMN) * NHE.columnScale() }
+    NHE.columnWidth = function (minimised, wide) { return wide ? COLUMN : (minimised ? COLUMN / 2 : COLUMN) * NHE.columnScale() }
     document.documentElement.style.setProperty('--nhe-column-scale', NHE.columnScale())
     document.documentElement.classList.toggle('nhe-phone', phone)
     // html.nhe-phone-upright: for layouts the design draws differently there

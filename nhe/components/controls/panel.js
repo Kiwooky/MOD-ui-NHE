@@ -47,9 +47,12 @@
         return 1 + 33 + Math.min(n, LIST_VISIBLE) * LIST_ROW + 2 + 48
     }
 
+    var hasList = function (col) { return col.cells.some(function (c) { return c.type !== 'toggle' && c.type !== 'trigger' }) }
     var widthOf = function (col) {
-        // controls.js: 120 (60 minimised), less on a phone
-        return NHE.columnWidth(col.kind === 'slider' && col.control.options && col.control.options.minimised)
+        // controls.js: 120 (60 minimised), less on a phone, except a stack
+        // with an option list in it
+        if (col.kind === 'stack') return NHE.columnWidth(false, hasList(col))
+        return NHE.columnWidth(col.control.options && col.control.options.minimised)
     }
 
     // the layout alone: [{ kind: 'slider'|'stack', control | cells, group, groupKind, groupWidth }]
@@ -178,7 +181,7 @@
                 self.instances[c.id] = new NHE.Slider(d, mix(mix(c.options, { group: group }), cb(c.id)))
                 return
             }
-            var st = el('div', 'nhe-stack', root)
+            var st = el('div', 'nhe-stack' + (hasList(col) ? ' nhe-stack--wide' : ''), root)
             st.setAttribute('data-group', col.groupKind)
             st.style.setProperty('--nhe-slider-group-color', typeof color === 'string' ? color : 'var(--nhe-group-' + color + ')')
             st.style.setProperty('--nhe-slider-group-width', col.groupWidth + 'px')

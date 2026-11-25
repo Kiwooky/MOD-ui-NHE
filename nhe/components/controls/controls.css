@@ -569,6 +569,9 @@ button.nhe-chain__port:active, .nhe-chain__none.is-tappable:active { opacity: .7
     flex: none;
     background: var(--nhe-surface-base);
 }
+/* an option list keeps its full width on a phone (its names would be cut
+   off), and so does a stack holding one, with all its cells */
+.nhe-option-list, .nhe-stack--wide, .nhe-stack--wide > * > .nhe-cell { width: 120px; }
 
 /* the group band, as on the slider */
 .nhe-stack__band { position: relative; height: 44px; flex: none; }
