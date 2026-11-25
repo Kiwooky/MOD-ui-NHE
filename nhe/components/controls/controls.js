@@ -543,6 +543,10 @@
     NHE.dragScroll = function (root, options) {
         var o = options || {}
         var drag = null
+        // once per element (every dialog gets it from NHE.fitDialog's watcher,
+        // and some ask for it themselves too)
+        if (root.nheDragScroll) return
+        root.nheDragScroll = true
 
         var scrollerY = function (n) {
             for (; n && n.nodeType === 1; n = n.parentNode) {
@@ -703,8 +707,21 @@
         document.documentElement.classList.toggle('nhe-phone-upright', phoneUpright())
     }
     apply()
-    window.addEventListener('resize', function (e) { if (e.target === window) apply() })
+    // the on-screen keyboard shortens the window: that's no reason to change
+    // the zoom (upright, the phone looked sideways and everything jumped);
+    // the size it's read at again once the field lets go
+    var FIELD = 'input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=file]), textarea, [contenteditable]'
+    var typing = function () { var a = document.activeElement; return !!(a && a.matches && a.matches(FIELD)) }
+    var width = window.innerWidth
+    window.addEventListener('resize', function (e) {
+        if (e.target !== window) return
+        if (typing() && window.innerWidth === width) return
+        width = window.innerWidth
+        apply()
+    })
+    document.addEventListener('focusout', function () { setTimeout(function () { if (!typing()) { width = window.innerWidth; apply() } }, 400) })
     window.addEventListener('orientationchange', apply)
+    NHE.isTextField = function (n) { return !!(n && n.matches && n.matches(FIELD)) }
 })();
 
 /*
@@ -718,7 +735,8 @@
  * then it goes full screen too (also when it grows, or the window shrinks).
  * Full screen is sized in px from the window, divided by the dialog's own
  * CSS zoom: Safari multiplies a zoomed box's percentage sizes by its zoom,
- * so 100% could run off the screen.
+ * so 100% could run off the screen. Each one also scrolls by dragging
+ * (NHE.dragScroll): MOD cancels touch scrolling on the page.
  *
  *   NHE.fitDialog(overlay)   // again, by hand (the watcher does it on its own)
  */
@@ -762,6 +780,9 @@
                     NHE.fitDialog(n)
                     // a card that grows later (another assignment type, a field shown)
                     var d = n.querySelector(DIALOG)
+                    // MOD cancels touch scrolling: a dialog taller than the
+                    // screen scrolls by dragging (else its buttons stay out of reach)
+                    if (d && NHE.dragScroll) NHE.dragScroll(d)
                     if (d && window.ResizeObserver) new ResizeObserver(function () { if (!always(d)) NHE.fitDialog(n) }).observe(d)
                 }
             })

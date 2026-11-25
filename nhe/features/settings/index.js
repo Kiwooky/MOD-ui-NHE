@@ -240,8 +240,9 @@ NHE.register('settings', function (mod) {
                       } : null,
                       onInfo: info.uri && NHE.PluginInfoDialog ? function () { showInfo(instance, info) } : null,
                       onDelete: NHE.ConfirmDialog ? function () { askDelete(st, info) } : null,
-                      // the plugin's GUI; not on a short screen (a phone held sideways), where the presets need the room
-                      picture: info.uri && h >= 520 ? mod.pluginImage(info.uri, 'screenshot', info.gui) : null,
+                      // the plugin's GUI; on a short screen (a phone held sideways) the
+                      // presets get a column of their own beside it (NHE.Panel: split)
+                      picture: info.uri ? mod.pluginImage(info.uri, 'screenshot', info.gui) : null,
                       onPicture: function (img) { mod.cleanPicture(img) } },
             controls: info.ports.filter(function (p) { return (p.properties || []).indexOf('notOnGUI') < 0 }).map(function (p) { return describe(instance, p) }),
             onInput: function (id, v) { send(instance, id, v) },

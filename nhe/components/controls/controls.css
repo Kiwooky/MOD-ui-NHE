@@ -557,6 +557,10 @@ button.nhe-chain__port { width: 100%; padding-left: 0; padding-right: 0; padding
    takes the picture's own height, so a wide one leaves the room to the presets */
 .nhe-panel__picture { display: flex; justify-content: center; flex: none; padding: 0 var(--nhe-space-8); }
 .nhe-panel__picture img { display: block; width: auto; height: auto; max-width: 100%; max-height: 180px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); pointer-events: none; }
+/* a short screen (panel.js: split): the picture has the column to itself, the presets the next one */
+.nhe-panel__plugin.is-split .nhe-panel__picture { flex: 1 1 auto; min-height: 0; align-items: flex-start; padding-bottom: var(--nhe-space-8); }
+.nhe-panel__plugin.is-split .nhe-panel__picture img { max-height: 100%; }
+.nhe-panel__presets { padding-top: var(--nhe-space-8); }
 
 .nhe-stack {
     position: relative;

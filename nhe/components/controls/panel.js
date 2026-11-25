@@ -20,7 +20,8 @@
  *       plugin: { name, on, binding, presets: { factory, user, selected },
  *                 onPresets, onColour, onInfo, onDelete,
  *                 picture, onPicture: fn(img) },                              // optional left column; picture: the
- *                                                         // plugin's GUI, under the header
+ *                                                         // plugin's GUI, under the header (height under
+ *                                                         // 520: the presets in a column of their own)
  *       controls: [{ id, type: 'slider'|'toggle'|'trigger'|'list',
  *                    group: null | { id, name, color },   // color: MOD's group colour index, or a CSS colour
  *                    options: { ...the component's options } }],
@@ -92,6 +93,8 @@
         return out
     }
 
+    var SPLIT_H = 520      // shorter: the presets in a column of their own
+
     var Panel = function (root, options) {
         this.root = root
         this.o = mix({ height: 646, controls: [], plugin: null }, options || {})
@@ -130,7 +133,11 @@
             pc.style.height = o.height + 'px'
             this.header = new NHE.PluginHeader(el('div', null, pc), mix({ name: o.plugin.name, on: o.plugin.on !== false, binding: o.plugin.binding || null, onPresets: o.plugin.onPresets, onColour: o.plugin.onColour, onInfo: o.plugin.onInfo, onDelete: o.plugin.onDelete }, mix(cb(':bypass'), {})))
             // the plugin's GUI, 180 px tall at most, under the name and its icons;
-            // the presets take what is left
+            // the presets take what is left. On a short screen (shorter than
+            // SPLIT_H: a phone held sideways) the picture takes the column and
+            // the presets get one of their own beside it
+            var split = !!o.plugin.picture && o.height < SPLIT_H
+            if (split) pc.classList.add('is-split')
             if (o.plugin.picture) {
                 var pic = el('div', 'nhe-panel__picture', pc)
                 var img = el('img', null, pic)
@@ -140,7 +147,8 @@
                 img.onerror = function () { if (pic.parentNode) pic.parentNode.removeChild(pic) }
                 if (typeof o.plugin.onPicture === 'function') img.onload = function () { o.plugin.onPicture(img) }
             }
-            var pd = el('div', null, pc)
+            var pd = el('div', null, split ? el('div', 'nhe-panel__plugin nhe-panel__presets', root) : pc)
+            if (split) pd.parentNode.style.height = o.height + 'px'
             pd.style.flex = '1 1 auto'
             pd.style.minHeight = '0'
             var pr = o.plugin.presets || {}

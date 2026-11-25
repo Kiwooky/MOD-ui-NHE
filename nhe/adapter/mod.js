@@ -271,6 +271,55 @@
         } else if (!want && meta) {
             meta.parentNode.removeChild(meta)
         }
+        if (held) holdScale(true)
+    }
+
+    // A text field in NHE on a phone: the browser zooms in on it (MOD's
+    // 980 px page is shrunk to fit, so its text looks small) and, as MOD
+    // cancels every touch move, nobody can pinch back out again. While one has
+    // focus, the viewport tag caps the scale at the one the page has now
+    // (maximum-scale: relative to the phone's own width); the cap goes when
+    // the field lets go. A page with a viewport tag of its own is left alone.
+    var held = false, holdBase = null
+    var holdScale = function (on) {
+        var meta = document.querySelector('meta[name=viewport][data-nhe]')
+        if (!on) {
+            held = false
+            if (meta && holdBase !== null) {
+                if (holdBase === '') meta.parentNode.removeChild(meta)
+                else meta.content = holdBase
+            }
+            holdBase = null
+            return
+        }
+        if (!meta && document.querySelector('meta[name=viewport]')) return
+        var landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches
+        var device = landscape ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height)
+        var scale = device / (window.innerWidth || 980)
+        if (!(scale > 0)) return
+        if (!meta) {
+            meta = document.createElement('meta')
+            meta.name = 'viewport'
+            meta.setAttribute('data-nhe', '')
+            meta.content = 'width=980'
+            document.head.appendChild(meta)
+            holdBase = ''
+        } else if (!held || holdBase === null) holdBase = meta.content
+        else if (holdBase !== '') holdBase = meta.content.replace(/,\s*maximum-scale=[\d.]+/, '')
+        held = true
+        meta.content = (holdBase || 'width=980') + ', maximum-scale=' + scale.toFixed(4)
+    }
+    if (phone) {
+        document.addEventListener('focusin', function (e) {
+            var t = e.target
+            if (NHE.isTextField && NHE.isTextField(t) && t.closest && t.closest('.nhe-ctl') && !held) holdScale(true)
+        })
+        document.addEventListener('focusout', function () {
+            setTimeout(function () {
+                var a = document.activeElement
+                if (held && !(NHE.isTextField && NHE.isTextField(a) && a.closest && a.closest('.nhe-ctl'))) holdScale(false)
+            }, 300)
+        })
     }
 
     // MOD's builder background: background.jpg on #pedalboard-dashboard
