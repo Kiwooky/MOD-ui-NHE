@@ -33,6 +33,36 @@
         $(check)
     }
 
+    // cb(updating) when MOD blocks its page: the websocket closed (host.js
+    // ws.onclose), the server said "stop", or an update is running
+    // (updating true). MOD's own blocker (desktop.blockUI, desktop.js) still
+    // runs: it drops its screens behind and closes the websocket; NHE only
+    // draws over it (features/connection). host.js looks desktop.blockUI up
+    // at each call, so wrapping it catches them all. Waits for `desktop`
+    // (made on MOD's page load), not for the pedalboard: the connection can
+    // drop before that ever loads.
+    mod.onBlockUI = function (cb) {
+        var wrap = function () {
+            if (!window.desktop || typeof desktop.blockUI !== 'function') return setTimeout(wrap, 50)
+            if (desktop.blockUI.nhe) { desktop.blockUI.nhe.push(cb); return }
+            var orig = desktop.blockUI, listeners = [cb]
+            desktop.blockUI = function (isUpdating) {
+                // MOD blocks once: its blockUI closes the websocket, whose
+                // onclose calls it again (no argument, so "not updating"),
+                // and it returns early. Only the first call counts
+                var already = $('body > .screen-disconnected').length > 0
+                var r = orig.apply(this, arguments)
+                if (already) return r
+                listeners.forEach(function (fn) { try { fn(!!isUpdating) } catch (e) { NHE.log('blockUI listener:', e) } })
+                return r
+            }
+            desktop.blockUI.nhe = listeners
+            // blocked before NHE got here: MOD's blocker is already up
+            if ($('body > .screen-disconnected').length) cb(/update/i.test($('body > .screen-disconnected').text()))
+        }
+        $(wrap)
+    }
+
     // Screens narrower than 1024 px (adapter/mod.css lifts MOD's body
     // min-width). MOD's pedalboard (pedalboard.js init) stores the window's
     // width minus its canvas's width once, as data 'hmargins', and every

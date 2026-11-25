@@ -12,7 +12,10 @@ Extensions for the [MOD](https://mod.audio) web UI (MOD Duo, Duo X, Dwarf, MOD D
 - **A live surface.** In a control's assignment dialog, **Add to surface** puts it on one screen with the controls you picked from other plugins, each plugin's under its name in its colour. The star at the left of the bottom bar opens it. Its **Morph targets** tab records two positions of up to 10 of its sliders and moves them all between the two with one Morph slider, which a knob, MIDI or an expression pedal can drive (on the MOD, through CV addressing).
 - **A gallery view** (the performance view). The gallery icon in the footer shows your pedals one at a time, as big as the screen allows. **Flip** a pedal to get to its settings on the back; **Hide** the ones you don't need while playing.
 
-Values, presets and assignments all go through MOD's own code, so everything stays in step with MOD's editor, the device and other browsers. On the device NHE adds its own folder and two small hooks into MOD's page, and nothing else (see "How it fits into MOD").
+- **Loads outright.** MOD's own page stays hidden behind a spinner until NHE has started, so MOD's bars and menus no longer flash up first (after 12 s it shows anyway, should NHE not get going).
+- **A connection screen for touch.** In place of MOD's small "Disconnected / Reload": a large card with a big Reload button, readable on a tablet or phone. It reconnects on its own as soon as the MOD answers (also the moment a tablet wakes or a computer comes back from sleep), waits for a MOD that's updating to restart, and stops rather than reloading in a loop (MOD wants one browser tab at a time).
+
+Values, presets and assignments all go through MOD's own code, so everything stays in step with MOD's editor, the device and other browsers. On the device NHE adds its own folder and three small hooks into MOD's page, and nothing else (see "How it fits into MOD").
 
 ## Install it on your MOD
 
@@ -92,16 +95,18 @@ Publish a release on GitHub (**Releases → Draft a new release**, a tag such as
 
 ## How it fits into MOD
 
-On the device, NHE touches MOD's files in exactly two places:
+On the device, NHE touches MOD's files in exactly three places:
 
 1. a link `/usr/share/mod/html/nhe` → `/data/nhe` (where this repo's `nhe/` folder lives)
 2. one `<script>` tag for `nhe/loader.js` in MOD's `index.html`
+3. one `<link>` for `nhe/boot.css` in its `<head>`: MOD's page stays hidden until the loader has started NHE
 
-Everything else is in `/data`, so it survives reboots. A MOD OS update removes the two hooks; run the install script again to put them back.
+Everything else is in `/data`, so it survives reboots. A MOD OS update removes the hooks; run the install script again to put them back.
 
 ```
 nhe/
-  loader.js              the one file index.html loads; reads version.json, loads features
+  loader.js              the one script index.html loads; reads version.json, loads features
+  boot.css               in <head>: hides MOD's page until NHE has started (no flash of MOD's UI)
   version.json           bumped on deploy so browsers fetch new files
   adapter/mod.js         the ONLY code that touches MOD's internals
   theme/tokens.css       design tokens (--nhe-*), exported from the Figma file's Variables
@@ -114,6 +119,7 @@ nhe/
                          the name dialog (name.js)
   features/performance/  performance.js + .css (shared with the mod-ui branch) and index.js (wiring)
   features/settings/     the NHE plugin settings panel in MOD's settings window (NHE / MOD switch)
+  features/connection/   the connection lost / updating screen, reconnecting on its own (starts early)
   device/install.sh      run on the device: hooks NHE into MOD's UI (safe to repeat)
   device/uninstall.sh    run on the device: restores MOD's original index.html
 tools/

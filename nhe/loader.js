@@ -17,6 +17,12 @@
  * Features are listed below. Each can be switched off with a MOD preference
  * "nhe-<id>" = "false" (the same store as Settings' "Show MOD Labs plugins").
  *
+ * boot.css (linked in <head> by install.sh) hides MOD's page until NHE has
+ * started: this file sets html.nhe-ready once the features have run, or
+ * at once if it can't get going. A feature registered with { early: true }
+ * starts as soon as MOD's page exists, without waiting for the pedalboard
+ * (the connection screen: MOD may never get that far).
+ *
  * Plain ES5 on purpose.
  */
 (function () {
@@ -28,6 +34,16 @@
     var BASE = script ? script.src.replace(/loader\.js.*$/, '') : '/nhe/'
 
     var FEATURES = [
+        {
+            // NHE's connection lost / updating screen in place of MOD's (early)
+            id: 'connection',
+            files: [
+                'components/controls/controls.css',
+                'components/controls/controls.js',
+                'features/connection/connection.css',
+                'features/connection/index.js'
+            ]
+        },
         {
             id: 'performance',
             files: [
@@ -123,9 +139,30 @@
             return prefs['nhe-' + id] !== 'false'
         },
         // features call NHE.register('id', function (mod) { ... }) from their
-        // index.js; the function runs once MOD's UI is ready
-        register: function (id, start) {
-            NHE.features[id] = { start: start, started: false }
+        // index.js; the function runs once MOD's UI is ready, or (options
+        // { early: true }) once its page exists
+        register: function (id, start, options) {
+            NHE.features[id] = { start: start, started: false, early: !!(options && options.early) }
+        },
+        // MOD's page shows (boot.css hid it); once, from any path
+        ready: function () {
+            var html = document.documentElement
+            if (html.classList.contains('nhe-ready')) return
+            var show = function () { html.classList.add('nhe-ready') }
+            if (window.requestAnimationFrame) requestAnimationFrame(show)
+            else show()
+        }
+    }
+
+    var startFeature = function (id) {
+        var f = NHE.features[id]
+        if (!f || f.started) return
+        f.started = true
+        try {
+            f.start(NHE.mod)
+            NHE.log(id, 'started')
+        } catch (e) {
+            NHE.log(id, 'failed to start:', e)
         }
     }
 
@@ -165,18 +202,14 @@
         queue.unshift('theme/tokens.css', 'adapter/mod.css', 'adapter/mod.js', 'components/config.js')
         var next = function () {
             if (!queue.length) {
+                if (!NHE.mod) { NHE.ready(); return }      // the adapter didn't load: show MOD as it is
+                // early features: as soon as MOD's page exists
+                $(function () {
+                    Object.keys(NHE.features).forEach(function (id) { if (NHE.features[id].early) startFeature(id) })
+                })
                 NHE.mod.ready(function () {
-                    Object.keys(NHE.features).forEach(function (id) {
-                        var f = NHE.features[id]
-                        if (f.started) return
-                        f.started = true
-                        try {
-                            f.start(NHE.mod)
-                            NHE.log(id, 'started')
-                        } catch (e) {
-                            NHE.log(id, 'failed to start:', e)
-                        }
-                    })
+                    Object.keys(NHE.features).forEach(startFeature)
+                    NHE.ready()
                 })
                 return
             }

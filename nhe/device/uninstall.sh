@@ -26,6 +26,7 @@ if [ -f "$BACKUP/index.html.orig" ]; then
     cp "$BACKUP/index.html.orig" "$HTML/index.html"
 else
     sed -i 's#<script[^>]*nhe/loader\.js[^>]*></script>##g' "$HTML/index.html"
+    sed -i 's#<link[^>]*nhe/boot\.css[^>]*>##g' "$HTML/index.html"
 fi
 [ -L "$HTML/nhe" ] && rm "$HTML/nhe"
 echo "NHE removed. Reload the MOD UI in your browser."

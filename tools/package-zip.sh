@@ -88,7 +88,14 @@ else
     sed "s#</body>#$TAG</body>#" "$HTML/index.html" > "$TMP/index.html"
 fi
 grep -q 'nhe/loader\.js' "$TMP/index.html" || { echo "Could not add the loader tag (no </body> in index.html?)."; exit 1; }
-cat "$TMP/index.html" > "$HTML/index.html"
+# and the boot stylesheet in <head> (MOD's page hidden until NHE has started)
+BOOT='<link rel="stylesheet" type="text/css" href="nhe/boot.css?v='"$VERSION"'">'
+if grep -q 'nhe/boot\.css' "$TMP/index.html"; then
+    sed "s#<link[^>]*nhe/boot\.css[^>]*>#$BOOT#" "$TMP/index.html" > "$TMP/index2.html"
+else
+    sed "s#</head>#$BOOT</head>#" "$TMP/index.html" > "$TMP/index2.html"
+fi
+cat "$TMP/index2.html" > "$HTML/index.html"
 
 # 4. the zip: html/ at its top, which Starless's installer looks for
 FILES=$(find "$HTML" -type f | wc -l | tr -d ' ')

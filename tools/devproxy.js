@@ -17,8 +17,9 @@
  * - /playground/... is served from ./playground: component playgrounds that
  *   need no MOD at all (http://localhost:18080/playground/slider.html).
  *   `npm run playground` runs a second copy on :18090 for just that.
- * - HTML pages get the loader's <script> tag added before </body>, unless
- *   the target already has it installed.
+ * - HTML pages get the loader's <script> tag added before </body>, and the
+ *   boot stylesheet's <link> before </head>, unless the target already has
+ *   them installed.
  *
  * Node built-ins only: no npm install needed.
  */
@@ -43,6 +44,7 @@ const ROOT = path.resolve(__dirname, '..')
 const NHE_DIR = path.join(ROOT, 'nhe')
 const PLAYGROUND_DIR = path.join(ROOT, 'playground')
 const TAG = '<script type="text/javascript" src="/nhe/loader.js?v=dev"></script>'
+const BOOT = '<link rel="stylesheet" type="text/css" href="/nhe/boot.css?v=dev">'
 
 const TYPES = {
     '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
@@ -99,6 +101,10 @@ const proxy = (req, res) => {
             let body = Buffer.concat(chunks).toString('utf8')
             if (!/nhe\/loader\.js/.test(body) && /<\/body>/i.test(body)) {
                 body = body.replace(/<\/body>/i, TAG + '</body>')
+            }
+            // only where the loader is too: boot.css hides the page until the loader shows it
+            if (/nhe\/loader\.js/.test(body) && !/nhe\/boot\.css/.test(body) && /<\/head>/i.test(body)) {
+                body = body.replace(/<\/head>/i, BOOT + '</head>')
             }
             delete h['content-length']
             h['cache-control'] = 'no-store'

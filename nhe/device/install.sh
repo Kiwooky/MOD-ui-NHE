@@ -12,7 +12,9 @@
 #     still MOD's own, so also after a MOD OS update)
 #   - links /usr/share/mod/html/nhe -> /data/nhe (so later updates are just
 #     file copies into /data/nhe, no remount needed)
-#   - adds one <script> tag for nhe/loader.js to index.html
+#   - adds one <script> tag for nhe/loader.js to index.html, and one <link>
+#     for nhe/boot.css in its <head> (MOD's page stays hidden until NHE has
+#     started, so MOD's own UI doesn't flash up first)
 #   - removes the older one-file performance-inject.js tag, if present
 # Takes effect on the next browser reload; no reboot needed.
 set -e
@@ -26,6 +28,7 @@ BACKUP=${NHE_TEST_BACKUP:-/data/nhe-backup}
 VERSION=$(sed -n 's/.*"version"[^"]*"\([^"]*\)".*/\1/p' "${NHE_TEST_DATA:-/data/nhe}/version.json" 2>/dev/null | tr -cd 'A-Za-z0-9._-')
 [ -n "$VERSION" ] || VERSION=1
 TAG='<script type="text/javascript" src="nhe/loader.js?v='"$VERSION"'"></script>'
+BOOT='<link rel="stylesheet" type="text/css" href="nhe/boot.css?v='"$VERSION"'">'
 
 [ -f "$DATA/loader.js" ] || { echo "No $DATA/loader.js: copy the nhe folder to /data first."; exit 1; }
 
@@ -67,5 +70,13 @@ else
     sed -i "s#</body>#$TAG</body>#" "$HTML/index.html"
 fi
 grep -q 'nhe/loader\.js' "$HTML/index.html" || { echo "Could not add the loader tag."; exit 1; }
+
+# the boot stylesheet in <head>: once, with this deploy's version (if the
+# page has no </head>, NHE still works, over MOD's page as before)
+if grep -q 'nhe/boot\.css' "$HTML/index.html"; then
+    sed -i "s#<link[^>]*nhe/boot\.css[^>]*>#$BOOT#" "$HTML/index.html"
+else
+    sed -i "s#</head>#$BOOT</head>#" "$HTML/index.html"
+fi
 
 echo "NHE installed. Reload the MOD UI in your browser."

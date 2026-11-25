@@ -1,0 +1,62 @@
+/* SPDX-FileCopyrightText: 2026 New Horizon Electronics
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * The connection screen (index.js): a card over the whole page, sized for
+ * a finger, in place of MOD's own "Disconnected / Reload" blocker.
+ * Builds on the dialog styles (components/controls/controls.css): upright
+ * on a phone it is enlarged with them (--nhe-zoom).
+ */
+
+/* MOD's blocker still does its work (it drops its screens behind and closes
+   the websocket), unseen */
+html.nhe-connection-on body > .screen-disconnected { display: none !important; }
+
+/* over everything, MOD's windows included, and shown even while boot.css
+   still hides MOD's page */
+.nhe-connection.nhe-dialog-overlay {
+    visibility: visible;
+    z-index: 2147483647;
+    background: rgba(0, 0, 0, .85);
+}
+
+.nhe-connection__card.nhe-dialog {
+    width: 440px;
+    padding: 0 var(--nhe-space-8) var(--nhe-space-24);
+    text-align: center;
+    touch-action: manipulation;
+}
+
+.nhe-connection .nhe-dialog__header { min-height: 56px; font-size: var(--nhe-font-size-lg); }
+
+.nhe-connection__spinner {
+    width: 56px;
+    height: 56px;
+    flex: none;
+    margin: var(--nhe-space-32) auto var(--nhe-space-24);
+    border: 5px solid rgba(255, 255, 255, .15);
+    border-top-color: var(--nhe-accent-default);
+    border-radius: 50%;
+    animation: nhe-connection-spin .9s linear infinite;
+}
+.nhe-connection.is-stuck .nhe-connection__spinner { display: none; }
+.nhe-connection.is-stuck .nhe-connection__status { margin-top: var(--nhe-space-32); }
+
+.nhe-connection__status {
+    margin: 0 var(--nhe-space-16);
+    font-size: var(--nhe-font-size-lg);
+    line-height: 24px;
+    font-weight: var(--nhe-font-weight-semibold);
+}
+
+.nhe-connection__hint {
+    margin: var(--nhe-space-16) var(--nhe-space-16) 0;
+    font-size: var(--nhe-font-size-md);
+    line-height: var(--nhe-font-line-normal);
+    opacity: .7;
+}
+.nhe-connection__hint:empty { display: none; }
+
+.nhe-connection .nhe-dialog__buttons { margin-top: 0; padding: var(--nhe-space-24) var(--nhe-space-16) 0; }
+.nhe-connection .nhe-text-button { height: 56px; font-size: var(--nhe-font-size-lg); }
+
+@keyframes nhe-connection-spin { to { transform: rotate(360deg); } }
